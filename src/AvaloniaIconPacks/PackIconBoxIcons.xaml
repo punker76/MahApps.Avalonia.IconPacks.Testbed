@@ -1,5 +1,6 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:iconpacks="clr-namespace:MahApps.Metro.IconPacks;assembly=AvaloniaIconPacks"
+        xmlns:converter="clr-namespace:MahApps.Metro.IconPacks.Converter;assembly=AvaloniaIconPacks"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <!-- xmlns:converters="clr-namespace:Avalonia.Controls.Converters;assembly=Avalonia.Controls"> -->
     <!-- <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" -->
@@ -15,19 +16,16 @@
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}" />
                 <Grid x:Name="PART_InnerGrid"
-                      RenderTransformOrigin="0.5 0.5"
                       Margin="{TemplateBinding BorderThickness}">
-                    <!-- <Grid.RenderTransform> -->
-                    <!--     <TransformGroup> -->
-                    <!--         <ScaleTransform x:Name="FlipTransform" -->
-                    <!--                         ScaleX="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Flip, Mode=OneWay, Converter={converter:FlipToScaleXValueConverter}}" -->
-                    <!--                         ScaleY="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Flip, Mode=OneWay, Converter={converter:FlipToScaleYValueConverter}}" /> -->
-                    <!--         <RotateTransform x:Name="RotationTransform" -->
-                    <!--                          Angle="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=RotationAngle, Mode=OneWay}" /> -->
-                    <!--         <RotateTransform x:Name="SpinTransform" /> -->
-                    <!--     </TransformGroup> -->
-                    <!-- </Grid.RenderTransform> -->
-                    <!-- Data="{Binding Data, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay, Converter={converter:NullToUnsetValueConverter}}" -->
+                    <Grid.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform ScaleX="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Flip, Mode=OneWay, Converter={converter:FlipToScaleXValueConverter}}"
+                                            ScaleY="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Flip, Mode=OneWay, Converter={converter:FlipToScaleYValueConverter}}" />
+                            <!-- <RotateTransform x:Name="RotationTransform" -->
+                            <!--                  Angle="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=RotationAngle, Mode=OneWay}" /> -->
+                            <!-- <RotateTransform x:Name="SpinTransform" /> -->
+                        </TransformGroup>
+                    </Grid.RenderTransform>
                     <Viewbox Margin="{TemplateBinding Padding}">
                         <Path Fill="{TemplateBinding Foreground}"
                               Stretch="Uniform"

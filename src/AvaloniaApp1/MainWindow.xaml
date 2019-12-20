@@ -8,17 +8,24 @@
         Title="AvaloniaApp1"
         Width="800"
         Height="600">
-  <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
+    <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
 
-    <TextBlock Margin="0 10" Text="PackIconBoxIcons with AvaloniaUI" FontSize="22" FontWeight="SemiBold" />
+        <TextBlock Margin="0 10" Text="PackIconBoxIcons with AvaloniaUI" FontSize="22" FontWeight="SemiBold" />
 
-    <Border HorizontalAlignment="Center"
-            VerticalAlignment="Center"
-            Background="Silver">
-      <iconpacks:PackIconBoxIcons Kind="LogosGithub"
-                                  Width="144" Height="144"
-                                  Foreground="Black" />
-    </Border>
+        <iconpacks:PackIconBoxIcons Kind="LogosGithub"
+                                    Background="Silver"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Width="144" Height="144"
+                                    Foreground="Black" />
 
-  </StackPanel>
+        <iconpacks:PackIconBoxIcons Kind="LogosGithub"
+                                    Background="Silver"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Width="144" Height="144"
+                                    Flip="Vertical"
+                                    Foreground="Black" />
+
+    </StackPanel>
 </Window>
