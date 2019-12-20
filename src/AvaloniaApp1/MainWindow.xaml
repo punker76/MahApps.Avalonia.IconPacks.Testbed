@@ -1,4 +1,4 @@
-﻿<Window xmlns:iconpacks="clr-namespace:MahApps.Metro.IconPacks;assembly=AvaloniaIconPacks"
+<Window xmlns:iconpacks="clr-namespace:MahApps.Metro.IconPacks;assembly=AvaloniaIconPacks"
         xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -8,15 +8,17 @@
         Title="AvaloniaApp1"
         Width="800"
         Height="600">
-    <Grid>
+  <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
 
-        <Border HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                Background="Silver">
-            <iconpacks:PackIconBoxIcons Kind="LogosAndroid"
-                                        Width="144" Height="144"
-                                        Foreground="Crimson" />
-        </Border>
+    <TextBlock Margin="0 10" Text="PackIconBoxIcons with AvaloniaUI" FontSize="22" FontWeight="SemiBold" />
 
-    </Grid>
+    <Border HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Background="Silver">
+      <iconpacks:PackIconBoxIcons Kind="LogosGithub"
+                                  Width="144" Height="144"
+                                  Foreground="Black" />
+    </Border>
+
+  </StackPanel>
 </Window>

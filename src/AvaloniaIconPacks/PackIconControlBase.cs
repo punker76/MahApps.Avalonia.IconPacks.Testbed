@@ -1,7 +1,6 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Linq;
-using Avalonia.Controls.Primitives;
-using Avalonia.Data;
 #if NETFX_CORE || WINDOWS_UWP
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Media;
@@ -9,8 +8,8 @@ using Windows.UI.Xaml.Media.Animation;
 #elif AVALONIA
 using Avalonia;
 using Avalonia.Animation.Easings;
-using Avalonia.Media;
-using Avalonia.Metadata;
+using Avalonia.Controls.Primitives;
+using Avalonia.Data;
 #else
 using System.ComponentModel;
 using System.Windows;
