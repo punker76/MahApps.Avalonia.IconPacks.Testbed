@@ -114,21 +114,16 @@ namespace MahApps.Metro.IconPacks
             protected set { SetValue(DataProperty, value); }
         }
 #elif AVALONIA
-        public static readonly DirectProperty<PackIconControlBase, string> DataProperty =
-            AvaloniaProperty.RegisterDirect<PackIconControlBase, string>(
-                nameof(Data),
-                o => o.Data);
-
-        private string _data;
+        public static readonly StyledProperty<string> DataProperty
+            = AvaloniaProperty.Register<PackIconControlBase, string>(nameof(Data));
 
         /// <summary>
         /// Gets the path data for the current icon kind.
         /// </summary>
-        [Content]
         public string Data
         {
-            get { return _data; }
-            protected set { SetAndRaise(DataProperty, ref _data, value); }
+            get { return (string)this.GetValue(DataProperty); }
+            protected set { this.SetValue(DataProperty, value); }
         }
 #else
         private static readonly DependencyPropertyKey DataPropertyKey
@@ -171,7 +166,8 @@ namespace MahApps.Metro.IconPacks
 
             this.UpdateData();
 
-            //this.CoerceValue(SpinProperty);
+            var spin = this.Spin && this.IsVisible && this.SpinDuration > 0 && this.Opacity > 0;
+            this.ToggleSpinAnimation(spin);
 
             if (this.Spin)
             {

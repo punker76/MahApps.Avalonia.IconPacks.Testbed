@@ -5,10 +5,18 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="AvaloniaApp1.MainWindow"
-        Title="AvaloniaApp1">
+        Title="AvaloniaApp1"
+        Width="800"
+        Height="600">
     <Grid>
 
-        <iconpacks:PackIconControlBase HorizontalAlignment="Center" VerticalAlignment="Center" Width="72" Height="72" Background="Silver" />
+        <Border HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Background="Silver">
+            <iconpacks:PackIconBoxIcons Kind="LogosAndroid"
+                                        Width="144" Height="144"
+                                        Foreground="Crimson" />
+        </Border>
 
     </Grid>
 </Window>
