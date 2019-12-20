@@ -12,14 +12,27 @@
 
         <TextBlock Margin="0 10" Text="PackIconBoxIcons with AvaloniaUI" FontSize="22" FontWeight="SemiBold" />
 
-        <iconpacks:PackIconBoxIcons Kind="LogosGithub"
+        <iconpacks:PackIconBoxIcons Kind="RegularRecycle"
                                     Background="Silver"
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
                                     Width="144" Height="144"
                                     Foreground="Black" />
 
-        <iconpacks:PackIconBoxIcons Kind="LogosGithub"
+        <TextBlock Margin="0 10" Text="RotationAngle = 45" FontSize="22" FontWeight="SemiBold" />
+
+        <iconpacks:PackIconBoxIcons Kind="RegularRecycle"
+                                    ClipToBounds="False"
+                                    Background="Silver"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Width="144" Height="144"
+                                    RotationAngle="45"
+                                    Foreground="Black" />
+
+        <TextBlock Margin="0 10" Text="Flip = Vertical" FontSize="22" FontWeight="SemiBold" />
+
+        <iconpacks:PackIconBoxIcons Kind="RegularRecycle"
                                     Background="Silver"
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
