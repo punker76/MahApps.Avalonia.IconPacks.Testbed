@@ -4,6 +4,7 @@
         <TargetFramework>netcoreapp3.1</TargetFramework>
         <PublishTrimmed>true</PublishTrimmed>
         <PublishSingleFile>true</PublishSingleFile>
+        <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     </PropertyGroup>
     <ItemGroup>
         <Compile Update="**\*.xaml.cs">
