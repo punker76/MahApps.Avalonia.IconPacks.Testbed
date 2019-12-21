@@ -1,4 +1,4 @@
-<Window xmlns:iconpacks="clr-namespace:MahApps.Metro.IconPacks;assembly=AvaloniaIconPacks"
+<Window xmlns:iconPacks="clr-namespace:MahApps.Metro.IconPacks;assembly=AvaloniaIconPacks"
         xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -12,27 +12,28 @@
 
         <TextBlock Margin="0 10" Text="PackIconBoxIcons with AvaloniaUI" FontSize="22" FontWeight="SemiBold" />
 
-        <iconpacks:PackIconBoxIcons Kind="RegularRecycle"
+        <iconPacks:PackIconBoxIcons Kind="RegularRecycle"
                                     Background="Silver"
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
                                     Width="144" Height="144"
                                     Foreground="Black" />
 
-        <TextBlock Margin="0 10" Text="RotationAngle = 45" FontSize="22" FontWeight="SemiBold" />
+        <TextBlock Margin="0 10" Text="{Binding #RotationSlider.Value, Mode=OneWay, StringFormat='RotationAngle {0}'}" FontSize="22" FontWeight="SemiBold" />
+        <Slider Name="RotationSlider" Margin="0 5" Width="200" Minimum="0" Maximum="360" Value="45" />
 
-        <iconpacks:PackIconBoxIcons Kind="RegularRecycle"
+        <iconPacks:PackIconBoxIcons Kind="RegularCog"
                                     ClipToBounds="False"
                                     Background="Silver"
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
                                     Width="144" Height="144"
-                                    RotationAngle="45"
+                                    RotationAngle="{Binding #RotationSlider.Value, Mode=OneWay}"
                                     Foreground="Black" />
 
         <TextBlock Margin="0 10" Text="Flip = Vertical" FontSize="22" FontWeight="SemiBold" />
 
-        <iconpacks:PackIconBoxIcons Kind="RegularRecycle"
+        <iconPacks:PackIconBoxIcons Kind="RegularRecycle"
                                     Background="Silver"
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center"

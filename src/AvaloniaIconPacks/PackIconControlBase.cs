@@ -53,6 +53,14 @@ namespace MahApps.Metro.IconPacks
             }
         }
 #elif AVALONIA
+        static PackIconControlBase()
+        {
+            // AffectsRender<PackIconControlBase>(
+            //     RotationAngleProperty);
+            // AffectsMeasure<PackIconControlBase>(RotationAngleProperty);
+
+        }
+
         public PackIconControlBase()
         {
             OpacityProperty.Changed.Subscribe(CoerceSpinProperty);

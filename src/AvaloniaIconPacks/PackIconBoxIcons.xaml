@@ -21,7 +21,7 @@
                         <TransformGroup>
                             <ScaleTransform ScaleX="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Flip, Mode=OneWay, Converter={converter:FlipToScaleXValueConverter}}"
                                             ScaleY="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Flip, Mode=OneWay, Converter={converter:FlipToScaleYValueConverter}}" />
-                            <RotateTransform Angle="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=RotationAngle, Mode=OneWay}" />
+                            <RotateTransform Angle="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=RotationAngle}" />
                             <!-- <RotateTransform x:Name="SpinTransform" /> -->
                         </TransformGroup>
                     </Grid.RenderTransform>
