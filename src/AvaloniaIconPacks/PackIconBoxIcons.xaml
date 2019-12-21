@@ -2,11 +2,6 @@
         xmlns:iconpacks="clr-namespace:MahApps.Metro.IconPacks;assembly=AvaloniaIconPacks"
         xmlns:converter="clr-namespace:MahApps.Metro.IconPacks.Converter;assembly=AvaloniaIconPacks"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <!-- xmlns:converters="clr-namespace:Avalonia.Controls.Converters;assembly=Avalonia.Controls"> -->
-    <!-- <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" -->
-    <!--                         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" -->
-    <!--                         xmlns:iconPacks="clr-namespace:MahApps.Metro.IconPacks" -->
-    <!--                         xmlns:converter="clr-namespace:MahApps.Metro.IconPacks.Converter;assembly=MahApps.Metro.IconPacks.Core"> -->
 
     <Styles.Resources>
         <iconpacks:DataToGeometryConverter x:Key="GeometryConverter" />
@@ -23,7 +18,6 @@
                             <ScaleTransform ScaleX="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Flip, Mode=OneWay, Converter={converter:FlipToScaleXValueConverter}}"
                                             ScaleY="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Flip, Mode=OneWay, Converter={converter:FlipToScaleYValueConverter}}" />
                             <RotateTransform Angle="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=RotationAngle}" />
-                            <!-- <RotateTransform x:Name="SpinTransform" /> -->
                         </TransformGroup>
                     </Grid.RenderTransform>
                     <Viewbox Margin="{TemplateBinding Padding}">
@@ -53,7 +47,7 @@
     <Style Selector="iconpacks|PackIconBoxIcons:spin /template/ Grid#PART_InnerGrid">
         <Style.Animations>
             <!--<Animation Duration="0:0:3" IterationCount="INFINITE" Easing="{Binding SpinEasingFunction, RelativeSource={RelativeSource TemplatedParent}}">-->
-            <Animation Duration="0:0:3" IterationCount="INFINITE" Easing="{Binding SpinEasingFunction, RelativeSource={RelativeSource TemplatedParent}}">
+            <Animation Duration="0:0:3" IterationCount="INFINITE">
                 <KeyFrame Cue="0%">
                     <Setter Property="RotateTransform.Angle" Value="0.0"/>
                 </KeyFrame>
