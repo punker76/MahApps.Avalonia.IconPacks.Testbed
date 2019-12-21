@@ -1,6 +1,10 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
+using Avalonia.Animation;
+using Avalonia.Media;
+using Avalonia.Styling;
 #if NETFX_CORE || WINDOWS_UWP
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Media;
@@ -55,10 +59,7 @@ namespace MahApps.Metro.IconPacks
 #elif AVALONIA
         static PackIconControlBase()
         {
-            // AffectsRender<PackIconControlBase>(
-            //     RotationAngleProperty);
-            // AffectsMeasure<PackIconControlBase>(RotationAngleProperty);
-
+            PseudoClass<PackIconControlBase>(SpinProperty, ":spin");
         }
 
         public PackIconControlBase()
@@ -346,7 +347,24 @@ namespace MahApps.Metro.IconPacks
 
         private void BeginSpinAnimation()
         {
-//             var element = this.InnerGrid;
+            // var spinAnimationStyle = new Style(x => x.OfType<PackIconControlBase>().Template().Name("PART_InnerGrid"));
+            // var animation = new Animation();
+            // animation.Duration = TimeSpan.FromSeconds(this.SpinDuration);
+            // animation.IterationCount = IterationCount.Infinite;
+            //
+            // var keyFrameStart = new KeyFrame() {Cue = new Cue(0)};
+            // keyFrameStart.Setters.Add(new Setter(RotateTransform.AngleProperty, 0d));
+            // animation.Children.Add(keyFrameStart);
+            //
+            // var keyFrameEnd = new KeyFrame() { Cue = new Cue(1) };
+            // keyFrameEnd.Setters.Add(new Setter(RotateTransform.AngleProperty, 360d));
+            // animation.Children.Add(keyFrameEnd);
+            //
+            // spinAnimationStyle.Animations.Add(animation);
+            //
+            // this.Styles.Add(spinAnimationStyle);
+
+            //             var element = this.InnerGrid;
 //             if (null == element)
 //             {
 //                 return;
@@ -480,7 +498,9 @@ namespace MahApps.Metro.IconPacks
         }
 #elif AVALONIA
         public static readonly StyledProperty<Easing> SpinEasingFunctionProperty
-            = AvaloniaProperty.Register<PackIconControlBase, Easing>(nameof(SpinEasingFunction));
+            = AvaloniaProperty.Register<PackIconControlBase, Easing>(
+                nameof(SpinEasingFunction),
+                defaultValue: new LinearEasing());
 #else
         public static readonly DependencyProperty SpinEasingFunctionProperty
             = DependencyProperty.Register(

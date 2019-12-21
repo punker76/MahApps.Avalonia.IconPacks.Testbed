@@ -21,6 +21,7 @@
 
         <TextBlock Margin="0 10" Text="{Binding #RotationSlider.Value, Mode=OneWay, StringFormat='RotationAngle {0}'}" FontSize="22" FontWeight="SemiBold" />
         <Slider Name="RotationSlider" Margin="0 5" Width="200" Minimum="0" Maximum="360" Value="45" />
+        <CheckBox Name="SpinCheckBox" Content="Spin" IsChecked="False" />
 
         <iconPacks:PackIconBoxIcons Kind="RegularCog"
                                     ClipToBounds="False"
@@ -28,6 +29,7 @@
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
                                     Width="144" Height="144"
+                                    Spin="{Binding #SpinCheckBox.IsChecked, Mode=OneWay}"
                                     RotationAngle="{Binding #RotationSlider.Value, Mode=OneWay}"
                                     Foreground="Black" />
 

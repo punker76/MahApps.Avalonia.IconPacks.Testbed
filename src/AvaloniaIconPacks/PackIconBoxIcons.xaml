@@ -10,6 +10,7 @@
 
     <Styles.Resources>
         <iconpacks:DataToGeometryConverter x:Key="GeometryConverter" />
+
         <ControlTemplate x:Key="MahApps.Templates.PackIconBoxIcons" TargetType="{x:Type iconpacks:PackIconBoxIcons}">
             <Grid>
                 <Border Background="{TemplateBinding Background}"
@@ -47,6 +48,20 @@
         <Setter Property="VerticalAlignment" Value="Top" />
         <Setter Property="UseLayoutRounding" Value="False" />
         <Setter Property="Template" Value="{StaticResource MahApps.Templates.PackIconBoxIcons}" />
+    </Style>
+
+    <Style Selector="iconpacks|PackIconBoxIcons:spin /template/ Grid#PART_InnerGrid">
+        <Style.Animations>
+            <!--<Animation Duration="0:0:3" IterationCount="INFINITE" Easing="{Binding SpinEasingFunction, RelativeSource={RelativeSource TemplatedParent}}">-->
+            <Animation Duration="0:0:3" IterationCount="INFINITE" Easing="{Binding SpinEasingFunction, RelativeSource={RelativeSource TemplatedParent}}">
+                <KeyFrame Cue="0%">
+                    <Setter Property="RotateTransform.Angle" Value="0.0"/>
+                </KeyFrame>
+                <KeyFrame Cue="100%">
+                    <Setter Property="RotateTransform.Angle" Value="360.0"/>
+                </KeyFrame>
+            </Animation>
+        </Style.Animations>
     </Style>
 
 </Styles>
