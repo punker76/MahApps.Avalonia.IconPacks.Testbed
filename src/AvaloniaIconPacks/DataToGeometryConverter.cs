@@ -12,12 +12,7 @@ namespace MahApps.Metro.IconPacks.Converter
         /// <inheritdoc />
         protected override object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is string data)
-            {
-                return PathGeometry.Parse(data);
-            }
-
-            return null;
+            return value is string data ? PathGeometry.Parse(data) : null;
         }
 
         /// <inheritdoc />
