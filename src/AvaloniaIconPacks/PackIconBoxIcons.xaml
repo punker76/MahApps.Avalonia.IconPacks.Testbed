@@ -4,8 +4,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <Styles.Resources>
-        <iconpacks:DataToGeometryConverter x:Key="GeometryConverter" />
-
         <ControlTemplate x:Key="MahApps.Templates.PackIconBoxIcons" TargetType="{x:Type iconpacks:PackIconBoxIcons}">
             <Grid>
                 <Border Background="{TemplateBinding Background}"
@@ -23,7 +21,7 @@
                     <Viewbox Margin="{TemplateBinding Padding}">
                         <Path Fill="{TemplateBinding Foreground}"
                               Stretch="Uniform"
-                              Data="{Binding Data, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource GeometryConverter}}"
+                              Data="{Binding Data, RelativeSource={RelativeSource TemplatedParent}, Converter={converter:DataToGeometryConverter}}"
                               UseLayoutRounding="False" />
                         <Viewbox.RenderTransform>
                             <ScaleTransform ScaleY="-1" />
