@@ -20,8 +20,11 @@
                                     Foreground="Black" />
 
         <TextBlock Margin="0 10" Text="{Binding #RotationSlider.Value, Mode=OneWay, StringFormat='RotationAngle {0}'}" FontSize="22" FontWeight="SemiBold" />
-        <Slider Name="RotationSlider" Margin="0 5" Width="200" Minimum="0" Maximum="360" Value="45" />
-        <CheckBox Name="SpinCheckBox" Content="Spin" IsChecked="False" />
+        <Slider Name="RotationSlider" Margin="0 2" Width="200" Minimum="0" Maximum="360" Value="45" SmallChange="1" LargeChange="10" />
+        <TextBlock Margin="0 2" Text="{Binding #DurationSlider.Value, Mode=OneWay, StringFormat='Duration {0}'}" FontSize="22" FontWeight="SemiBold" />
+        <Slider Name="DurationSlider" Margin="0 2" Width="200" Minimum="0" Maximum="10" Value="3" SmallChange="1" LargeChange="1" />
+        <CheckBox Name="SpinCheckBox" Margin="0 2" Content="Spin" IsChecked="True" />
+        <CheckBox Name="VisibilityCheckBox" Margin="0 2" Content="Visible" IsChecked="True" />
 
         <iconPacks:PackIconBoxIcons Kind="RegularCog"
                                     ClipToBounds="False"
@@ -29,8 +32,10 @@
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
                                     Width="144" Height="144"
+                                    IsVisible="{Binding #VisibilityCheckBox.IsChecked, Mode=OneWay}"
                                     Spin="{Binding #SpinCheckBox.IsChecked, Mode=OneWay}"
                                     RotationAngle="{Binding #RotationSlider.Value, Mode=OneWay}"
+                                    SpinDuration="{Binding #DurationSlider.Value, Mode=OneWay}"
                                     Foreground="Black" />
 
         <TextBlock Margin="0 10" Text="Flip = Vertical" FontSize="22" FontWeight="SemiBold" />

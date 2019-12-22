@@ -1,19 +1,19 @@
 ﻿using System;
-using System.ComponentModel;
-using System.Globalization;
-using System.Linq;
-using Avalonia.Animation;
-using Avalonia.Media;
-using Avalonia.Styling;
 #if NETFX_CORE || WINDOWS_UWP
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Animation;
 #elif AVALONIA
+using System.Reactive;
+using System.Reactive.Linq;
 using Avalonia;
+using Avalonia.Animation;
 using Avalonia.Animation.Easings;
+using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Data;
+using Avalonia.Media;
+using Avalonia.Styling;
 #else
 using System.ComponentModel;
 using System.Windows;
@@ -57,49 +57,37 @@ namespace MahApps.Metro.IconPacks
             }
         }
 #elif AVALONIA
-        static PackIconControlBase()
-        {
-            PseudoClass<PackIconControlBase>(SpinProperty, ":spin");
-        }
-
         public PackIconControlBase()
         {
-            OpacityProperty.Changed.Subscribe(CoerceSpinProperty);
-            IsVisibleProperty.Changed.Subscribe(CoerceSpinProperty);
-            SpinProperty.Changed.Subscribe(CoerceSpinProperty);
-            SpinDurationProperty.Changed.Subscribe(e =>
-            {
-                if (e.Sender is PackIconControlBase packIcon && e.OldValue != e.NewValue && packIcon.Spin && e.NewValue is double)
+            Observable.CombineLatest(
+                    this.GetObservable(SpinProperty).Select(_ => Unit.Default),
+                    this.GetObservable(IsVisibleProperty).Select(_ => Unit.Default),
+                    this.GetObservable(SpinDurationProperty).Select(_ => Unit.Default),
+                    this.GetObservable(OpacityProperty).Select(_ => Unit.Default),
+                    this.GetObservable(SpinEasingFunctionProperty).Select(_ => Unit.Default))
+                .Select(_ => this.CalculateSpinning())
+                .Subscribe(spin =>
                 {
-                    packIcon.StopSpinAnimation();
-                    packIcon.BeginSpinAnimation();
-                }
-            });
-            SpinEasingFunctionProperty.Changed.Subscribe(e =>
-            {
-                if (e.Sender is PackIconControlBase packIcon && e.OldValue != e.NewValue && packIcon.Spin)
-                {
-                    packIcon.StopSpinAnimation();
-                    packIcon.BeginSpinAnimation();
-                }
-            });
-            SpinAutoReverseProperty.Changed.Subscribe(e =>
-            {
-                if (e.Sender is PackIconControlBase packIcon && e.OldValue != e.NewValue && packIcon.Spin && e.NewValue is bool)
-                {
-                    packIcon.StopSpinAnimation();
-                    packIcon.BeginSpinAnimation();
-                }
-            });
+                    this.StopSpinAnimation();
+                    if (spin)
+                    {
+                        this.BeginSpinAnimation();
+                    }
+                });
+
+            // SpinAutoReverseProperty.Changed.Subscribe(e =>
+            // {
+            //     if (e.Sender is PackIconControlBase packIcon && e.OldValue != e.NewValue)
+            //     {
+            //         packIcon.StopSpinAnimation();
+            //         packIcon.BeginSpinAnimation();
+            //     }
+            // });
         }
 
-        private void CoerceSpinProperty(AvaloniaPropertyChangedEventArgs e)
+        private bool CalculateSpinning()
         {
-            if (e.Sender is PackIconControlBase packIcon)
-            {
-                var spin = this.Spin && packIcon.IsVisible && packIcon.SpinDuration > 0 && packIcon.Opacity > 0;
-                packIcon.ToggleSpinAnimation(spin);
-            }
+            return this.Spin && this.IsVisible && this.SpinDuration > 0 && this.Opacity > 0 && this.SpinEasingFunction != null;
         }
 #else
         static PackIconControlBase()
@@ -167,17 +155,19 @@ namespace MahApps.Metro.IconPacks
             }
         }
 #elif AVALONIA
+        private Grid innerGrid;
+
         /// <inheritdoc />
         protected override void OnTemplateApplied(TemplateAppliedEventArgs e)
         {
             base.OnTemplateApplied(e);
 
+            this.innerGrid = e.NameScope.Find<Grid>("PART_InnerGrid");
+
             this.UpdateData();
 
-            var spin = this.Spin && this.IsVisible && this.SpinDuration > 0 && this.Opacity > 0;
-            this.ToggleSpinAnimation(spin);
-
-            if (this.Spin)
+            var spin = CalculateSpinning();
+            if (spin)
             {
                 this.StopSpinAnimation();
                 this.BeginSpinAnimation();
@@ -239,7 +229,7 @@ namespace MahApps.Metro.IconPacks
             = AvaloniaProperty.Register<PackIconControlBase, double>(
                 nameof(RotationAngle),
                 0d,
-                false,
+                true,
                 BindingMode.OneWay,
                 (packIcon, value) =>
                 {
@@ -289,20 +279,7 @@ namespace MahApps.Metro.IconPacks
         }
 #elif AVALONIA
         public static readonly StyledProperty<bool> SpinProperty
-            = AvaloniaProperty.Register<PackIconControlBase, bool>(
-                nameof(Spin),
-                false,
-                false,
-                BindingMode.OneWay,
-                (packIcon, value) =>
-                {
-                    if (!packIcon.IsVisible || packIcon.Opacity <= 0 || packIcon.SpinDuration <= 0.0)
-                    {
-                        return false;
-                    }
-
-                    return value;
-                });
+            = AvaloniaProperty.Register<PackIconControlBase, bool>(nameof(Spin));
 #else
         public static readonly DependencyProperty SpinProperty
             = DependencyProperty.Register(
@@ -329,88 +306,48 @@ namespace MahApps.Metro.IconPacks
         }
 #endif
 
-        private void ToggleSpinAnimation(bool spin)
-        {
-            if (spin)
-            {
-                this.BeginSpinAnimation();
-            }
-            else
-            {
-                this.StopSpinAnimation();
-            }
-        }
-
-        // private Storyboard spinningStoryboard;
-        // private FrameworkElement _innerGrid;
-        // private FrameworkElement InnerGrid => this._innerGrid ?? (this._innerGrid = this.GetTemplateChild("PART_InnerGrid") as FrameworkElement);
+        private Animation spinAnimation = null;
+        private IDisposable spinAnimationSubscription = null;
 
         private void BeginSpinAnimation()
         {
-            // var spinAnimationStyle = new Style(x => x.OfType<PackIconControlBase>().Template().Name("PART_InnerGrid"));
-            // var animation = new Animation();
-            // animation.Duration = TimeSpan.FromSeconds(this.SpinDuration);
-            // animation.IterationCount = IterationCount.Infinite;
-            //
-            // var keyFrameStart = new KeyFrame() {Cue = new Cue(0)};
-            // keyFrameStart.Setters.Add(new Setter(RotateTransform.AngleProperty, 0d));
-            // animation.Children.Add(keyFrameStart);
-            //
-            // var keyFrameEnd = new KeyFrame() { Cue = new Cue(1) };
-            // keyFrameEnd.Setters.Add(new Setter(RotateTransform.AngleProperty, 360d));
-            // animation.Children.Add(keyFrameEnd);
-            //
-            // spinAnimationStyle.Animations.Add(animation);
-            //
-            // this.Styles.Add(spinAnimationStyle);
+            if (this.innerGrid is null)
+            {
+                return;
+            }
 
-            //             var element = this.InnerGrid;
-//             if (null == element)
-//             {
-//                 return;
-//             }
-//             var transformGroup = element.RenderTransform as TransformGroup ?? new TransformGroup();
-//             var rotateTransform = transformGroup.Children.OfType<RotateTransform>().LastOrDefault();
-//
-//             if (rotateTransform != null)
-//             {
-//                 rotateTransform.Angle = 0;
-//             }
-//             else
-//             {
-//                 transformGroup.Children.Add(new RotateTransform());
-//                 element.RenderTransform = transformGroup;
-//             }
-//
-//             var animation = new DoubleAnimation
-//             {
-//                 From = 0,
-//                 To = 360,
-//                 AutoReverse = this.SpinAutoReverse,
-//                 EasingFunction = this.SpinEasingFunction,
-//                 RepeatBehavior = RepeatBehavior.Forever,
-//                 Duration = new Duration(TimeSpan.FromSeconds(this.SpinDuration))
-//             };
-//
-//             var storyboard = new Storyboard();
-//             storyboard.Children.Add(animation);
-//             Storyboard.SetTarget(animation, element);
-//
-// #if NETFX_CORE || WINDOWS_UWP
-//             Storyboard.SetTargetProperty(animation, $"(RenderTransform).(TransformGroup.Children)[{transformGroup.Children.Count - 1}].(Angle)");
-// #else
-//             Storyboard.SetTargetProperty(animation, new PropertyPath($"(0).(1)[{transformGroup.Children.Count - 1}].(2)", RenderTransformProperty, TransformGroup.ChildrenProperty, RotateTransform.AngleProperty));
-// #endif
-//
-//             spinningStoryboard = storyboard;
-//             storyboard.Begin();
+            var animation = spinAnimation ?? new Animation
+            {
+                Children =
+                {
+                    new KeyFrame()
+                    {
+                        Cue = new Cue(0),
+                        Setters = {new Setter(RotateTransform.AngleProperty, 0d)}
+                    },
+                    new KeyFrame()
+                    {
+                        Cue = new Cue(1),
+                        Setters = {new Setter(RotateTransform.AngleProperty, 360d)}
+                    }
+                }
+            };
+
+            animation.Duration = TimeSpan.FromSeconds(this.SpinDuration);
+            animation.Easing = this.SpinEasingFunction;
+            animation.IterationCount = IterationCount.Infinite;
+            this.spinAnimation = animation;
+            this.spinAnimationSubscription = animation.Apply(this.innerGrid, Avalonia.Animation.Clock.GlobalClock, Observable.Return(true), null);
         }
 
         private void StopSpinAnimation()
         {
-            // var storyboard = spinningStoryboard;
-            // storyboard?.Stop();
-            // spinningStoryboard = null;
+            if (this.spinAnimation != null)
+            {
+                this.spinAnimation.IterationCount = new IterationCount(0);
+                this.spinAnimationSubscription?.Dispose();
+                this.spinAnimationSubscription = null;
+            }
         }
 
         /// <summary>
@@ -500,7 +437,7 @@ namespace MahApps.Metro.IconPacks
         public static readonly StyledProperty<Easing> SpinEasingFunctionProperty
             = AvaloniaProperty.Register<PackIconControlBase, Easing>(
                 nameof(SpinEasingFunction),
-                defaultValue: new LinearEasing());
+                new LinearEasing());
 #else
         public static readonly DependencyProperty SpinEasingFunctionProperty
             = DependencyProperty.Register(
