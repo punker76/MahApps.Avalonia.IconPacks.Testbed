@@ -2,6 +2,8 @@
 
 Testbed for MahApps.Avalonia.IconPacks
 
+![iconpacks_avaloniaui_spin2](https://user-images.githubusercontent.com/658431/71325584-313bae80-24ef-11ea-949f-46d64c4c0e3b.gif)
+
 ![iconpacks_avaloniaui_spin](https://user-images.githubusercontent.com/658431/71308144-e3447f00-23f8-11ea-86bd-1abef5aabe62.gif)
 
 ![iconpacks_avaloniaui](https://user-images.githubusercontent.com/658431/71307221-6e1e7d00-23eb-11ea-90d1-91e0007cf673.gif)
