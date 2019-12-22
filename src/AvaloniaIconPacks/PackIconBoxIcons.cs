@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 #if (NETFX_CORE || WINDOWS_UWP)
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Data;
@@ -54,7 +54,7 @@ namespace MahApps.Metro.IconPacks
         public PackIconBoxIcons()
         {
             // this.DefaultStyleKey = typeof(PackIconBoxIcons);
-            KindProperty.Changed.Subscribe(args => UpdateData());
+            this.GetObservable(KindProperty).Subscribe(_ => UpdateData());
         }
 #else
         static PackIconBoxIcons()
