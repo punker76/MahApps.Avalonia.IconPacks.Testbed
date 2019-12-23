@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFrameworks>netstandard2.0;netcoreapp3.1</TargetFrameworks>
+        <TargetFrameworks>netstandard2.0</TargetFrameworks>
         <DefineConstants>$(DefineConstants);AVALONIA</DefineConstants>
     </PropertyGroup>
     <ItemGroup>
@@ -12,6 +12,6 @@
         </AvaloniaResource>
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="Avalonia" Version="0.9.0" />
+        <PackageReference Include="Avalonia" Version="0.9.1" />
     </ItemGroup>
 </Project>

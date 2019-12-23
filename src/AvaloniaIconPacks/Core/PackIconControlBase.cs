@@ -1,5 +1,6 @@
 ﻿using System;
 #if NETFX_CORE || WINDOWS_UWP
+using System.Linq;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Animation;
@@ -16,6 +17,7 @@ using Avalonia.Media;
 using Avalonia.Styling;
 #else
 using System.ComponentModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
@@ -74,15 +76,6 @@ namespace MahApps.Metro.IconPacks
                         this.BeginSpinAnimation();
                     }
                 });
-
-            // SpinAutoReverseProperty.Changed.Subscribe(e =>
-            // {
-            //     if (e.Sender is PackIconControlBase packIcon && e.OldValue != e.NewValue)
-            //     {
-            //         packIcon.StopSpinAnimation();
-            //         packIcon.BeginSpinAnimation();
-            //     }
-            // });
         }
 
         private bool CalculateSpinning()
@@ -100,42 +93,32 @@ namespace MahApps.Metro.IconPacks
 #if (NETFX_CORE || WINDOWS_UWP)
         protected static readonly DependencyProperty DataProperty
             = DependencyProperty.Register(nameof(Data), typeof(string), typeof(PackIconControlBase), new PropertyMetadata(""));
-
-        /// <summary>
-        /// Gets the path data for the current icon kind.
-        /// </summary>
-        public string Data
-        {
-            get { return (string)GetValue(DataProperty); }
-            protected set { SetValue(DataProperty, value); }
-        }
 #elif AVALONIA
         public static readonly StyledProperty<string> DataProperty
             = AvaloniaProperty.Register<PackIconControlBase, string>(nameof(Data));
-
-        /// <summary>
-        /// Gets the path data for the current icon kind.
-        /// </summary>
-        public string Data
-        {
-            get { return (string)this.GetValue(DataProperty); }
-            protected set { this.SetValue(DataProperty, value); }
-        }
 #else
         private static readonly DependencyPropertyKey DataPropertyKey
             = DependencyProperty.RegisterReadOnly(nameof(Data), typeof(string), typeof(PackIconControlBase), new PropertyMetadata(""));
 
         // ReSharper disable once StaticMemberInGenericType
         public static readonly DependencyProperty DataProperty = DataPropertyKey.DependencyProperty;
+#endif
 
         /// <summary>
         /// Gets the path data for the current icon kind.
         /// </summary>
+#if !(NETFX_CORE || WINDOWS_UWP || AVALONIA)
         [TypeConverter(typeof(GeometryConverter))]
         public string Data
         {
             get { return (string)GetValue(DataProperty); }
             protected set { SetValue(DataPropertyKey, value); }
+        }
+#else
+        public string Data
+        {
+            get { return (string)GetValue(DataProperty); }
+            protected set { SetValue(DataProperty, value); }
         }
 #endif
 
@@ -229,7 +212,7 @@ namespace MahApps.Metro.IconPacks
             = AvaloniaProperty.Register<PackIconControlBase, double>(
                 nameof(RotationAngle),
                 0d,
-                true,
+                false,
                 BindingMode.OneWay,
                 (packIcon, value) =>
                 {
@@ -306,6 +289,17 @@ namespace MahApps.Metro.IconPacks
         }
 #endif
 
+        /// <summary>
+        /// Gets or sets a value indicating whether the inner icon is spinning.
+        /// </summary>
+        /// <value><c>true</c> if spin; otherwise, <c>false</c>.</value>
+        public bool Spin
+        {
+            get { return (bool)this.GetValue(SpinProperty); }
+            set { this.SetValue(SpinProperty, value); }
+        }
+
+#if AVALONIA
         private Animation spinAnimation = null;
         private IDisposable spinAnimationSubscription = null;
 
@@ -349,16 +343,74 @@ namespace MahApps.Metro.IconPacks
                 this.spinAnimationSubscription = null;
             }
         }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether the inner icon is spinning.
-        /// </summary>
-        /// <value><c>true</c> if spin; otherwise, <c>false</c>.</value>
-        public bool Spin
+#else
+        private void ToggleSpinAnimation(bool spin)
         {
-            get { return (bool)this.GetValue(SpinProperty); }
-            set { this.SetValue(SpinProperty, value); }
+            if (spin)
+            {
+                this.BeginSpinAnimation();
+            }
+            else
+            {
+                this.StopSpinAnimation();
+            }
         }
+
+        private Storyboard spinningStoryboard;
+        private FrameworkElement _innerGrid;
+        private FrameworkElement InnerGrid => this._innerGrid ?? (this._innerGrid = this.GetTemplateChild("PART_InnerGrid") as FrameworkElement);
+
+        private void BeginSpinAnimation()
+        {
+            var element = this.InnerGrid;
+            if (null == element)
+            {
+                return;
+            }
+            var transformGroup = element.RenderTransform as TransformGroup ?? new TransformGroup();
+            var rotateTransform = transformGroup.Children.OfType<RotateTransform>().LastOrDefault();
+
+            if (rotateTransform != null)
+            {
+                rotateTransform.Angle = 0;
+            }
+            else
+            {
+                transformGroup.Children.Add(new RotateTransform());
+                element.RenderTransform = transformGroup;
+            }
+
+            var animation = new DoubleAnimation
+            {
+                From = 0,
+                To = 360,
+                AutoReverse = this.SpinAutoReverse,
+                EasingFunction = this.SpinEasingFunction,
+                RepeatBehavior = RepeatBehavior.Forever,
+                Duration = new Duration(TimeSpan.FromSeconds(this.SpinDuration))
+            };
+
+            var storyboard = new Storyboard();
+            storyboard.Children.Add(animation);
+            Storyboard.SetTarget(animation, element);
+
+#if NETFX_CORE || WINDOWS_UWP
+            Storyboard.SetTargetProperty(animation, $"(RenderTransform).(TransformGroup.Children)[{transformGroup.Children.Count - 1}].(Angle)");
+#else
+            Storyboard.SetTargetProperty(animation, new PropertyPath($"(0).(1)[{transformGroup.Children.Count - 1}].(2)", RenderTransformProperty, TransformGroup.ChildrenProperty, RotateTransform.AngleProperty));
+#endif
+
+            spinningStoryboard = storyboard;
+            storyboard.Begin();
+        }
+
+        private void StopSpinAnimation()
+        {
+            var storyboard = spinningStoryboard;
+            storyboard?.Stop();
+            spinningStoryboard = null;
+        }
+#endif
 
         /// <summary>
         /// Identifies the SpinDuration dependency property.

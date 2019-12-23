@@ -1,10 +1,10 @@
 using System;
-using System.Globalization;
 #if (NETFX_CORE || WINDOWS_UWP)
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Markup;
 #elif AVALONIA
+using System.Globalization;
 using Avalonia;
 using Avalonia.Data.Converters;
 using Avalonia.Markup.Xaml;
@@ -24,6 +24,7 @@ namespace MahApps.Metro.IconPacks.Converter
     [MarkupExtensionReturnType(ReturnType = typeof(IValueConverter))]
     public abstract class MarkupConverter : MarkupExtension, IValueConverter
     {
+        /// <inheritdoc />
         protected override object ProvideValue()
         {
             return this;
@@ -49,6 +50,7 @@ namespace MahApps.Metro.IconPacks.Converter
         /// <returns>A converted value. If the method returns null, the valid null value is used.</returns>
         protected abstract object ConvertBack(object value, Type targetType, object parameter, string language);
 
+        /// <inheritdoc />
         object IValueConverter.Convert(object value, Type targetType, object parameter, string language)
         {
             try
@@ -61,6 +63,7 @@ namespace MahApps.Metro.IconPacks.Converter
             }
         }
 
+        /// <inheritdoc />
         object IValueConverter.ConvertBack(object value, Type targetType, object parameter, string language)
         {
             try
@@ -73,62 +76,13 @@ namespace MahApps.Metro.IconPacks.Converter
             }
         }
     }
-#elif AVALONIA
-    public abstract class MarkupConverter : MarkupExtension, IValueConverter
-    {
-        public override object ProvideValue(IServiceProvider serviceProvider)
-        {
-            return this;
-        }
-
-        /// <summary>
-        /// Converts a value.
-        /// </summary>
-        /// <param name="value">The value produced by the binding source.</param>
-        /// <param name="targetType">The type of the binding target property.</param>
-        /// <param name="parameter">The converter parameter to use.</param>
-        /// <param name="culture">The culture to use in the converter.</param>
-        /// <returns>A converted value. If the method returns null, the valid null value is used.</returns>
-        protected abstract object Convert(object value, Type targetType, object parameter, CultureInfo culture);
-
-        /// <summary>
-        /// Converts a value.
-        /// </summary>
-        /// <param name="value">The value that is produced by the binding target.</param>
-        /// <param name="targetType">The type to convert to.</param>
-        /// <param name="parameter">The converter parameter to use.</param>
-        /// <param name="culture">The culture to use in the converter.</param>
-        /// <returns>A converted value. If the method returns null, the valid null value is used.</returns>
-        protected abstract object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture);
-
-        object IValueConverter.Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            try
-            {
-                return Convert(value, targetType, parameter, culture);
-            }
-            catch
-            {
-                return AvaloniaProperty.UnsetValue;
-            }
-        }
-
-        object IValueConverter.ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            try
-            {
-                return ConvertBack(value, targetType, parameter, culture);
-            }
-            catch
-            {
-                return AvaloniaProperty.UnsetValue;
-            }
-        }
-    }
 #else
+#if !(AVALONIA)
     [MarkupExtensionReturnType(typeof(IValueConverter))]
+#endif
     public abstract class MarkupConverter : MarkupExtension, IValueConverter
     {
+        /// <inheritdoc />
         public override object ProvideValue(IServiceProvider serviceProvider)
         {
             return this;
@@ -154,6 +108,7 @@ namespace MahApps.Metro.IconPacks.Converter
         /// <returns>A converted value. If the method returns null, the valid null value is used.</returns>
         protected abstract object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture);
 
+        /// <inheritdoc />
         object IValueConverter.Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             try
@@ -162,10 +117,15 @@ namespace MahApps.Metro.IconPacks.Converter
             }
             catch
             {
-                return DependencyProperty.UnsetValue;
+#if AVALONIA
+                return AvaloniaProperty.UnsetValue;
+#else
+            return DependencyProperty.UnsetValue;
+#endif
             }
         }
 
+        /// <inheritdoc />
         object IValueConverter.ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             try
@@ -174,7 +134,11 @@ namespace MahApps.Metro.IconPacks.Converter
             }
             catch
             {
-                return DependencyProperty.UnsetValue;
+#if AVALONIA
+                return AvaloniaProperty.UnsetValue;
+#else
+            return DependencyProperty.UnsetValue;
+#endif
             }
         }
     }
