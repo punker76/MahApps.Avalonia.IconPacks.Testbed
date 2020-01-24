@@ -15,8 +15,8 @@
         </AvaloniaResource>
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="Avalonia" Version="0.9.1" />
-        <PackageReference Include="Avalonia.Desktop" Version="0.9.1" />
+        <PackageReference Include="Avalonia" Version="0.9.*" />
+        <PackageReference Include="Avalonia.Desktop" Version="0.9.*" />
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="..\AvaloniaIconPacks\AvaloniaIconPacks.csproj" />
