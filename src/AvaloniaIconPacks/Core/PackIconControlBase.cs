@@ -141,9 +141,9 @@ namespace MahApps.Metro.IconPacks
         private Grid innerGrid;
 
         /// <inheritdoc />
-        protected override void OnTemplateApplied(TemplateAppliedEventArgs e)
+        protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
         {
-            base.OnTemplateApplied(e);
+            base.OnApplyTemplate(e);
 
             this.innerGrid = e.NameScope.Find<Grid>("PART_InnerGrid");
 
@@ -214,6 +214,7 @@ namespace MahApps.Metro.IconPacks
                 0d,
                 false,
                 BindingMode.OneWay,
+                null,
                 (packIcon, value) =>
                 {
                     var val = (double) value;
@@ -429,6 +430,7 @@ namespace MahApps.Metro.IconPacks
                 1d,
                 false,
                 BindingMode.OneWay,
+                null,
                 (iconPack, value) =>
                 {
                     var val = (double) value;
