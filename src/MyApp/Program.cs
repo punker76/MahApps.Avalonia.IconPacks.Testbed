@@ -1,6 +1,9 @@
-﻿using Avalonia;
+﻿using System;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 
-namespace AvaloniaApp1
+namespace MyApp
 {
     class Program
     {
@@ -14,6 +17,6 @@ namespace AvaloniaApp1
         public static AppBuilder BuildAvaloniaApp()
             => AppBuilder.Configure<App>()
                 .UsePlatformDetect()
-                .LogToDebug();
+                .LogToTrace();
     }
 }
