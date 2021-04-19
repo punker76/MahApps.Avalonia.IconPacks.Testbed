@@ -13,7 +13,7 @@ jobs:
       with:
         dotnet-version: '5.0.x'
     - name: Publish with dotnet
-      run: dotnet publish ./src/MyApp/MyApp.csproj -r linux-x64 -c Release
+      run: dotnet publish ./src/MyApp/MyApp.csproj -r linux-x64 -c Release -f net5.0
     - name: Archive publish artifacts
       uses: actions/upload-artifact@v2
       with:
@@ -30,7 +30,7 @@ jobs:
       with:
         dotnet-version: '5.0.x'
     - name: Publish with dotnet
-      run: dotnet publish ./src/MyApp/MyApp.csproj -r win-x64 -c Release
+      run: dotnet publish ./src/MyApp/MyApp.csproj -r win-x64 -c Release -f net5.0
     - name: Archive publish artifacts
       uses: actions/upload-artifact@v2
       with:
@@ -47,7 +47,7 @@ jobs:
       with:
         dotnet-version: '5.0.x'
     - name: Publish with dotnet
-      run: dotnet publish ./src/MyApp/MyApp.csproj -r osx-x64 -c Release
+      run: dotnet publish ./src/MyApp/MyApp.csproj -r osx-x64 -c Release -f net5.0
     - name: Archive publish artifacts
       uses: actions/upload-artifact@v2
       with:
