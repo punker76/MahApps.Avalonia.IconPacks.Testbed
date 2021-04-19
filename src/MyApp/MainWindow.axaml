@@ -1,17 +1,19 @@
-<Window xmlns:iconPacks="clr-namespace:MahApps.Metro.IconPacks;assembly=AvaloniaIconPacks"
-        xmlns="https://github.com/avaloniaui"
+<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:iconPacks="clr-namespace:MahApps.Metro.IconPacks;assembly=AvaloniaIconPacks"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-        x:Class="AvaloniaApp1.MainWindow"
-        Title="AvaloniaApp1"
+        x:Class="MyApp.MainWindow"
+        Title="MyApp"
         Width="800"
         Height="600">
-    <ScrollViewer>
-        <StackPanel Orientation="Vertical" HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="10">
+    
+    <ScrollViewer >
+        <StackPanel Orientation="Vertical" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10">
 
-            <TextBlock Margin="0 10" Text="PackIconBoxIcons with AvaloniaUI" FontSize="22" FontWeight="SemiBold" />
+            <TextBlock Margin="0 10" Text="Welcome to Avalonia!" FontSize="22" FontWeight="SemiBold" />
+            <TextBlock Margin="0 10" Text="IconPacks - PackIconBoxIcons" FontSize="18" FontWeight="SemiBold" />
 
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5">
                 <iconPacks:PackIconBoxIcons Kind="RegularRecycle"
@@ -50,4 +52,5 @@
 
         </StackPanel>
     </ScrollViewer>
+    
 </Window>

@@ -13,15 +13,15 @@
                       Margin="{TemplateBinding BorderThickness}">
                     <Grid.RenderTransform>
                         <TransformGroup>
-                            <ScaleTransform ScaleX="{Binding #PART_InnerGrid.TemplatedParent.Flip, Mode=OneWay, Converter={converter:FlipToScaleXValueConverter}}"
-                                            ScaleY="{Binding #PART_InnerGrid.TemplatedParent.Flip, Mode=OneWay, Converter={converter:FlipToScaleYValueConverter}}" />
-                            <RotateTransform Angle="{Binding #PART_InnerGrid.TemplatedParent.RotationAngle, Mode=OneWay}" />
+                            <ScaleTransform ScaleX="{Binding #PART_InnerGrid.TemplatedParent.Flip, FallbackValue=1, Mode=OneWay, Converter={converter:FlipToScaleXValueConverter}}"
+                                            ScaleY="{Binding #PART_InnerGrid.TemplatedParent.Flip, FallbackValue=1, Mode=OneWay, Converter={converter:FlipToScaleYValueConverter}}" />
+                            <RotateTransform Angle="{Binding #PART_InnerGrid.TemplatedParent.RotationAngle, FallbackValue=0, Mode=OneWay}" />
                         </TransformGroup>
                     </Grid.RenderTransform>
                     <Viewbox Margin="{TemplateBinding Padding}">
                         <Path Fill="{TemplateBinding Foreground}"
                               Stretch="Uniform"
-                              Data="{Binding Data, RelativeSource={RelativeSource TemplatedParent}, Converter={converter:DataToGeometryConverter}}"
+                              Data="{Binding Data, RelativeSource={RelativeSource TemplatedParent}, Converter={x:Static converter:DataToGeometryConverter.Instance}}"
                               UseLayoutRounding="False" />
                         <Viewbox.RenderTransform>
                             <ScaleTransform ScaleY="-1" />
