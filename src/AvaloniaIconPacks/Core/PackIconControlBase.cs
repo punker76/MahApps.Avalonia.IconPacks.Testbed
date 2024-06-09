@@ -7,6 +7,7 @@ using Windows.UI.Xaml.Media.Animation;
 #elif AVALONIA
 using System.Reactive;
 using System.Reactive.Linq;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Animation;
 using Avalonia.Animation.Easings;
@@ -15,6 +16,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Data;
 using Avalonia.Media;
 using Avalonia.Styling;
+
 #else
 using System.ComponentModel;
 using System.Linq;
@@ -30,7 +32,6 @@ namespace MahApps.Metro.IconPacks
     /// </summary>
     public abstract class PackIconControlBase : PackIconBase
     {
-
 #if NETFX_CORE || WINDOWS_UWP
         private long _opacityRegisterToken;
         private long _visibilityRegisterToken;
@@ -39,8 +40,10 @@ namespace MahApps.Metro.IconPacks
         {
             this.Loaded += (sender, args) =>
             {
-                this._opacityRegisterToken = this.RegisterPropertyChangedCallback(OpacityProperty, this.CoerceSpinProperty);
-                this._visibilityRegisterToken = this.RegisterPropertyChangedCallback(VisibilityProperty, this.CoerceSpinProperty);
+                this._opacityRegisterToken =
+ this.RegisterPropertyChangedCallback(OpacityProperty, this.CoerceSpinProperty);
+                this._visibilityRegisterToken =
+ this.RegisterPropertyChangedCallback(VisibilityProperty, this.CoerceSpinProperty);
             };
             this.Unloaded += (sender, args) =>
             {
@@ -54,7 +57,8 @@ namespace MahApps.Metro.IconPacks
             var packIcon = sender as PackIconControlBase;
             if (packIcon != null && (dp == OpacityProperty || dp == VisibilityProperty))
             {
-                var spin = this.Spin && packIcon.Visibility == Visibility.Visible && packIcon.SpinDuration > 0 && packIcon.Opacity > 0;
+                var spin =
+ this.Spin && packIcon.Visibility == Visibility.Visible && packIcon.SpinDuration > 0 && packIcon.Opacity > 0;
                 packIcon.ToggleSpinAnimation(spin);
             }
         }
@@ -67,7 +71,7 @@ namespace MahApps.Metro.IconPacks
                     this.GetObservable(SpinDurationProperty).Select(_ => Unit.Default),
                     this.GetObservable(OpacityProperty).Select(_ => Unit.Default),
                     this.GetObservable(SpinEasingFunctionProperty).Select(_ => Unit.Default))
-                .Select(_ => this.CalculateSpinning())
+                .Select(_ => this.CanSpin())
                 .Subscribe(spin =>
                 {
                     this.StopSpinAnimation();
@@ -78,9 +82,13 @@ namespace MahApps.Metro.IconPacks
                 });
         }
 
-        private bool CalculateSpinning()
+        private bool CanSpin()
         {
-            return this.Spin && this.IsVisible && this.SpinDuration > 0 && this.Opacity > 0 && this.SpinEasingFunction != null;
+            return this.Spin
+                   && this.IsVisible
+                   && this.SpinDuration > 0
+                   && this.Opacity > 0
+                   && this.SpinEasingFunction != null;
         }
 #else
         static PackIconControlBase()
@@ -139,6 +147,8 @@ namespace MahApps.Metro.IconPacks
         }
 #elif AVALONIA
         private Grid innerGrid;
+        private ScaleTransform scaleTransform;
+        private RotateTransform rotateTransform;
 
         /// <inheritdoc />
         protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
@@ -147,13 +157,68 @@ namespace MahApps.Metro.IconPacks
 
             this.innerGrid = e.NameScope.Find<Grid>("PART_InnerGrid");
 
+            if (this.innerGrid != null)
+            {
+                var transformGroup = new TransformGroup();
+                this.scaleTransform = new ScaleTransform();
+                this.rotateTransform = new RotateTransform();
+                transformGroup.Children.Add(scaleTransform);
+                transformGroup.Children.Add(rotateTransform);
+                this.innerGrid.RenderTransform = transformGroup;
+            }
+
+            this.UpdateScaleTransformation(this.Flip);
+            this.UpdateRotateTransformation(this.RotationAngle);
             this.UpdateData();
 
-            var spin = CalculateSpinning();
+            var spin = CanSpin();
             if (spin)
             {
                 this.StopSpinAnimation();
                 this.BeginSpinAnimation();
+            }
+        }
+
+        protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs e)
+        {
+            if (e.Property == FlipProperty)
+            {
+                if (e.NewValue != null && e.NewValue != e.OldValue)
+                {
+                    this.UpdateScaleTransformation(e.GetNewValue<PackIconFlipOrientation>());
+                }
+            }
+            else if (e.Property == RotationAngleProperty)
+            {
+                if (e.NewValue != null && e.NewValue != e.OldValue)
+                {
+                    this.UpdateRotateTransformation(e.GetNewValue<double>());
+                }
+            }
+
+            base.OnPropertyChanged(e);
+        }
+
+        private void UpdateScaleTransformation(PackIconFlipOrientation flipOrientation)
+        {
+            if (this.scaleTransform != null)
+            {
+                var scaleX = flipOrientation is PackIconFlipOrientation.Horizontal or PackIconFlipOrientation.Both
+                    ? -1
+                    : 1;
+                var scaleY = flipOrientation is PackIconFlipOrientation.Vertical or PackIconFlipOrientation.Both
+                    ? -1
+                    : 1;
+                this.scaleTransform.ScaleX = scaleX;
+                this.scaleTransform.ScaleY = scaleY;
+            }
+        }
+
+        private void UpdateRotateTransformation(double angle)
+        {
+            if (this.rotateTransform != null)
+            {
+                this.rotateTransform.Angle = angle;
             }
         }
 #else
@@ -217,7 +282,7 @@ namespace MahApps.Metro.IconPacks
                 null,
                 (packIcon, value) =>
                 {
-                    var val = (double) value;
+                    var val = (double)value;
                     return val < 0 ? 0d : (val > 360 ? 360d : value);
                 });
 #else
@@ -302,7 +367,7 @@ namespace MahApps.Metro.IconPacks
 
 #if AVALONIA
         private Animation spinAnimation = null;
-        private IDisposable spinAnimationSubscription = null;
+        private Task spinAnimationTask = null;
 
         private void BeginSpinAnimation()
         {
@@ -318,12 +383,12 @@ namespace MahApps.Metro.IconPacks
                     new KeyFrame()
                     {
                         Cue = new Cue(0),
-                        Setters = {new Setter(RotateTransform.AngleProperty, 0d)}
+                        Setters = { new Setter(RotateTransform.AngleProperty, 0d) }
                     },
                     new KeyFrame()
                     {
                         Cue = new Cue(1),
-                        Setters = {new Setter(RotateTransform.AngleProperty, 360d)}
+                        Setters = { new Setter(RotateTransform.AngleProperty, 360d) }
                     }
                 }
             };
@@ -332,7 +397,7 @@ namespace MahApps.Metro.IconPacks
             animation.Easing = this.SpinEasingFunction;
             animation.IterationCount = IterationCount.Infinite;
             this.spinAnimation = animation;
-            this.spinAnimationSubscription = animation.Apply(this.innerGrid, Avalonia.Animation.Clock.GlobalClock, Observable.Return(true), null);
+            this.spinAnimationTask = animation.RunAsync(this.innerGrid);
         }
 
         private void StopSpinAnimation()
@@ -340,8 +405,8 @@ namespace MahApps.Metro.IconPacks
             if (this.spinAnimation != null)
             {
                 this.spinAnimation.IterationCount = new IterationCount(0);
-                this.spinAnimationSubscription?.Dispose();
-                this.spinAnimationSubscription = null;
+                this.spinAnimationTask?.Dispose();
+                this.spinAnimationTask = null;
             }
         }
 #else
@@ -359,7 +424,8 @@ namespace MahApps.Metro.IconPacks
 
         private Storyboard spinningStoryboard;
         private FrameworkElement _innerGrid;
-        private FrameworkElement InnerGrid => this._innerGrid ?? (this._innerGrid = this.GetTemplateChild("PART_InnerGrid") as FrameworkElement);
+        private FrameworkElement InnerGrid => this._innerGrid ?? (this._innerGrid =
+ this.GetTemplateChild("PART_InnerGrid") as FrameworkElement);
 
         private void BeginSpinAnimation()
         {
@@ -433,7 +499,7 @@ namespace MahApps.Metro.IconPacks
                 null,
                 (iconPack, value) =>
                 {
-                    var val = (double) value;
+                    var val = (double)value;
                     return val < 0 ? 0d : value;
                 });
 #else

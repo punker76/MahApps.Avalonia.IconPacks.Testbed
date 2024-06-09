@@ -1,19 +1,15 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFrameworks>netstandard2.0</TargetFrameworks>
+		<TargetFrameworks>net6.0;netstandard2.0</TargetFrameworks>
 		<DefineConstants>$(DefineConstants);AVALONIA</DefineConstants>
-		<LangVersion>9.0</LangVersion>
-		<Nullable>enable</Nullable>
+		<LangVersion>latest</LangVersion>
+		<Nullable>disable</Nullable>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="Avalonia" Version="0.10.0" />
+		<AvaloniaResource Include="**/*.xaml" />
 	</ItemGroup>
 	<ItemGroup>
-		<Compile Update="**\*.xaml.cs">
-			<DependentUpon>%(Filename)</DependentUpon>
-		</Compile>
-		<AvaloniaResource Include="**\*.xaml">
-			<SubType>Designer</SubType>
-		</AvaloniaResource>
+		<PackageReference Include="Avalonia" Version="11.0.6" />
+		<PackageReference Include="Avalonia.ReactiveUI" Version="11.0.6" />
 	</ItemGroup>
 </Project>

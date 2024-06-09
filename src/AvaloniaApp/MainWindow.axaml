@@ -4,16 +4,20 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:iconPacks="clr-namespace:MahApps.Metro.IconPacks;assembly=AvaloniaIconPacks"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-        x:Class="MyApp.MainWindow"
-        Title="MyApp"
-        Width="800"
-        Height="600">
-    
-    <ScrollViewer >
-        <StackPanel Orientation="Vertical" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10">
+        x:Class="AvaloniaApp.MainWindow"
+        Title="AvaloniaApp">
 
+    <ScrollViewer>
+        <StackPanel Orientation="Vertical" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10">
             <TextBlock Margin="0 10" Text="Welcome to Avalonia!" FontSize="22" FontWeight="SemiBold" />
             <TextBlock Margin="0 10" Text="IconPacks - PackIconBoxIcons" FontSize="18" FontWeight="SemiBold" />
+
+            <ComboBox Name="FlipOrientation" Width="200" SelectedIndex="1">
+                <iconPacks:PackIconFlipOrientation>Horizontal</iconPacks:PackIconFlipOrientation>
+                <iconPacks:PackIconFlipOrientation>Vertical</iconPacks:PackIconFlipOrientation>
+                <iconPacks:PackIconFlipOrientation>Both</iconPacks:PackIconFlipOrientation>
+                <iconPacks:PackIconFlipOrientation>Normal</iconPacks:PackIconFlipOrientation>
+            </ComboBox>
 
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5">
                 <iconPacks:PackIconBoxIcons Kind="RegularRecycle"
@@ -27,14 +31,19 @@
                                             HorizontalAlignment="Center"
                                             VerticalAlignment="Center"
                                             Width="144" Height="144"
-                                            Flip="Vertical" />
+                                            Flip="{Binding #FlipOrientation.SelectedItem, Mode=OneWay}" />
             </StackPanel>
 
-            <TextBlock Margin="0 10" Text="{Binding #RotationSlider.Value, Mode=OneWay, StringFormat='RotationAngle {0}'}" FontSize="22" FontWeight="SemiBold" />
-            <Slider Name="RotationSlider" Margin="0 2" Width="200" Minimum="0" Maximum="360" Value="45" SmallChange="1" LargeChange="10" TickFrequency="1" IsSnapToTickEnabled="True" />
+            <TextBlock Margin="0 10"
+                       Text="{Binding #RotationSlider.Value, Mode=OneWay, StringFormat='RotationAngle {0}'}"
+                       FontSize="22" FontWeight="SemiBold" />
+            <Slider Name="RotationSlider" Margin="0 2" Width="200" Minimum="0" Maximum="360" Value="45" SmallChange="1"
+                    LargeChange="10" TickFrequency="1" IsSnapToTickEnabled="True" />
 
-            <TextBlock Margin="0 2" Text="{Binding #DurationSlider.Value, Mode=OneWay, StringFormat='Duration {0}'}" FontSize="22" FontWeight="SemiBold" />
-            <Slider Name="DurationSlider" Margin="0 2" Width="200" Minimum="0" Maximum="10" Value="3" SmallChange="1" LargeChange="2" TickFrequency="1" IsSnapToTickEnabled="True" />
+            <TextBlock Margin="0 2" Text="{Binding #DurationSlider.Value, Mode=OneWay, StringFormat='Duration {0}'}"
+                       FontSize="22" FontWeight="SemiBold" />
+            <Slider Name="DurationSlider" Margin="0 2" Width="200" Minimum="0" Maximum="10" Value="3" SmallChange="1"
+                    LargeChange="2" TickFrequency="1" IsSnapToTickEnabled="True" />
 
             <CheckBox Name="SpinCheckBox" Margin="0 2" Content="Spin" IsChecked="True" />
             <CheckBox Name="VisibilityCheckBox" Margin="0 2" Content="Visible" IsChecked="True" />
@@ -52,5 +61,4 @@
 
         </StackPanel>
     </ScrollViewer>
-    
 </Window>
