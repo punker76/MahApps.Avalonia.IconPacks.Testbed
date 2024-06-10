@@ -7,49 +7,55 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
     - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '5.0.x'
+        dotnet-version: '6.0.x'
     - name: Publish with dotnet
-      run: dotnet publish ./src/MyApp/MyApp.csproj -r linux-x64 -c Release -f net5.0
+      run: dotnet publish ./src/AvaloniaApp/AvaloniaApp.csproj -r linux-x64 -c Release -f net6.0
     - name: Archive publish artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
-        name: AvaloniaApp_net50_linux-x64
-        path: src/MyApp/bin/Release/net5.0/linux-x64/publish
+        name: AvaloniaApp_net60_linux-x64
+        path: src/AvaloniaApp/bin/Release/net6.0/linux-x64/publish
 
   publishwin:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
     - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '5.0.x'
+        dotnet-version: '6.0.x'
     - name: Publish with dotnet
-      run: dotnet publish ./src/MyApp/MyApp.csproj -r win-x64 -c Release -f net5.0
+      run: dotnet publish ./src/AvaloniaApp/AvaloniaApp.csproj -r win-x64 -c Release -f net6.0
     - name: Archive publish artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
-        name: AvaloniaApp_net50_winx64
-        path: src/MyApp/bin/Release/net5.0/win-x64/publish
+        name: AvaloniaApp_net60_winx64
+        path: src/AvaloniaApp/bin/Release/net6.0/win-x64/publish
 
   publishmac:
     runs-on: macos-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
     - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '5.0.x'
+        dotnet-version: '6.0.x'
     - name: Publish with dotnet
-      run: dotnet publish ./src/MyApp/MyApp.csproj -r osx-x64 -c Release -f net5.0
+      run: dotnet publish ./src/AvaloniaApp/AvaloniaApp.csproj -r osx-x64 -c Release -f net6.0
     - name: Archive publish artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
-        name: AvaloniaApp_net50_osx
-        path: src/MyApp/bin/Release/net5.0/osx-x64/publish
+        name: AvaloniaApp_net60_osx
+        path: src/AvaloniaApp/bin/Release/net6.0/osx-x64/publish
