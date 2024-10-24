@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFrameworks>net6.0;netstandard2.0</TargetFrameworks>
+		<TargetFrameworks>net8.0;net6.0;netstandard2.0</TargetFrameworks>
 		<DefineConstants>$(DefineConstants);AVALONIA</DefineConstants>
 		<LangVersion>latest</LangVersion>
 		<Nullable>disable</Nullable>
@@ -9,7 +9,7 @@
 		<AvaloniaResource Include="**/*.xaml" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="Avalonia" Version="11.0.6" />
-		<PackageReference Include="Avalonia.ReactiveUI" Version="11.0.6" />
+		<PackageReference Include="Avalonia" Version="11.1.4" />
+		<PackageReference Include="Avalonia.ReactiveUI" Version="11.1.4" />
 	</ItemGroup>
 </Project>
