@@ -1,9 +1,7 @@
 # Avalonia.IconPacks
 
-Testbed for planned Avalonia.IconPacks library.
+Testbed for planned IconPacks.Avalonia library.
 
-![iconpacks_pic](./2020-09-17_15h22_46.png)
-
-![iconpacks_gif](./avalonia_iconpacks_preview010.gif)
+https://github.com/user-attachments/assets/2abd771a-6e47-45cf-9848-5b654530f165
 
 [MahApps.IconPacks](https://github.com/MahApps/MahApps.Metro.IconPacks)
