@@ -1,5 +1,4 @@
 ﻿using System;
-using System.ComponentModel;
 
 #if NETFX_CORE || WINDOWS_UWP
 using System.Linq;
@@ -42,10 +41,8 @@ namespace MahApps.Metro.IconPacks
         {
             this.Loaded += (sender, args) =>
             {
-                this._opacityRegisterToken =
- this.RegisterPropertyChangedCallback(OpacityProperty, this.CoerceSpinProperty);
-                this._visibilityRegisterToken =
- this.RegisterPropertyChangedCallback(VisibilityProperty, this.CoerceSpinProperty);
+                this._opacityRegisterToken = this.RegisterPropertyChangedCallback(OpacityProperty, this.CoerceSpinProperty);
+                this._visibilityRegisterToken = this.RegisterPropertyChangedCallback(VisibilityProperty, this.CoerceSpinProperty);
             };
             this.Unloaded += (sender, args) =>
             {
@@ -59,8 +56,7 @@ namespace MahApps.Metro.IconPacks
             var packIcon = sender as PackIconControlBase;
             if (packIcon != null && (dp == OpacityProperty || dp == VisibilityProperty))
             {
-                var spin =
- this.Spin && packIcon.Visibility == Visibility.Visible && packIcon.SpinDuration > 0 && packIcon.Opacity > 0;
+                var spin = this.Spin && packIcon.Visibility == Visibility.Visible && packIcon.SpinDuration > 0 && packIcon.Opacity > 0;
                 packIcon.ToggleSpinAnimation(spin);
             }
         }
@@ -147,6 +143,7 @@ namespace MahApps.Metro.IconPacks
         }
 #elif AVALONIA
         private Grid innerGrid;
+
         private ScaleTransform scaleTransform;
         private RotateTransform rotateTransform;
 
@@ -179,24 +176,24 @@ namespace MahApps.Metro.IconPacks
             }
         }
 
-        protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs e)
+        protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
         {
-            if (e.Property == FlipProperty)
-            {
-                if (e.NewValue != null && e.NewValue != e.OldValue)
-                {
-                    this.UpdateScaleTransformation(e.GetNewValue<PackIconFlipOrientation>());
-                }
-            }
-            else if (e.Property == RotationAngleProperty)
-            {
-                if (e.NewValue != null && e.NewValue != e.OldValue)
-                {
-                    this.UpdateRotateTransformation(e.GetNewValue<double>());
-                }
-            }
+            base.OnPropertyChanged(change);
 
-            base.OnPropertyChanged(e);
+            if (change.Property == FlipProperty)
+            {
+                if (change.NewValue != null && change.NewValue != change.OldValue)
+                {
+                    this.UpdateScaleTransformation(change.GetNewValue<PackIconFlipOrientation>());
+                }
+            }
+            else if (change.Property == RotationAngleProperty)
+            {
+                if (change.NewValue != null && change.NewValue != change.OldValue)
+                {
+                    this.UpdateRotateTransformation(change.GetNewValue<double>());
+                }
+            }
         }
 
         private void UpdateScaleTransformation(PackIconFlipOrientation flipOrientation)
@@ -282,8 +279,12 @@ namespace MahApps.Metro.IconPacks
                 null,
                 (packIcon, value) =>
                 {
-                    var val = (double)value;
-                    return val < 0 ? 0d : (val > 360 ? 360d : value);
+                    if (value < 0)
+                    {
+                        return 0d;
+                    }
+
+                    return value > 360 ? 360d : value;
                 });
 #else
         public static readonly DependencyProperty RotationAngleProperty
@@ -294,7 +295,12 @@ namespace MahApps.Metro.IconPacks
                 new PropertyMetadata(0d, null, (dependencyObject, value) =>
                 {
                     var val = (double)value;
-                    return val < 0 ? 0d : (val > 360 ? 360d : value);
+                    if (val < 0)
+                    {
+                        return 0d;
+                    }
+
+                    return val > 360 ? 360d : val;
                 }));
 #endif
 
@@ -497,11 +503,7 @@ namespace MahApps.Metro.IconPacks
                 false,
                 BindingMode.OneWay,
                 null,
-                (iconPack, value) =>
-                {
-                    var val = (double)value;
-                    return val < 0 ? 0d : value;
-                });
+                (iconPack, value) => value < 0 ? 0d : value);
 #else
         public static readonly DependencyProperty SpinDurationProperty
             = DependencyProperty.Register(

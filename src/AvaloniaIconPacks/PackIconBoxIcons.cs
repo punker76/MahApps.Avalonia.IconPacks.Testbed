@@ -52,9 +52,16 @@ namespace MahApps.Metro.IconPacks
             this.DefaultStyleKey = typeof(PackIconBoxIcons);
         }
 #elif AVALONIA
-        public PackIconBoxIcons()
+        // We override OnPropertyChanged of the base class. That way we can react on property changes
+        protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
         {
-            this.GetObservable(KindProperty).Subscribe(_ => UpdateData());
+            base.OnPropertyChanged(change);
+
+            // if the changed property is the NumberOfStarsProperty, we need to update the stars
+            if (change.Property == KindProperty)
+            {
+                UpdateData();
+            }
         }
 #else
         static PackIconBoxIcons()
