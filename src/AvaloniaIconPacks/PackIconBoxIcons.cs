@@ -1,10 +1,10 @@
 using System;
+using Avalonia.Media;
 #if (NETFX_CORE || WINDOWS_UWP)
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Data;
 #elif AVALONIA
 using Avalonia;
-using Avalonia.Markup.Xaml;
 #else
 using System.Windows;
 #endif
@@ -15,7 +15,7 @@ namespace MahApps.Metro.IconPacks
     /// BoxIcons licensed under [SIL OFL 1.1](<see><cref>http://scripts.sil.org/OFL</cref></see>)
     /// Contributions, corrections and requests can be made on GitHub <see><cref>https://github.com/atisawd/boxicons</cref></see>.
     /// </summary>
-    public partial class PackIconBoxIcons : PackIconControlBase
+    public class PackIconBoxIcons : PackIconControlBase
     {
 #if AVALONIA
         public static readonly StyledProperty<PackIconBoxIconsKind> KindProperty
@@ -54,8 +54,6 @@ namespace MahApps.Metro.IconPacks
 #elif AVALONIA
         public PackIconBoxIcons()
         {
-            // this.DefaultStyleKey = typeof(PackIconBoxIcons);
-            AvaloniaXamlLoader.Load(this);
             this.GetObservable(KindProperty).Subscribe(_ => UpdateData());
         }
 #else
@@ -82,7 +80,7 @@ namespace MahApps.Metro.IconPacks
             {
                 string data = null;
                 PackIconBoxIconsDataFactory.DataIndex.Value?.TryGetValue(Kind, out data);
-                this.Data = data;
+                this.Data = data != null ? StreamGeometry.Parse(data) : null;
             }
             else
             {

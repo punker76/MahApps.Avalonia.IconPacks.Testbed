@@ -1,4 +1,6 @@
 ﻿using System;
+using System.ComponentModel;
+
 #if NETFX_CORE || WINDOWS_UWP
 using System.Linq;
 using Windows.UI.Xaml;
@@ -65,6 +67,13 @@ namespace MahApps.Metro.IconPacks
 #elif AVALONIA
         public PackIconControlBase()
         {
+            AffectsRender<PackIconControlBase>(SpinProperty);
+            AffectsRender<PackIconControlBase>(SpinDurationProperty);
+            AffectsRender<PackIconControlBase>(OpacityProperty);
+            AffectsRender<PackIconControlBase>(SpinEasingFunctionProperty);
+            AffectsRender<PackIconControlBase>(FlipProperty);
+            AffectsRender<PackIconControlBase>(RotationAngleProperty);
+
             Observable.CombineLatest(
                     this.GetObservable(SpinProperty).Select(_ => Unit.Default),
                     this.GetObservable(IsVisibleProperty).Select(_ => Unit.Default),
@@ -101,10 +110,7 @@ namespace MahApps.Metro.IconPacks
 #if (NETFX_CORE || WINDOWS_UWP)
         protected static readonly DependencyProperty DataProperty
             = DependencyProperty.Register(nameof(Data), typeof(string), typeof(PackIconControlBase), new PropertyMetadata(""));
-#elif AVALONIA
-        public static readonly StyledProperty<string> DataProperty
-            = AvaloniaProperty.Register<PackIconControlBase, string>(nameof(Data));
-#else
+#elif !AVALONIA
         private static readonly DependencyPropertyKey DataPropertyKey
             = DependencyProperty.RegisterReadOnly(nameof(Data), typeof(string), typeof(PackIconControlBase), new PropertyMetadata(""));
 
@@ -121,12 +127,6 @@ namespace MahApps.Metro.IconPacks
         {
             get { return (string)GetValue(DataProperty); }
             protected set { SetValue(DataPropertyKey, value); }
-        }
-#else
-        public string Data
-        {
-            get { return (string)GetValue(DataProperty); }
-            protected set { SetValue(DataProperty, value); }
         }
 #endif
 

@@ -1,7 +1,7 @@
 #if (NETFX_CORE || WINDOWS_UWP)
 using Windows.UI.Xaml.Controls;
 #elif AVALONIA
-using Avalonia.Controls.Primitives;
+using Avalonia.Controls;
 #else
 using System.Windows.Controls;
 #endif
@@ -9,7 +9,7 @@ using System.Windows.Controls;
 namespace MahApps.Metro.IconPacks
 {
 #if AVALONIA
-    public abstract class PackIconBase : TemplatedControl
+    public abstract class PackIconBase : PathIcon
 #else
     public abstract class PackIconBase : Control
 #endif
