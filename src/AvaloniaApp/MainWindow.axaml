@@ -28,11 +28,15 @@
                                         Kind="{Binding #BoxIcons.SelectedItem, Mode=OneWay}"
                                         Foreground="{DynamicResource SystemControlHighlightAccentBrush}" />
 
-            <Label Content="Button MarkupExtension" />
-            <Button Content="{iconPacks:BoxIcons RegularAtom}" Margin="10" />
+            <Label Content="Image ValueConverter" />
+            <Image Source="{Binding #BoxIcons.SelectedItem, Mode=OneWay, Converter={iconPacks:PackIconBoxIconsKindToImageConverter Brush=Goldenrod}}" Width="24" Height="24"
+                   HorizontalAlignment="Left" Margin="10" />
 
             <Label Content="Image MarkupExtension" />
             <Image Source="{iconPacks:BoxIconsImage Kind=RegularAtom, Brush=Brown}" Width="24" Height="24" HorizontalAlignment="Left" Margin="10" />
+
+            <Label Content="Button MarkupExtension" />
+            <Button Content="{iconPacks:BoxIcons RegularAtom}" Margin="10" />
 
             <Separator />
 

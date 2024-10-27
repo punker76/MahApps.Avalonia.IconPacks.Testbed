@@ -1,9 +1,7 @@
-﻿namespace IconPacks.Avalonia
-{
-#if !(NETFX_CORE || WINDOWS_UWP)
-    using System.ComponentModel;
-#endif
+﻿using System.ComponentModel;
 
+namespace IconPacks.Avalonia
+{
     /// ******************************************
     /// This code is auto generated. Do not amend.
     /// ******************************************
