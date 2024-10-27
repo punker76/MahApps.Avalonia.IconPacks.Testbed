@@ -12,16 +12,31 @@
 
     <ScrollViewer>
         <StackPanel Orientation="Vertical" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10">
-            <TextBlock Margin="0 10" Text="Welcome to Avalonia!" FontSize="22" FontWeight="SemiBold" />
-            <TextBlock Margin="0 10" Text="IconPacks - PackIconBoxIcons" FontSize="18" FontWeight="SemiBold" />
+            <TextBlock Margin="0 10" Text="Welcome to IconPacks.Avalonia!" FontSize="22" FontWeight="SemiBold" />
+            <TextBlock Text="PackIconBoxIcons" FontSize="18" FontWeight="SemiBold" />
 
-            <ComboBox Name="BoxIcons" Width="200" ItemsSource="{avaloniaApp:Enums iconPacks:PackIconBoxIconsKind}"
+            <ComboBox Name="BoxIcons"
+                      Width="200"
+                      Margin="0 0 0 10"
+                      ItemsSource="{avaloniaApp:Enums iconPacks:PackIconBoxIconsKind}"
                       SelectedItem="{x:Static iconPacks:PackIconBoxIconsKind.RegularRecycle}" />
 
+            <Separator />
+
+            <Label Content="PackIconBoxIcons Control" />
             <iconPacks:PackIconBoxIcons Margin="10"
                                         Kind="{Binding #BoxIcons.SelectedItem, Mode=OneWay}"
                                         Foreground="{DynamicResource SystemControlHighlightAccentBrush}" />
 
+            <Label Content="Button MarkupExtension" />
+            <Button Content="{iconPacks:BoxIcons RegularAtom}" Margin="10" />
+
+            <Label Content="Image MarkupExtension" />
+            <Image Source="{iconPacks:BoxIconsImage Kind=RegularAtom, Brush=Brown}" Width="24" Height="24" HorizontalAlignment="Left" Margin="10" />
+
+            <Separator />
+
+            <Label Content="Flip Orientation" />
             <ComboBox Name="FlipOrientation" Width="200" SelectedIndex="1">
                 <iconPacks:PackIconFlipOrientation>Horizontal</iconPacks:PackIconFlipOrientation>
                 <iconPacks:PackIconFlipOrientation>Vertical</iconPacks:PackIconFlipOrientation>
@@ -29,7 +44,9 @@
                 <iconPacks:PackIconFlipOrientation>Normal</iconPacks:PackIconFlipOrientation>
             </ComboBox>
 
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5">
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center" Margin="0 10">
                 <iconPacks:PackIconBoxIcons Kind="{Binding #BoxIcons.SelectedItem, Mode=OneWay}"
                                             Foreground="{DynamicResource SystemControlHighlightAccentBrush}"
                                             HorizontalAlignment="Center"
@@ -44,30 +61,53 @@
                                             Flip="{Binding #FlipOrientation.SelectedItem, Mode=OneWay}" />
             </StackPanel>
 
-            <TextBlock Margin="0 10"
-                       Text="{Binding #RotationSlider.Value, Mode=OneWay, StringFormat='RotationAngle {0}'}"
-                       FontSize="22" FontWeight="SemiBold" />
-            <Slider Name="RotationSlider" Margin="0 2" Width="200" Minimum="0" Maximum="360" Value="45" SmallChange="1"
-                    LargeChange="10" TickFrequency="1" IsSnapToTickEnabled="True" />
+            <Separator />
 
-            <TextBlock Margin="0 2" Text="{Binding #DurationSlider.Value, Mode=OneWay, StringFormat='Duration {0}'}"
-                       FontSize="22" FontWeight="SemiBold" />
-            <Slider Name="DurationSlider" Margin="0 2" Width="200" Minimum="0" Maximum="10" Value="3" SmallChange="1"
-                    LargeChange="2" TickFrequency="1" IsSnapToTickEnabled="True" />
+            <Grid ColumnDefinitions="Auto,*">
+                <StackPanel Orientation="Vertical" Grid.Column="0">
+                    <CheckBox Name="SpinCheckBox" Margin="0 2" Content="Spin" IsChecked="True" />
+                    <CheckBox Name="VisibilityCheckBox" Margin="0 2" Content="Visible" IsChecked="True" />
 
-            <CheckBox Name="SpinCheckBox" Margin="0 2" Content="Spin" IsChecked="True" />
-            <CheckBox Name="VisibilityCheckBox" Margin="0 2" Content="Visible" IsChecked="True" />
+                    <Label Content="{Binding #RotationSlider.Value, Mode=OneWay, StringFormat='RotationAngle {0}'}" />
+                    <Slider Name="RotationSlider"
+                            IsEnabled="{Binding !#SpinCheckBox.IsChecked}"
+                            Margin="0 2"
+                            HorizontalAlignment="Left"
+                            Width="200"
+                            Minimum="0"
+                            Maximum="360"
+                            Value="45"
+                            SmallChange="1"
+                            LargeChange="10"
+                            TickFrequency="1"
+                            IsSnapToTickEnabled="True" />
 
-            <iconPacks:PackIconBoxIcons Kind="RegularCog"
-                                        Foreground="{DynamicResource SystemControlHighlightAccentBrush}"
-                                        ClipToBounds="False"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        Width="144" Height="144"
-                                        IsVisible="{Binding #VisibilityCheckBox.IsChecked, Mode=OneWay}"
-                                        Spin="{Binding #SpinCheckBox.IsChecked, Mode=OneWay}"
-                                        RotationAngle="{Binding #RotationSlider.Value, Mode=OneWay}"
-                                        SpinDuration="{Binding #DurationSlider.Value, Mode=OneWay}" />
+                    <Label Content="{Binding #DurationSlider.Value, Mode=OneWay, StringFormat='Duration {0}'}" />
+                    <Slider Name="DurationSlider"
+                            Margin="0 2"
+                            Width="200"
+                            Minimum="0"
+                            Maximum="10"
+                            Value="3"
+                            SmallChange="1"
+                            LargeChange="2"
+                            TickFrequency="1"
+                            IsSnapToTickEnabled="True" />
+                </StackPanel>
+
+                <iconPacks:PackIconBoxIcons Grid.Column="1"
+                                            Margin="10"
+                                            Kind="RegularCog"
+                                            Foreground="{DynamicResource SystemControlHighlightAccentBrush}"
+                                            ClipToBounds="False"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Width="144" Height="144"
+                                            IsVisible="{Binding #VisibilityCheckBox.IsChecked, Mode=OneWay}"
+                                            Spin="{Binding #SpinCheckBox.IsChecked, Mode=OneWay}"
+                                            RotationAngle="{Binding #RotationSlider.Value, Mode=OneWay}"
+                                            SpinDuration="{Binding #DurationSlider.Value, Mode=OneWay}" />
+            </Grid>
 
         </StackPanel>
     </ScrollViewer>
