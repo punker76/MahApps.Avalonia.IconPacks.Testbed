@@ -1,13 +1,14 @@
+﻿using Avalonia;
 using Avalonia.Media;
-using IconPacks.Avalonia;
-using Avalonia;
+using IconPacks.Avalonia.Attributes;
 
-namespace MahApps.Metro.IconPacks
+namespace IconPacks.Avalonia
 {
     /// <summary>
     /// BoxIcons licensed under [SIL OFL 1.1](<see><cref>http://scripts.sil.org/OFL</cref></see>)
     /// Contributions, corrections and requests can be made on GitHub <see><cref>https://github.com/atisawd/boxicons</cref></see>.
     /// </summary>
+    [MetaData("Boxicons", "https://boxicons.com/", "https://boxicons.com/usage/#license")]
     public class PackIconBoxIcons : PackIconControlBase
     {
         public static readonly StyledProperty<PackIconBoxIconsKind> KindProperty
@@ -44,7 +45,7 @@ namespace MahApps.Metro.IconPacks
             if (Kind != default)
             {
                 string data = null;
-                PackIconBoxIconsDataFactory.DataIndex.Value?.TryGetValue(Kind, out data);
+                PackIconDataFactory<PackIconBoxIconsKind>.DataIndex.Value?.TryGetValue(Kind, out data);
                 this.Data = data != null ? StreamGeometry.Parse(data) : null;
             }
             else

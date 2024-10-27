@@ -4,7 +4,6 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:avaloniaApp="clr-namespace:AvaloniaApp"
         xmlns:iconPacks="urn:iconpacks-avalonia"
-        xmlns:iconPacks1="clr-namespace:MahApps.Metro.IconPacks;assembly=AvaloniaIconPacks"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="AvaloniaApp.MainWindow"
         Title="AvaloniaApp"
@@ -16,10 +15,10 @@
             <TextBlock Margin="0 10" Text="Welcome to Avalonia!" FontSize="22" FontWeight="SemiBold" />
             <TextBlock Margin="0 10" Text="IconPacks - PackIconBoxIcons" FontSize="18" FontWeight="SemiBold" />
 
-            <ComboBox Name="BoxIcons" Width="200" ItemsSource="{avaloniaApp:Enums iconPacks1:PackIconBoxIconsKind}"
-                      SelectedItem="{x:Static iconPacks1:PackIconBoxIconsKind.RegularRecycle}" />
+            <ComboBox Name="BoxIcons" Width="200" ItemsSource="{avaloniaApp:Enums iconPacks:PackIconBoxIconsKind}"
+                      SelectedItem="{x:Static iconPacks:PackIconBoxIconsKind.RegularRecycle}" />
 
-            <iconPacks1:PackIconBoxIcons Margin="10"
+            <iconPacks:PackIconBoxIcons Margin="10"
                                         Kind="{Binding #BoxIcons.SelectedItem, Mode=OneWay}"
                                         Foreground="{DynamicResource SystemControlHighlightAccentBrush}" />
 
@@ -31,13 +30,13 @@
             </ComboBox>
 
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="5">
-                <iconPacks1:PackIconBoxIcons Kind="{Binding #BoxIcons.SelectedItem, Mode=OneWay}"
+                <iconPacks:PackIconBoxIcons Kind="{Binding #BoxIcons.SelectedItem, Mode=OneWay}"
                                             Foreground="{DynamicResource SystemControlHighlightAccentBrush}"
                                             HorizontalAlignment="Center"
                                             VerticalAlignment="Center"
                                             Margin="5"
                                             Width="144" Height="144" />
-                <iconPacks1:PackIconBoxIcons Kind="{Binding #BoxIcons.SelectedItem, Mode=OneWay}"
+                <iconPacks:PackIconBoxIcons Kind="{Binding #BoxIcons.SelectedItem, Mode=OneWay}"
                                             Foreground="{DynamicResource SystemControlHighlightAccentBrush}"
                                             HorizontalAlignment="Center"
                                             VerticalAlignment="Center"
@@ -59,7 +58,7 @@
             <CheckBox Name="SpinCheckBox" Margin="0 2" Content="Spin" IsChecked="True" />
             <CheckBox Name="VisibilityCheckBox" Margin="0 2" Content="Visible" IsChecked="True" />
 
-            <iconPacks1:PackIconBoxIcons Kind="RegularCog"
+            <iconPacks:PackIconBoxIcons Kind="RegularCog"
                                         Foreground="{DynamicResource SystemControlHighlightAccentBrush}"
                                         ClipToBounds="False"
                                         HorizontalAlignment="Center"

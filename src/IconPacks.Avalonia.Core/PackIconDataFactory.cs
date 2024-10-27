@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using IconPacks.Avalonia.Utils;
+using Avalonia.Platform;
 
 namespace IconPacks.Avalonia
 {
@@ -15,10 +15,8 @@ namespace IconPacks.Avalonia
 
         public static IDictionary<TEnum, string> Create()
         {
-            var json = System.Reflection.Assembly.GetAssembly(typeof(TEnum))?.ReadFile("Resources.Icons.json");
-            return string.IsNullOrEmpty(json)
-                ? new Dictionary<TEnum, string>()
-                : System.Text.Json.JsonSerializer.Deserialize<Dictionary<TEnum, string>>(json);
+            using var iconJsonStream = AssetLoader.Open(new Uri($"avares://{typeof(TEnum).Assembly.GetName().Name}/Resources/Icons.json"));
+            return System.Text.Json.JsonSerializer.Deserialize<Dictionary<TEnum, string>>(iconJsonStream);
         }
     }
 }

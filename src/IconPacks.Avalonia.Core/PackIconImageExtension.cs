@@ -54,7 +54,7 @@ namespace IconPacks.Avalonia
         /// <summary>
         /// Gets the <see cref="DrawingGroup" /> object that will be used for the <see cref="DrawingImage" />.
         /// </summary>
-        protected virtual DrawingGroup GetDrawingGroup(object iconKind, Brush foregroundBrush, string path)
+        protected virtual DrawingGroup GetDrawingGroup(object iconKind, IBrush foregroundBrush, string path)
         {
             var geometryDrawing = new GeometryDrawing
             {
@@ -74,7 +74,7 @@ namespace IconPacks.Avalonia
         /// <summary>
         /// Gets the ImageSource for the given kind.
         /// </summary>
-        protected IImage CreateImageSource(object iconKind, Brush foregroundBrush)
+        protected IImage CreateImageSource(object iconKind, IBrush foregroundBrush)
         {
             var path = this.GetPathData(iconKind);
 

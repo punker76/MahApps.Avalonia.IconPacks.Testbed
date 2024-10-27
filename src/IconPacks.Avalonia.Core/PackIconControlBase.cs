@@ -18,7 +18,7 @@ namespace IconPacks.Avalonia
     /// </summary>
     public abstract class PackIconControlBase : PackIconBase
     {
-        public PackIconControlBase()
+        protected PackIconControlBase()
         {
             AffectsRender<PackIconControlBase>(SpinProperty, SpinDurationProperty, OpacityProperty, SpinEasingFunctionProperty, FlipProperty, RotationAngleProperty);
 

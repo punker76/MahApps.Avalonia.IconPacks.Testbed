@@ -19,7 +19,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\AvaloniaIconPacks\AvaloniaIconPacks.csproj" />
+        <ProjectReference Include="..\IconPacks.Avalonia.BoxIcons\IconPacks.Avalonia.BoxIcons.csproj" />
     </ItemGroup>
 
 </Project>

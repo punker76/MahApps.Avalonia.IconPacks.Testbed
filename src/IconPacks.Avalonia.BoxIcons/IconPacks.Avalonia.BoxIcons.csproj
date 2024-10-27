@@ -5,6 +5,15 @@
         <DefineConstants>$(DefineConstants);AVALONIA</DefineConstants>
         <LangVersion>latest</LangVersion>
         <Nullable>disable</Nullable>
+        <GenerateLibraryLayout>true</GenerateLibraryLayout>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <DefineConstants>$(DefineConstants);BOXICONS</DefineConstants>
+        <IconsName>BoxIcons</IconsName>
+        <AssemblyName>IconPacks.Avalonia.BoxIcons</AssemblyName>
+        <Title>IconPacks.Avalonia.BoxIcons</Title>
+        <RootNamespace>IconPacks.Avalonia</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
@@ -16,8 +25,9 @@
         <ProjectReference Include="..\IconPacks.Avalonia.Core\IconPacks.Avalonia.Core.csproj" />
     </ItemGroup>
 
-    <ItemGroup> 
-        <AvaloniaResource Include="**/*.xaml" /> 
-    </ItemGroup> 
+    <ItemGroup>
+        <AvaloniaResource Include="**/*.xaml" />
+        <AvaloniaResource Include="Resources\**" />
+    </ItemGroup>
 
 </Project>

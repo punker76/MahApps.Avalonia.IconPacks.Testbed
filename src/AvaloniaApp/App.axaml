@@ -28,6 +28,7 @@
                                        ListLow="#ff134b82" ListMedium="#ff2f7bad" RegionColor="#ff0d2644" />
             </FluentTheme.Palettes>
         </FluentTheme>
-         <StyleInclude Source="avares://AvaloniaIconPacks/BoxIcons.xaml"/> 
+
+        <StyleInclude Source="avares://IconPacks.Avalonia.BoxIcons/BoxIcons.xaml"/> 
     </Application.Styles>
 </Application>
