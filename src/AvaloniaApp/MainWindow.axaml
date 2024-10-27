@@ -23,20 +23,36 @@
 
             <Separator />
 
+            <Label Content="PackIconControl Control" />
+            <iconPacks:PackIconControl Margin="10"
+                                       Kind="{Binding #BoxIcons.SelectedItem, Mode=OneWay}"
+                                       Foreground="{DynamicResource SystemControlHighlightAccentBrush}" />
+
             <Label Content="PackIconBoxIcons Control" />
             <iconPacks:PackIconBoxIcons Margin="10"
                                         Kind="{Binding #BoxIcons.SelectedItem, Mode=OneWay}"
                                         Foreground="{DynamicResource SystemControlHighlightAccentBrush}" />
 
-            <Label Content="Image ValueConverter" />
-            <Image Source="{Binding #BoxIcons.SelectedItem, Mode=OneWay, Converter={iconPacks:PackIconBoxIconsKindToImageConverter Brush=Goldenrod}}" Width="24" Height="24"
+            <Label Content="Image with ValueConverter" />
+            <Image Source="{Binding #BoxIcons.SelectedItem, Mode=OneWay, Converter={iconPacks:PackIconBoxIconsKindToImageConverter Brush=Goldenrod}}"
+                   Width="24" Height="24"
                    HorizontalAlignment="Left" Margin="10" />
 
-            <Label Content="Image MarkupExtension" />
-            <Image Source="{iconPacks:BoxIconsImage Kind=RegularAtom, Brush=Brown}" Width="24" Height="24" HorizontalAlignment="Left" Margin="10" />
+            <Label Content="Image with MarkupExtension" />
+            <Image Source="{iconPacks:BoxIconsImage Kind=RegularAtom, Brush=Brown}"
+                   Width="24" Height="24"
+                   HorizontalAlignment="Left" Margin="10" />
 
-            <Label Content="Button MarkupExtension" />
+            <Label Content="Image with PackIconImage MarkupExtension" />
+            <Image Source="{iconPacks:PackIconImage Kind={x:Static iconPacks:PackIconBoxIconsKind.RegularAlarm}, Brush=GreenYellow}"
+                   Width="24" Height="24"
+                   HorizontalAlignment="Left" Margin="10" />
+
+            <Label Content="Button with MarkupExtension" />
             <Button Content="{iconPacks:BoxIcons RegularAtom}" Margin="10" />
+
+            <Label Content="Button with PackIcon MarkupExtension" />
+            <Button Content="{iconPacks:PackIcon {x:Static iconPacks:PackIconBoxIconsKind.RegularAlarm}}" Margin="10" />
 
             <Separator />
 

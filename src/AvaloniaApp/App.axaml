@@ -29,6 +29,7 @@
             </FluentTheme.Palettes>
         </FluentTheme>
 
-        <StyleInclude Source="avares://IconPacks.Avalonia.BoxIcons/BoxIcons.xaml"/> 
+        <!-- <StyleInclude Source="avares://IconPacks.Avalonia.BoxIcons/BoxIcons.xaml" /> -->
+        <StyleInclude Source="avares://IconPacks.Avalonia/Icons.xaml" />
     </Application.Styles>
 </Application>

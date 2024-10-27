@@ -1,23 +1,25 @@
-﻿using Avalonia;
+﻿using System;
+using System.Windows;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.Metadata;
 using Avalonia.Media;
-using IconPacks.Avalonia.Attributes;
+using IconPacks.Avalonia;
 
 namespace IconPacks.Avalonia
 {
     /// <summary>
-    /// BoxIcons licensed under [SIL OFL 1.1](<see><cref>http://scripts.sil.org/OFL</cref></see>)
-    /// Contributions, corrections and requests can be made on GitHub <see><cref>https://github.com/atisawd/boxicons</cref></see>.
     /// </summary>
-    [MetaData("Boxicons", "https://boxicons.com/", "https://boxicons.com/usage/#license")]
-    public class PackIconBoxIcons : PackIconControlBase
+    [PseudoClasses(":PackIconBoxIcons")]
+    public class PackIconControl : PackIconControlBase
     {
-        public static readonly StyledProperty<PackIconBoxIconsKind> KindProperty
-            = AvaloniaProperty.Register<PackIconBoxIcons, PackIconBoxIconsKind>(nameof(Kind));
+        public static readonly StyledProperty<Enum> KindProperty
+            = AvaloniaProperty.Register<PackIconControl, Enum>(nameof(Kind));
 
         /// <summary>
         /// Gets or sets the icon to display.
         /// </summary>
-        public PackIconBoxIconsKind Kind
+        public Enum Kind
         {
             get { return GetValue(KindProperty); }
             set { SetValue(KindProperty, value); }
@@ -42,10 +44,12 @@ namespace IconPacks.Avalonia
 
         protected override void UpdateData()
         {
-            if (Kind != default)
+            this.PseudoClasses.Set(":PackIconBoxIcons", Kind is PackIconBoxIconsKind);
+
+            if (Kind != default(Enum))
             {
                 string data = null;
-                PackIconDataFactory<PackIconBoxIconsKind>.DataIndex.Value?.TryGetValue(Kind, out data);
+                PackIconControlDataFactory.DataIndex.Value?.TryGetValue(Kind, out data);
                 this.Data = data != null ? StreamGeometry.Parse(data) : null;
             }
             else
