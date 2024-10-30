@@ -33,6 +33,8 @@ namespace IconPacks.Avalonia
             {
                 UpdateData();
             }
+            
+            base.UpdateIconPseudoClasses(true, false, true);
         }
 
         protected override void SetKind<TKind>(TKind iconKind)
