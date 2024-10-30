@@ -6,6 +6,7 @@ using Avalonia;
 using Avalonia.Animation;
 using Avalonia.Animation.Easings;
 using Avalonia.Controls;
+using Avalonia.Controls.Metadata;
 using Avalonia.Controls.Primitives;
 using Avalonia.Data;
 using Avalonia.Media;
@@ -16,8 +17,29 @@ namespace IconPacks.Avalonia
     /// <summary>
     /// Class PackIconControlBase which is the base class for any PackIcon control.
     /// </summary>
+    [PseudoClasses(IconDataFlippedVerticallyPseudoClass)]
+    [PseudoClasses(IconFilledPseudoClass)]
+    [PseudoClasses(IconOutlinedPseudoClass)]
     public abstract class PackIconControlBase : PackIconBase
     {
+        /// <summary>
+        /// A string representing the pseudo-class when the icon data is flipped vertically
+        /// </summary>
+        /// <returns>":icon-data-flipped-vertically"</returns>
+        public const string IconDataFlippedVerticallyPseudoClass = ":icon-data-flipped-vertically";
+        
+        /// <summary>
+        /// A string representing the pseudo-class when the icon data is drawn filled
+        /// </summary>
+        /// <returns>":icon-filled"</returns>
+        public const string IconFilledPseudoClass = ":icon-filled";
+        
+        /// <summary>
+        /// A string representing the pseudo-class when the icon data is drawn outlined
+        /// </summary>
+        /// <returns>":icon-outlided"</returns>
+        public const string IconOutlinedPseudoClass = ":icon-outlined";
+        
         protected PackIconControlBase()
         {
             AffectsRender<PackIconControlBase>(SpinProperty, SpinDurationProperty, OpacityProperty, SpinEasingFunctionProperty, FlipProperty, RotationAngleProperty);
@@ -280,6 +302,13 @@ namespace IconPacks.Avalonia
         {
             get { return this.GetValue(SpinAutoReverseProperty); }
             set { this.SetValue(SpinAutoReverseProperty, value); }
+        }
+
+        protected void UpdateIconPseudoClasses(bool filled, bool outlined, bool flipped)
+        {
+            PseudoClasses.Set(IconFilledPseudoClass, filled);
+            PseudoClasses.Set(IconOutlinedPseudoClass, outlined);
+            PseudoClasses.Set(IconDataFlippedVerticallyPseudoClass, flipped);
         }
     }
 }
