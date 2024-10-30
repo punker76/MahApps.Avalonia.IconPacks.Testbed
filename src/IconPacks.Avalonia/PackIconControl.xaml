@@ -3,7 +3,12 @@
                     xmlns:iconPacks="urn:iconpacks-avalonia"
                     xmlns:converter="clr-namespace:IconPacks.Avalonia.Converter;assembly=IconPacks.Avalonia.Core"
                     x:ClassModifier="internal">
-
+    
+    <Design.PreviewWith>
+        <iconPacks:PackIconBoxIcons Kind="RegularBowlingBall" />
+    </Design.PreviewWith>
+    
+    
     <ControlTemplate x:Key="IconPacks.Avalonia.PackIconControl.Template" TargetType="iconPacks:PackIconControl">
         <Grid>
             <Border Background="{TemplateBinding Background}"
@@ -12,7 +17,8 @@
             <Grid x:Name="PART_InnerGrid"
                   Margin="{TemplateBinding BorderThickness}"
                   RenderTransformOrigin="0.5 0.5">
-                <Viewbox Margin="{TemplateBinding Padding}">
+                <Viewbox x:Name="PART_ViewBox" 
+                         Margin="{TemplateBinding Padding}">
                     <Path x:Name="PART_IconPath"
                           Data="{Binding Data, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay, Converter={x:Static converter:NullToUnsetValueConverter.Instance}}"
                           Fill="{TemplateBinding Foreground}"
@@ -161,10 +167,12 @@
         <Setter Property="UseLayoutRounding" Value="False" />
         <Setter Property="Template" Value="{DynamicResource IconPacks.Avalonia.PackIconControl.Template}" />
 
-        <!-- <Style Selector="^[Kind=IconPacks.Avalonia.PackIconBoxIconsKind]"> -->
-        <Style Selector="^:PackIconBoxIcons">
-            <Setter Property="Template" Value="{DynamicResource IconPacks.Avalonia.PackIconBoxIcons.Template}" />
+        <!-- flipped icon data -->
+        <Style Selector="^:icon-data-flipped-vertically /template/ Viewbox#PART_ViewBox">
+            <Setter Property="RenderTransform" Value="scale(1, -1)" />
         </Style>
+        
+        
     </ControlTheme>
 
     <ControlTheme x:Key="{x:Type iconPacks:PackIconControl}"

@@ -10,9 +10,15 @@ namespace IconPacks.Avalonia
 {
     /// <summary>
     /// </summary>
-    [PseudoClasses(":PackIconBoxIcons")]
+    [PseudoClasses(IconDataFlippedVerticallyPseudoClass)]
     public class PackIconControl : PackIconControlBase
     {
+        /// <summary>
+        /// A string representing the pseudo-class when the icon data is flipped vertically
+        /// </summary>
+        /// <returns>":icon-data-flipped-vertically"</returns>
+        public const string IconDataFlippedVerticallyPseudoClass = ":icon-data-flipped-vertically";
+        
         public static readonly StyledProperty<Enum> KindProperty
             = AvaloniaProperty.Register<PackIconControl, Enum>(nameof(Kind));
 
@@ -44,7 +50,16 @@ namespace IconPacks.Avalonia
 
         protected override void UpdateData()
         {
-            this.PseudoClasses.Set(":PackIconBoxIcons", Kind is PackIconBoxIconsKind);
+            switch(Kind)
+            {
+                case PackIconBoxIconsKind:
+                    PseudoClasses.Set(IconDataFlippedVerticallyPseudoClass, true);
+                    break;
+                
+                default:
+                    PseudoClasses.Set(IconDataFlippedVerticallyPseudoClass, false);
+                    break;
+            }
 
             if (Kind != default(Enum))
             {
