@@ -1,0 +1,135 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:fa="clr-namespace:FluentAvalonia.Styling;assembly=FluentAvalonia"
+             xmlns:viewModels="clr-namespace:MahApps.IconPacksBrowser.Avalonia.ViewModels"
+             xmlns:iconPacks="urn:iconpacks-avalonia"
+             xmlns:converter="clr-namespace:IconPacks.Avalonia.Converter;assembly=IconPacks.Avalonia.Core"
+             x:Class="MahApps.IconPacksBrowser.Avalonia.App"
+             RequestedThemeVariant="Light">
+    <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+
+    <Application.Resources>
+        <DataTemplate x:Key="IconPacksBrowser.DataTemplates.ListBox.IconViewModel"
+                      DataType="viewModels:IIconViewModel">
+                        <Grid x:Name="Root"
+                  Width="128"
+                  Height="128"
+                  Background="Transparent">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <iconPacks:PackIconControl Grid.Row="0"
+                                           Width="32"
+                                           Height="32"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Kind="{Binding Value, Mode=OneWay, Converter={converter:NullToUnsetValueConverter}}" />
+                <Grid Grid.Row="0"
+                      HorizontalAlignment="Center"
+                      VerticalAlignment="Top"
+                      Focusable="False"
+                      IsVisible="{Binding $parent[ListBoxItem].IsSelected}">
+                    <Rectangle RadiusX="11" RadiusY="11">
+                        <Rectangle.Fill>
+                            <SolidColorBrush Color="{DynamicResource MahApps.Colors.ThemeBackground}" Opacity=".2" />
+                        </Rectangle.Fill>
+                    </Rectangle>
+                    <StackPanel Margin="11 0" Orientation="Horizontal">
+                        <Button Width="22"
+                                Height="22"
+                                HorizontalAlignment="Center"
+                                BorderThickness="0"
+                                Command="{Binding Source={x:Static viewModels:MainViewModel.Instance}, Path=CopyToClipboardTextCommand}"
+                                CommandParameter="{Binding}"
+                                Focusable="False"
+                                IsTabStop="False">
+                            <ToolTip.Tip>
+                                <TextBlock Text="{Binding Value, StringFormat='{}Copy {0} to clipboard as element'}" />
+                            </ToolTip.Tip>
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconBoxIcons Width="7"
+                                                            Margin="1 0"
+                                                            Kind="RegularChevronLeft" />
+                                <iconPacks:PackIconBoxIcons Width="7"
+                                                            Margin="1 0"
+                                                            Kind="RegularChevronRight" />
+                            </StackPanel>
+                        </Button>
+                        <Button Width="22"
+                                Height="22"
+                                BorderThickness="0"
+                                Command="{Binding Source={x:Static viewModels:MainViewModel.Instance}, Path=CopyToClipboardAsContentTextCommand}"
+                                CommandParameter="{Binding}"
+                                Focusable="False"
+                                IsTabStop="False">
+                            <ToolTip.Tip>
+                                <TextBlock Text="{Binding Value, StringFormat='{}Copy {0} to clipboard as content'}" />
+                            </ToolTip.Tip>
+                            <iconPacks:PackIconBoxIcons Width="14"
+                                                        Height="14"
+                                                        Kind="RegularBracket" />
+                        </Button>
+                        <Button Width="22"
+                                Height="22"
+                                BorderThickness="0"
+                                Command="{Binding Source={x:Static viewModels:MainViewModel.Instance}, Path=CopyToClipboardAsPathIconTextCommand}"
+                                CommandParameter="{Binding}"
+                                Focusable="False"
+                                IsTabStop="False">
+                            <ToolTip.Tip>
+                                <TextBlock Text="{Binding Value, StringFormat='{}Copy {0} to clipboard as PathIcon element'}" />
+                            </ToolTip.Tip>
+                            <iconPacks:PackIconBoxIcons Width="14"
+                                                           Height="14"
+                                                           Kind="RegularPolygon" />
+                        </Button>
+                        <Button Width="22"
+                                Height="22"
+                                BorderThickness="0"
+                                Command="{Binding Source={x:Static viewModels:MainViewModel.Instance}, Path=CopyToClipboardAsGeometryTextCommand}"
+                                CommandParameter="{Binding}"
+                                Focusable="False"
+                                IsTabStop="False">
+                            <ToolTip.Tip>
+                                <TextBlock Text="{Binding Value, StringFormat='{}Copy {0} to clipboard as Geometry'}" />
+                            </ToolTip.Tip>
+                            <iconPacks:PackIconBoxIcons Width="14"
+                                                        Height="14"
+                                                        Kind="RegularPencil" />
+                        </Button>
+                    </StackPanel>
+                </Grid>
+                <TextBlock Grid.Row="1"
+                           Margin="2"
+                           HorizontalAlignment="Center"
+                           Text="{Binding Name, Mode=OneWay}"
+                           TextTrimming="CharacterEllipsis" />
+            </Grid>
+        </DataTemplate>
+    </Application.Resources>
+
+    <Application.Styles>
+        
+        <fa:FluentAvaloniaTheme CustomAccentColor="Green" />
+        
+        <StyleInclude Source="avares://IconPacks.Avalonia/Icons.xaml" />
+
+        <!-- SearchTextBox-Style -->
+        <Style Selector="TextBox.Search">
+            <Setter Property="MinHeight"
+                    Value="26" />
+            <Setter Property="Opacity"
+                    Value="0.6" />
+            <Setter Property="Padding"
+                    Value="4" />
+            <Setter Property="CornerRadius"
+                    Value="13" />
+            <Style Selector="^:focus">
+                <Setter Property="Opacity"
+                        Value="1" />
+            </Style>
+        </Style>
+
+    </Application.Styles>
+</Application>
