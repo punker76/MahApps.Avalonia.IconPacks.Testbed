@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Reactive;
-using System.Reactive.Linq;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Animation;
@@ -43,22 +41,6 @@ namespace IconPacks.Avalonia
         protected PackIconControlBase()
         {
             AffectsRender<PackIconControlBase>(SpinProperty, SpinDurationProperty, OpacityProperty, SpinEasingFunctionProperty, FlipProperty, RotationAngleProperty);
-
-            Observable.CombineLatest(
-                    this.GetObservable(SpinProperty).Select(_ => Unit.Default),
-                    this.GetObservable(IsVisibleProperty).Select(_ => Unit.Default),
-                    this.GetObservable(SpinDurationProperty).Select(_ => Unit.Default),
-                    this.GetObservable(OpacityProperty).Select(_ => Unit.Default),
-                    this.GetObservable(SpinEasingFunctionProperty).Select(_ => Unit.Default))
-                .Select(_ => this.CanSpin())
-                .Subscribe(spin =>
-                {
-                    this.StopSpinAnimation();
-                    if (spin)
-                    {
-                        this.BeginSpinAnimation();
-                    }
-                });
         }
 
         private bool CanSpin()
@@ -119,6 +101,21 @@ namespace IconPacks.Avalonia
                 if (change.NewValue != null && change.NewValue != change.OldValue)
                 {
                     this.UpdateRotateTransformation(change.GetNewValue<double>());
+                }
+            }
+            
+            // Update Spin-Animation as needed 
+            if (change.Property == SpinProperty
+                || change.Property == IsVisibleProperty
+                || change.Property == SpinDurationProperty
+                || change.Property == OpacityProperty
+                || change.Property == SpinEasingFunctionProperty)
+            {
+                this.StopSpinAnimation();
+                
+                if (this.CanSpin())
+                {
+                    this.BeginSpinAnimation();
                 }
             }
         }
