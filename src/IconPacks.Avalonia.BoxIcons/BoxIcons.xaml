@@ -7,4 +7,6 @@
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Styles.Resources>
+
+    <StyleInclude Source="avares://IconPacks.Avalonia.Core/PackIcon.xaml"/>
 </Styles>

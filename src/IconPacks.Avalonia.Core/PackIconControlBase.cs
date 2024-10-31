@@ -27,19 +27,19 @@ namespace IconPacks.Avalonia
         /// </summary>
         /// <returns>":icon-data-flipped-vertically"</returns>
         public const string IconDataFlippedVerticallyPseudoClass = ":icon-data-flipped-vertically";
-        
+
         /// <summary>
         /// A string representing the pseudo-class when the icon data is drawn filled
         /// </summary>
         /// <returns>":icon-filled"</returns>
         public const string IconFilledPseudoClass = ":icon-filled";
-        
+
         /// <summary>
         /// A string representing the pseudo-class when the icon data is drawn outlined
         /// </summary>
-        /// <returns>":icon-outlided"</returns>
+        /// <returns>":icon-outlined"</returns>
         public const string IconOutlinedPseudoClass = ":icon-outlined";
-        
+
         protected PackIconControlBase()
         {
             AffectsRender<PackIconControlBase>(SpinProperty, SpinDurationProperty, OpacityProperty, SpinEasingFunctionProperty, FlipProperty, RotationAngleProperty);

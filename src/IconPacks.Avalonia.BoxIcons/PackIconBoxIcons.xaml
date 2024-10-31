@@ -7,39 +7,9 @@
         <iconPacks:PackIconBoxIcons Kind="RegularAtom" />
     </Design.PreviewWith>
 
-    <ControlTemplate x:Key="IconPacks.Avalonia.PackIconBoxIcons.Template" TargetType="iconPacks:PackIconBoxIcons">
-        <Grid>
-            <Border Background="{TemplateBinding Background}"
-                    BorderBrush="{TemplateBinding BorderBrush}"
-                    BorderThickness="{TemplateBinding BorderThickness}" />
-            <Grid x:Name="PART_InnerGrid"
-                  Margin="{TemplateBinding BorderThickness}">
-                <Viewbox Margin="{TemplateBinding Padding}">
-                    <Path Data="{Binding Data, RelativeSource={RelativeSource TemplatedParent}}"
-                          Fill="{TemplateBinding Foreground}"
-                          Stretch="Uniform"
-                          UseLayoutRounding="False" />
-                    <Viewbox.RenderTransform>
-                        <ScaleTransform ScaleY="-1" />
-                    </Viewbox.RenderTransform>
-                </Viewbox>
-            </Grid>
-        </Grid>
-    </ControlTemplate>
-
-    <ControlTheme x:Key="IconPacks.Avalonia.PackIconBoxIcons.Theme" TargetType="iconPacks:PackIconBoxIcons">
-        <Setter Property="Foreground" Value="{DynamicResource ThemeForegroundColor}" />
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="Height" Value="{DynamicResource IconElementThemeHeight}" />
-        <Setter Property="Width" Value="{DynamicResource IconElementThemeWidth}" />
-        <Setter Property="IsTabStop" Value="False" />
-        <Setter Property="FlowDirection" Value="LeftToRight" />
-        <Setter Property="Padding" Value="0" />
-        <Setter Property="HorizontalAlignment" Value="Left" />
-        <Setter Property="VerticalAlignment" Value="Top" />
-        <Setter Property="UseLayoutRounding" Value="False" />
-        <Setter Property="Template" Value="{DynamicResource IconPacks.Avalonia.PackIconBoxIcons.Template}" />
-    </ControlTheme>
+    <ControlTheme x:Key="IconPacks.Avalonia.PackIconBoxIcons.Theme"
+                  BasedOn="{StaticResource IconPacks.Avalonia.PackIconControlBase.Theme}"
+                  TargetType="iconPacks:PackIconBoxIcons" />
 
     <ControlTheme x:Key="{x:Type iconPacks:PackIconBoxIcons}"
                   BasedOn="{StaticResource IconPacks.Avalonia.PackIconBoxIcons.Theme}"

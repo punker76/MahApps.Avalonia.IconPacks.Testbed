@@ -11,6 +11,11 @@ namespace IconPacks.Avalonia
     [MetaData("Boxicons", "https://boxicons.com/", "https://boxicons.com/usage/#license")]
     public class PackIconBoxIcons : PackIconControlBase
     {
+        public PackIconBoxIcons()
+        {
+            base.UpdateIconPseudoClasses(true, false, true);
+        }
+
         public static readonly StyledProperty<PackIconBoxIconsKind> KindProperty
             = AvaloniaProperty.Register<PackIconBoxIcons, PackIconBoxIconsKind>(nameof(Kind));
 
@@ -33,8 +38,6 @@ namespace IconPacks.Avalonia
             {
                 UpdateData();
             }
-            
-            base.UpdateIconPseudoClasses(true, false, true);
         }
 
         protected override void SetKind<TKind>(TKind iconKind)
