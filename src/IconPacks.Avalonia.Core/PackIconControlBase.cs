@@ -103,7 +103,7 @@ namespace IconPacks.Avalonia
                     this.UpdateRotateTransformation(change.GetNewValue<double>());
                 }
             }
-            
+
             // Update Spin-Animation as needed 
             if (change.Property == SpinProperty
                 || change.Property == IsVisibleProperty
@@ -112,7 +112,7 @@ namespace IconPacks.Avalonia
                 || change.Property == SpinEasingFunctionProperty)
             {
                 this.StopSpinAnimation();
-                
+
                 if (this.CanSpin())
                 {
                     this.BeginSpinAnimation();

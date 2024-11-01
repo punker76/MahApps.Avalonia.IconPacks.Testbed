@@ -14,7 +14,7 @@
                 <Viewbox x:Name="PART_ViewBox"
                          Margin="{TemplateBinding Padding}">
                     <Path x:Name="PART_IconPath"
-                          Data="{Binding Data, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay, Converter={x:Static converter:NullToUnsetValueConverter.Instance}}"
+                          Data="{Binding Data, RelativeSource={RelativeSource TemplatedParent}, Mode=OneWay, Converter={x:Static converter:NullToDoNothingValueConverter.Instance}}"
                           Stretch="Uniform"
                           UseLayoutRounding="False" />
                 </Viewbox>
