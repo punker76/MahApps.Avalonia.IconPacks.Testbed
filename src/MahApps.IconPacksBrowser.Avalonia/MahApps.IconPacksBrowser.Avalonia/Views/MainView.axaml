@@ -53,21 +53,21 @@
                 </TextBox>
 
                 <TransitioningContentControl Margin="10 0"
-                                                 VerticalAlignment="Center"
-                                                 Foreground="{DynamicResource MahApps.Brushes.Highlight}"
-                                                 FontSize="30"
-                                                 FontWeight="DemiBold"
-                                                 Content="{Binding SelectedIconPack.Content}" />
+                                             VerticalAlignment="Center"
+                                             Foreground="{DynamicResource MahApps.Brushes.Highlight}"
+                                             FontSize="30"
+                                             FontWeight="DemiBold"
+                                             Content="{Binding SelectedIconPack.Content}" />
             </DockPanel>
         </Border>
-        
-        
+
+
         <controls:NavigationView Grid.Row="1"
-                       PaneDisplayMode="Left"
-                       IsPaneOpen="True"
-                       OpenPaneLength="205"
-                       MenuItemsSource="{Binding AvailableIconPacks}"
-                       SelectedItem="{Binding SelectedIconPack}">
+                                 PaneDisplayMode="Left"
+                                 IsPaneOpen="True"
+                                 OpenPaneLength="205"
+                                 MenuItemsSource="{Binding AvailableIconPacks}"
+                                 SelectedItem="{Binding SelectedIconPack}">
 
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -75,23 +75,41 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <ListBox Grid.Column="0"
-                         Margin="2"
-                         ItemTemplate="{StaticResource IconPacksBrowser.DataTemplates.ListBox.IconViewModel}"
-                         ItemsSource="{Binding VisibleIcons}"
-                         SelectedValue="{Binding SelectedIcon}">
-                    <!-- TODO: <ListBox.ItemsPanel> -->
-                    <!--     <ItemsPanelTemplate> -->
-                    <!--         <controls:VirtualizingWrapPanel IsItemsHost="True" -->
-                    <!--                                         ItemSize="128,128" -->
-                    <!--                                         MouseWheelDelta="1" -->
-                    <!--                                         Orientation="Vertical" -->
-                    <!--                                         ScrollLineDelta="1" -->
-                    <!--                                         SpacingMode="BetweenItemsOnly" -->
-                    <!--                                         StretchItems="False" /> -->
-                    <!--     </ItemsPanelTemplate> -->
-                    <!-- </ListBox.ItemsPanel> -->
-                </ListBox>
+                <ScrollViewer Grid.Column="0"
+                              Margin="2"
+                              HorizontalScrollBarVisibility="Disabled"
+                              VerticalScrollBarVisibility="Auto">
+                    <controls:ItemsRepeater ItemTemplate="{StaticResource IconPacksBrowser.DataTemplates.ListBox.IconViewModel}"
+                                            ItemsSource="{Binding VisibleIcons}">
+                        <controls:ItemsRepeater.Layout>
+                            <controls:UniformGridLayout MinColumnSpacing="1" MinRowSpacing="1" Orientation="Horizontal" />
+                        </controls:ItemsRepeater.Layout>
+                    </controls:ItemsRepeater>
+                </ScrollViewer>
+
+                <!-- <ListBox Grid.Column="0" -->
+                <!--          Margin="2" -->
+                <!--          ItemTemplate="{StaticResource IconPacksBrowser.DataTemplates.ListBox.IconViewModel}" -->
+                <!--          ItemsSource="{Binding VisibleIcons}" -->
+                <!--          SelectedValue="{Binding SelectedIcon}"> -->
+                <!--     ~1~ <ListBox.ItemsPanel> @1@ -->
+                <!--     ~1~     <ItemsPanelTemplate> @1@ -->
+                <!--     ~1~         <WrapPanel /> @1@ -->
+                <!--     ~1~     </ItemsPanelTemplate> @1@ -->
+                <!--     ~1~ </ListBox.ItemsPanel> @1@ -->
+                <!--      -->
+                <!--     ~1~ TODO: <ListBox.ItemsPanel> @1@ -->
+                <!--     ~1~     <ItemsPanelTemplate> @1@ -->
+                <!--     ~1~         <controls:VirtualizingWrapPanel IsItemsHost="True" @1@ -->
+                <!--     ~1~                                         ItemSize="128,128" @1@ -->
+                <!--     ~1~                                         MouseWheelDelta="1" @1@ -->
+                <!--     ~1~                                         Orientation="Vertical" @1@ -->
+                <!--     ~1~                                         ScrollLineDelta="1" @1@ -->
+                <!--     ~1~                                         SpacingMode="BetweenItemsOnly" @1@ -->
+                <!--     ~1~                                         StretchItems="False" /> @1@ -->
+                <!--     ~1~     </ItemsPanelTemplate> @1@ -->
+                <!--     ~1~ </ListBox.ItemsPanel> @1@ -->
+                <!-- </ListBox> -->
 
                 <!-- <TODO: ctrls:SidebarExpander Grid.Column="1" -->
                 <!--                        Background="{DynamicResource IconPackBrowser.Brushes.PanelBackground}" -->

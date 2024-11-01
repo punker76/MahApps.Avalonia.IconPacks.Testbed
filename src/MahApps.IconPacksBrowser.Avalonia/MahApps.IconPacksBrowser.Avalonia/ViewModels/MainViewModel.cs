@@ -80,7 +80,7 @@ public partial class MainViewModel : ViewModelBase
     {
         return
             // Filter for IconPackType
-            (args.selectedIocnPack == AvailableIconPacks[0] || icon.IconPackName == args.selectedIocnPack.Content?.ToString()) &&
+            (args.selectedIocnPack == AvailableIconPacks[0] || icon.MetaData.Name == args.selectedIocnPack.Content?.ToString()) &&
 
             // Filter for IconName
             (string.IsNullOrWhiteSpace(args.filterText) || icon.Name.Contains(args.filterText.Trim(), StringComparison.OrdinalIgnoreCase));
