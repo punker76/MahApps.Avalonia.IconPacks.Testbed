@@ -75,41 +75,42 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <ScrollViewer Grid.Column="0"
-                              Margin="2"
-                              HorizontalScrollBarVisibility="Disabled"
-                              VerticalScrollBarVisibility="Auto">
-                    <controls:ItemsRepeater ItemTemplate="{StaticResource IconPacksBrowser.DataTemplates.ListBox.IconViewModel}"
-                                            ItemsSource="{Binding VisibleIcons}">
-                        <controls:ItemsRepeater.Layout>
-                            <controls:UniformGridLayout MinColumnSpacing="1" MinRowSpacing="1" Orientation="Horizontal" />
-                        </controls:ItemsRepeater.Layout>
-                    </controls:ItemsRepeater>
-                </ScrollViewer>
+                <!-- <ScrollViewer Grid.Column="0" -->
+                <!--               Margin="2" -->
+                <!--               HorizontalScrollBarVisibility="Disabled" -->
+                <!--               VerticalScrollBarVisibility="Auto"> -->
+                <!--     <controls:ItemsRepeater ItemTemplate="{StaticResource IconPacksBrowser.DataTemplates.ListBox.IconViewModel.Test}" -->
+                <!--                             ItemsSource="{Binding VisibleIcons}"> -->
+                <!--         <controls:ItemsRepeater.Layout> -->
+                <!--             <controls:UniformGridLayout MinColumnSpacing="1" MinRowSpacing="1" Orientation="Horizontal" /> -->
+                <!--         </controls:ItemsRepeater.Layout> -->
+                <!--     </controls:ItemsRepeater> -->
+                <!-- </ScrollViewer> -->
 
-                <!-- <ListBox Grid.Column="0" -->
-                <!--          Margin="2" -->
-                <!--          ItemTemplate="{StaticResource IconPacksBrowser.DataTemplates.ListBox.IconViewModel}" -->
-                <!--          ItemsSource="{Binding VisibleIcons}" -->
-                <!--          SelectedValue="{Binding SelectedIcon}"> -->
-                <!--     ~1~ <ListBox.ItemsPanel> @1@ -->
-                <!--     ~1~     <ItemsPanelTemplate> @1@ -->
-                <!--     ~1~         <WrapPanel /> @1@ -->
-                <!--     ~1~     </ItemsPanelTemplate> @1@ -->
-                <!--     ~1~ </ListBox.ItemsPanel> @1@ -->
-                <!--      -->
-                <!--     ~1~ TODO: <ListBox.ItemsPanel> @1@ -->
-                <!--     ~1~     <ItemsPanelTemplate> @1@ -->
-                <!--     ~1~         <controls:VirtualizingWrapPanel IsItemsHost="True" @1@ -->
-                <!--     ~1~                                         ItemSize="128,128" @1@ -->
-                <!--     ~1~                                         MouseWheelDelta="1" @1@ -->
-                <!--     ~1~                                         Orientation="Vertical" @1@ -->
-                <!--     ~1~                                         ScrollLineDelta="1" @1@ -->
-                <!--     ~1~                                         SpacingMode="BetweenItemsOnly" @1@ -->
-                <!--     ~1~                                         StretchItems="False" /> @1@ -->
-                <!--     ~1~     </ItemsPanelTemplate> @1@ -->
-                <!--     ~1~ </ListBox.ItemsPanel> @1@ -->
-                <!-- </ListBox> -->
+                <ListBox Grid.Column="0"
+                         Margin="2"
+                         ItemTemplate="{StaticResource IconPacksBrowser.DataTemplates.ListBox.IconViewModel}"
+                         ItemsSource="{Binding VisibleIcons}"
+                         SelectedValue="{Binding SelectedIcon}">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <VirtualizingStackPanel Orientation="Vertical" />
+                            <!-- <WrapPanel /> -->
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+
+                    <!-- TODO: <ListBox.ItemsPanel> -->
+                    <!--     <ItemsPanelTemplate> -->
+                    <!--         <controls:VirtualizingWrapPanel IsItemsHost="True" -->
+                    <!--                                         ItemSize="128,128" -->
+                    <!--                                         MouseWheelDelta="1" -->
+                    <!--                                         Orientation="Vertical" -->
+                    <!--                                         ScrollLineDelta="1" -->
+                    <!--                                         SpacingMode="BetweenItemsOnly" -->
+                    <!--                                         StretchItems="False" /> -->
+                    <!--     </ItemsPanelTemplate> -->
+                    <!-- </ListBox.ItemsPanel> -->
+                </ListBox>
 
                 <!-- <TODO: ctrls:SidebarExpander Grid.Column="1" -->
                 <!--                        Background="{DynamicResource IconPackBrowser.Brushes.PanelBackground}" -->

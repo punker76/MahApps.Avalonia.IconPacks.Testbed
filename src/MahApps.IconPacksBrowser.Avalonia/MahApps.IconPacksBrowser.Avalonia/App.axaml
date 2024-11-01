@@ -3,13 +3,133 @@
              xmlns:fa="clr-namespace:FluentAvalonia.Styling;assembly=FluentAvalonia"
              xmlns:viewModels="clr-namespace:MahApps.IconPacksBrowser.Avalonia.ViewModels"
              xmlns:iconPacks="urn:iconpacks-avalonia"
-             xmlns:converter="clr-namespace:IconPacks.Avalonia.Converter;assembly=IconPacks.Avalonia.Core"
              x:Class="MahApps.IconPacksBrowser.Avalonia.App"
              RequestedThemeVariant="Light">
     <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
     <Application.Resources>
         <DataTemplate x:Key="IconPacksBrowser.DataTemplates.ListBox.IconViewModel"
+                      DataType="viewModels:IIconViewModel">
+            <Grid x:Name="Root"
+                  Width="128"
+                  Height="128"
+                  Background="Transparent"
+                  RowDefinitions="*,Auto">
+
+                <iconPacks:PackIconControl Grid.Row="0"
+                                           Width="48"
+                                           Height="48"
+                                           Padding="5"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Kind="{Binding Value, Mode=OneWay}" />
+
+                <Grid Grid.Row="0"
+                      HorizontalAlignment="Center"
+                      VerticalAlignment="Top"
+                      Focusable="False">
+                    <Grid.IsVisible>
+                        <OnPlatform>
+                            <OnPlatform.Default>
+                                <Binding Path="$parent[ListBoxItem].IsPointerOver" />
+                            </OnPlatform.Default>
+                            <OnPlatform.Android>
+                                <Binding Path="$parent[ListBoxItem].IsSelected" />
+                            </OnPlatform.Android>
+                            <OnPlatform.iOS>
+                                <Binding Path="$parent[ListBoxItem].IsSelected" />
+                            </OnPlatform.iOS>
+                        </OnPlatform>
+                    </Grid.IsVisible>
+
+                    <Rectangle RadiusX="11" RadiusY="11">
+                        <Rectangle.Fill>
+                            <SolidColorBrush Color="{DynamicResource SystemAccentColor}" Opacity=".5" />
+                        </Rectangle.Fill>
+                    </Rectangle>
+                    <StackPanel Margin="11 0" Orientation="Horizontal">
+                        <Button Width="22"
+                                Height="22"
+                                HorizontalAlignment="Center"
+                                BorderThickness="0"
+                                Padding="0"
+                                Margin="2"
+                                Command="{Binding Source={x:Static viewModels:MainViewModel.Instance}, Path=CopyToClipboardTextCommand}"
+                                CommandParameter="{Binding}"
+                                Focusable="False"
+                                IsTabStop="False">
+                            <ToolTip.Tip>
+                                <TextBlock Text="{Binding Value, StringFormat='{}Copy {0} to clipboard as element'}" />
+                            </ToolTip.Tip>
+                            <StackPanel Orientation="Horizontal">
+                                <iconPacks:PackIconBoxIcons Width="7"
+                                                            Margin="1 0"
+                                                            Kind="RegularChevronLeft" />
+                                <iconPacks:PackIconBoxIcons Width="7"
+                                                            Margin="1 0"
+                                                            Kind="RegularChevronRight" />
+                            </StackPanel>
+                        </Button>
+                        <Button Width="22"
+                                Height="22"
+                                BorderThickness="0"
+                                Padding="0"
+                                Margin="2"
+                                Command="{Binding Source={x:Static viewModels:MainViewModel.Instance}, Path=CopyToClipboardAsContentTextCommand}"
+                                CommandParameter="{Binding}"
+                                Focusable="False"
+                                IsTabStop="False">
+                            <ToolTip.Tip>
+                                <TextBlock Text="{Binding Value, StringFormat='{}Copy {0} to clipboard as content'}" />
+                            </ToolTip.Tip>
+                            <iconPacks:PackIconBoxIcons Width="14"
+                                                        Height="14"
+                                                        Kind="RegularBracket" />
+                        </Button>
+                        <Button Width="22"
+                                Height="22"
+                                BorderThickness="0"
+                                Padding="0"
+                                Margin="2"
+                                Command="{Binding Source={x:Static viewModels:MainViewModel.Instance}, Path=CopyToClipboardAsPathIconTextCommand}"
+                                CommandParameter="{Binding}"
+                                Focusable="False"
+                                IsTabStop="False">
+                            <ToolTip.Tip>
+                                <TextBlock Text="{Binding Value, StringFormat='{}Copy {0} to clipboard as PathIcon element'}" />
+                            </ToolTip.Tip>
+                            <iconPacks:PackIconBoxIcons Width="14"
+                                                        Height="14"
+                                                        Kind="RegularPolygon" />
+                        </Button>
+                        <Button Width="22"
+                                Height="22"
+                                BorderThickness="0"
+                                Padding="0"
+                                Margin="2"
+                                Command="{Binding Source={x:Static viewModels:MainViewModel.Instance}, Path=CopyToClipboardAsGeometryTextCommand}"
+                                CommandParameter="{Binding}"
+                                Focusable="False"
+                                IsTabStop="False">
+                            <ToolTip.Tip>
+                                <TextBlock Text="{Binding Value, StringFormat='{}Copy {0} to clipboard as Geometry'}" />
+                            </ToolTip.Tip>
+                            <iconPacks:PackIconBoxIcons Width="14"
+                                                        Height="14"
+                                                        Kind="RegularPencil" />
+                        </Button>
+                    </StackPanel>
+                </Grid>
+
+                <TextBlock Grid.Row="1"
+                           Margin="2"
+                           HorizontalAlignment="Center"
+                           Text="{Binding Name, Mode=OneWay}"
+                           TextTrimming="CharacterEllipsis" />
+            </Grid>
+        </DataTemplate>
+
+        <DataTemplate x:Key="IconPacksBrowser.DataTemplates.ItemsRepeater.IconViewModel"
                       DataType="viewModels:IIconViewModel">
             <ContentControl Content="{Binding}">
                 <ContentControl.Theme>
