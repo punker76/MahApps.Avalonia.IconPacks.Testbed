@@ -1,23 +1,11 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows.Input;
 using AsyncAwaitBestPractices;
-using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Media;
-using Avalonia.Media.Imaging;
-using Avalonia.Platform;
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using FluentAvalonia.UI.Data;
-using IconPacks.Avalonia;
 using IconPacks.Avalonia.Attributes;
-using MahApps.IconPacksBrowser.Avalonia.Helper;
 
 namespace MahApps.IconPacksBrowser.Avalonia.ViewModels;
 

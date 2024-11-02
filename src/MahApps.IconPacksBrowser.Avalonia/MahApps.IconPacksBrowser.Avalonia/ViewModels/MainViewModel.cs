@@ -2,13 +2,14 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Reactive.Linq;
+using System.Reactive.Subjects;
 using System.Threading.Tasks;
-using System.Windows.Input;
 using AsyncAwaitBestPractices;
-using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DynamicData;
+using DynamicData.Binding;
+using DynamicData.Operators;
 using FluentAvalonia.UI.Controls;
 using IconPacks.Avalonia;
 using MahApps.IconPacksBrowser.Avalonia.Helper;
@@ -18,6 +19,10 @@ namespace MahApps.IconPacksBrowser.Avalonia.ViewModels;
 
 public partial class MainViewModel : ViewModelBase
 {
+    private const int PAGE_SIZE = 100;
+    private const int FIRST_PAGE = 1;
+    private readonly ISubject<PageRequest> _pager;
+
     public static MainViewModel Instance { get; } = new();
 
     public MainViewModel()
@@ -28,13 +33,69 @@ public partial class MainViewModel : ViewModelBase
             .Throttle(TimeSpan.FromMilliseconds(350), RxApp.MainThreadScheduler)
             .Select(IconFilter);
 
+        _pager = new BehaviorSubject<PageRequest>(new PageRequest(FIRST_PAGE, PAGE_SIZE));
+
         _iconsCache.Connect()
             .Filter(filterByText)
+            .Sort(SortExpressionComparer<IIconViewModel>.Ascending(e => e.Identifier))
+            .Page(_pager)
+            .Do(change => PagingUpdate(change.Response))
             .ObserveOn(RxApp.MainThreadScheduler)
             .Bind(out _visibleIcons)
             .Subscribe();
-        
+
         LoadIconPacks().SafeFireAndForget();
+    }
+
+    private void PagingUpdate(IPageResponse response)
+    {
+        TotalItems = response.TotalSize;
+        CurrentPage = response.Page;
+        TotalPages = response.Pages;
+    }
+
+    [ObservableProperty] int _TotalItems;
+
+    [ObservableProperty] [NotifyCanExecuteChangedFor(nameof(FirstPageCommand), nameof(PreviousPageCommand), nameof(NextPageCommand))]
+    int _CurrentPage;
+
+    [ObservableProperty] [NotifyCanExecuteChangedFor(nameof(NextPageCommand), nameof(PreviousPageCommand), nameof(LastPageCommand))]
+    int _TotalPages;
+
+    private bool CanMoveToFirstPage() => CurrentPage > FIRST_PAGE;
+
+    [RelayCommand(CanExecute = nameof(CanMoveToFirstPage), AllowConcurrentExecutions = false)]
+    public Task FirstPage()
+    {
+        _pager.OnNext(new PageRequest(FIRST_PAGE, PAGE_SIZE));
+        return Task.CompletedTask;
+    }
+
+    private bool CanMoveToPreviousPage() => CurrentPage > FIRST_PAGE;
+
+    [RelayCommand(CanExecute = nameof(CanMoveToPreviousPage), AllowConcurrentExecutions = false)]
+    private Task PreviousPage()
+    {
+        _pager.OnNext(new PageRequest(CurrentPage - 1, PAGE_SIZE));
+        return Task.CompletedTask;
+    }
+
+    private bool CanMoveToNextPage() => CurrentPage < TotalPages;
+
+    [RelayCommand(CanExecute = nameof(CanMoveToNextPage), AllowConcurrentExecutions = false)]
+    private Task NextPage()
+    {
+        _pager.OnNext(new PageRequest(CurrentPage + 1, PAGE_SIZE));
+        return Task.CompletedTask;
+    }
+
+    private bool CanMoveToLastPage() => CurrentPage < TotalPages;
+
+    [RelayCommand(CanExecute = nameof(CanMoveToLastPage), AllowConcurrentExecutions = false)]
+    private Task LastPage()
+    {
+        _pager.OnNext(new PageRequest(TotalPages, PAGE_SIZE));
+        return Task.CompletedTask;
     }
 
     private async Task LoadIconPacks()
@@ -95,32 +156,32 @@ public partial class MainViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private async Task CopyTextToClipboardAsync(string? text)
+    public async Task CopyTextToClipboardAsync(string? text)
     {
         await DoCopyTextToClipboard(text);
     }
 
     [RelayCommand]
-    private async Task CopyToClipboardTextAsync(IIconViewModel icon)
+    public async Task CopyToClipboardTextAsync(IIconViewModel icon)
     {
         await DoCopyTextToClipboard(icon.CopyToClipboardText);
     }
 
 
     [RelayCommand]
-    private async Task CopyToClipboardAsContentTextAsync(IIconViewModel icon)
+    public async Task CopyToClipboardAsContentTextAsync(IIconViewModel icon)
     {
         await DoCopyTextToClipboard(icon.CopyToClipboardAsContentText);
     }
 
     [RelayCommand]
-    private async Task CopyToClipboardAsGeometryTextAsync(IIconViewModel icon)
+    public async Task CopyToClipboardAsGeometryTextAsync(IIconViewModel icon)
     {
         await DoCopyTextToClipboard(icon.CopyToClipboardAsGeometryText);
     }
 
     [RelayCommand]
-    private async Task CopyToClipboardAsPathIconTextAsync(IIconViewModel icon)
+    public async Task CopyToClipboardAsPathIconTextAsync(IIconViewModel icon)
     {
         await DoCopyTextToClipboard(icon.CopyToClipboardAsPathIconText);
     }

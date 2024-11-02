@@ -10,10 +10,10 @@ namespace MahApps.IconPacksBrowser.Avalonia.ViewModels;
 public interface IIconViewModel
 {
     /// <summary>
-    /// Gets the unique identifier by returning "IcoNPackName|Name" combination 
+    /// Gets the unique identifier by returning "IconPackName|Name" combination 
     /// </summary>
     string Identifier => $"{IconPackName}|{Name}";
-    
+
     string Name { get; set; }
     string IconPackName { get; }
     string Description { get; set; }

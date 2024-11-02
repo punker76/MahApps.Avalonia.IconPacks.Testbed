@@ -1,5 +1,4 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using ReactiveUI;
 
 namespace MahApps.IconPacksBrowser.Avalonia.ViewModels;
 
