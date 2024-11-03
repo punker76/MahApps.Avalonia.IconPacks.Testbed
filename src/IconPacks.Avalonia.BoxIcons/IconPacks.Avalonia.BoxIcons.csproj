@@ -26,7 +26,9 @@
 
     <ItemGroup>
         <AvaloniaResource Include="**/*.xaml" />
-        <AvaloniaResource Include="Resources\**" />
+        <AvaloniaResource Include="../Icons/BoxIcons/**">
+            <Link>Resources\%(RecursiveDir)%(FileName)%(Extension)</Link>
+        </AvaloniaResource>
     </ItemGroup>
 
 </Project>
