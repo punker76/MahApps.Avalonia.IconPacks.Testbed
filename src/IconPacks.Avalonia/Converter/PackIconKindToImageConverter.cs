@@ -153,7 +153,7 @@ namespace IconPacks.Avalonia.Converter
         {
             var geometryDrawing = new GeometryDrawing
             {
-                Geometry = Geometry.Parse(path)
+                Geometry = StreamGeometry.Parse(path)
             };
 
             // if (iconKind is PackIconFeatherIconsKind)

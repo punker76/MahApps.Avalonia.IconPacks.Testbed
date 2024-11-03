@@ -45,8 +45,8 @@ namespace IconPacks.Avalonia.Converter
             var transformGroup = new TransformGroup();
             transformGroup.Children.Add(this.GetScaleTransform(iconKind)); // scale
             transformGroup.Children.Add(new ScaleTransform(
-                this.Flip == PackIconFlipOrientation.Horizontal || this.Flip == PackIconFlipOrientation.Both ? -1 : 1,
-                this.Flip == PackIconFlipOrientation.Vertical || this.Flip == PackIconFlipOrientation.Both ? -1 : 1
+                this.Flip is PackIconFlipOrientation.Horizontal or PackIconFlipOrientation.Both ? -1 : 1,
+                this.Flip is PackIconFlipOrientation.Vertical or PackIconFlipOrientation.Both ? -1 : 1
             )); // flip
             transformGroup.Children.Add(new RotateTransform(this.RotationAngle)); // rotate
 
@@ -60,7 +60,7 @@ namespace IconPacks.Avalonia.Converter
         {
             var geometryDrawing = new GeometryDrawing
             {
-                Geometry = Geometry.Parse(path),
+                Geometry = StreamGeometry.Parse(path),
                 Brush = foregroundBrush
             };
 
@@ -92,24 +92,15 @@ namespace IconPacks.Avalonia.Converter
         /// <inheritdoc />
         protected override object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is not Enum)
-            {
-                return BindingNotification.UnsetValue;
-            }
-
-            var imageSource = CreateImageSource(value, parameter as IBrush ?? this.Brush ?? Brushes.Black);
-            if (imageSource is null)
-            {
-                return BindingNotification.UnsetValue;
-            }
-
-            return imageSource;
+            return value is not Enum
+                ? null
+                : CreateImageSource(value, parameter as IBrush ?? this.Brush ?? Brushes.Black);
         }
 
         /// <inheritdoc />
         protected override object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            return BindingNotification.UnsetValue;
+            throw new NotSupportedException("Two way bindings are not supported with an image");
         }
     }
 }

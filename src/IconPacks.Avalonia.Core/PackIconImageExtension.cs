@@ -58,7 +58,7 @@ namespace IconPacks.Avalonia
         {
             var geometryDrawing = new GeometryDrawing
             {
-                Geometry = Geometry.Parse(path),
+                Geometry = StreamGeometry.Parse(path),
                 Brush = foregroundBrush
             };
 

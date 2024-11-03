@@ -56,7 +56,7 @@ namespace IconPacks.Avalonia.Converter
             }
             catch
             {
-                return BindingNotification.UnsetValue;
+                return BindingOperations.DoNothing;
             }
         }
 
@@ -69,7 +69,7 @@ namespace IconPacks.Avalonia.Converter
             }
             catch
             {
-                return BindingNotification.UnsetValue;
+                return BindingOperations.DoNothing;
             }
         }
     }
