@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using Avalonia.Platform;
 
 namespace IconPacks.Avalonia
@@ -16,7 +17,9 @@ namespace IconPacks.Avalonia
         public static IDictionary<TEnum, string> Create()
         {
             using var iconJsonStream = AssetLoader.Open(new Uri($"avares://{typeof(TEnum).Assembly.GetName().Name}/Resources/Icons.json"));
-            return System.Text.Json.JsonSerializer.Deserialize<Dictionary<TEnum, string>>(iconJsonStream);
+#pragma warning disable IL2026
+            return new ReadOnlyDictionary<TEnum, string>(System.Text.Json.JsonSerializer.Deserialize<Dictionary<TEnum, string>>(iconJsonStream) ?? new Dictionary<TEnum, string>());
+#pragma warning restore IL2026
         }
     }
 }
