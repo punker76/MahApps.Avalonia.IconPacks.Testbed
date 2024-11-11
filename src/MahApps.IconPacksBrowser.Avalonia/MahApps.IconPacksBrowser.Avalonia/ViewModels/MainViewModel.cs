@@ -38,66 +38,15 @@ public partial class MainViewModel : ViewModelBase
         _iconsCache.Connect()
             .Filter(filterByText)
             .Sort(SortExpressionComparer<IIconViewModel>.Ascending(e => e.Identifier))
-            .Page(_pager)
-            .Do(change => PagingUpdate(change.Response))
             .ObserveOn(RxApp.MainThreadScheduler)
             .Bind(out _visibleIcons)
             .Subscribe();
 
         LoadIconPacks().SafeFireAndForget();
     }
-
-    private void PagingUpdate(IPageResponse response)
-    {
-        TotalItems = response.TotalSize;
-        CurrentPage = response.Page;
-        TotalPages = response.Pages;
-    }
-
+    
     [ObservableProperty] int _TotalItems;
-
-    [ObservableProperty] [NotifyCanExecuteChangedFor(nameof(FirstPageCommand), nameof(PreviousPageCommand), nameof(NextPageCommand))]
-    int _CurrentPage;
-
-    [ObservableProperty] [NotifyCanExecuteChangedFor(nameof(NextPageCommand), nameof(PreviousPageCommand), nameof(LastPageCommand))]
-    int _TotalPages;
-
-    private bool CanMoveToFirstPage() => CurrentPage > FIRST_PAGE;
-
-    [RelayCommand(CanExecute = nameof(CanMoveToFirstPage), AllowConcurrentExecutions = false)]
-    public Task FirstPage()
-    {
-        _pager.OnNext(new PageRequest(FIRST_PAGE, PAGE_SIZE));
-        return Task.CompletedTask;
-    }
-
-    private bool CanMoveToPreviousPage() => CurrentPage > FIRST_PAGE;
-
-    [RelayCommand(CanExecute = nameof(CanMoveToPreviousPage), AllowConcurrentExecutions = false)]
-    private Task PreviousPage()
-    {
-        _pager.OnNext(new PageRequest(CurrentPage - 1, PAGE_SIZE));
-        return Task.CompletedTask;
-    }
-
-    private bool CanMoveToNextPage() => CurrentPage < TotalPages;
-
-    [RelayCommand(CanExecute = nameof(CanMoveToNextPage), AllowConcurrentExecutions = false)]
-    private Task NextPage()
-    {
-        _pager.OnNext(new PageRequest(CurrentPage + 1, PAGE_SIZE));
-        return Task.CompletedTask;
-    }
-
-    private bool CanMoveToLastPage() => CurrentPage < TotalPages;
-
-    [RelayCommand(CanExecute = nameof(CanMoveToLastPage), AllowConcurrentExecutions = false)]
-    private Task LastPage()
-    {
-        _pager.OnNext(new PageRequest(TotalPages, PAGE_SIZE));
-        return Task.CompletedTask;
-    }
-
+    
     private async Task LoadIconPacks()
     {
         var availableIconPacks = new List<(Type EnumType, Type IconPackType)>(

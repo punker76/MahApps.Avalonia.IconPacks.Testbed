@@ -6,6 +6,7 @@
              xmlns:controls="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
              xmlns:helper="clr-namespace:MahApps.IconPacksBrowser.Avalonia.Helper"
              xmlns:iconPacks="urn:iconpacks-avalonia"
+             xmlns:controls1="clr-namespace:MahApps.IconPacksBrowser.Avalonia.Controls"
              mc:Ignorable="d"
              d:DesignWidth="800"
              d:DesignHeight="450"
@@ -93,7 +94,7 @@
                     <ListBox.ItemsPanel>
                         <ItemsPanelTemplate>
                             <!-- <VirtualizingStackPanel Orientation="Vertical" /> -->
-                            <WrapPanel />
+                            <controls1:VirtualizingWrapPanel />
                         </ItemsPanelTemplate>
                     </ListBox.ItemsPanel>
 
@@ -130,36 +131,7 @@
                 <!--     </ctrls:SidebarExpander.Header> -->
                 <!--     <ctrls:SideBar /> -->
                 <!-- </ctrls:SidebarExpander> -->
-
-                <StackPanel Grid.Column="0"
-                            Grid.ColumnSpan="2"
-                            Grid.Row="1"
-                            Margin="0,10"
-                            Orientation="Horizontal"
-                            HorizontalAlignment="Center">
-                    <Button Command="{Binding FirstPageCommand}">
-                        <PathIcon Data="M20,5V19L13,12M6,5V19H4V5M13,5V19L6,12" Width="14" Height="14" />
-                    </Button>
-                    <RepeatButton Margin="12,0,0,0"
-                                  Command="{Binding PreviousPageCommand}">
-                        <PathIcon Data="M6,18V6H8V18H6M9.5,12L18,6V18L9.5,12Z" Width="16" Height="16" />
-                    </RepeatButton>
-                    <TextBlock Margin="8,0" VerticalAlignment="Center">
-                        <TextBlock.Text>
-                            <MultiBinding StringFormat="Page {0} of {1}">
-                                <Binding Path="CurrentPage" />
-                                <Binding Path="TotalPages" />
-                            </MultiBinding>
-                        </TextBlock.Text>
-                    </TextBlock>
-                    <RepeatButton Command="{Binding NextPageCommand}">
-                        <PathIcon Data="M16,18H18V6H16M6,18L14.5,12L6,6V18Z" Width="16" Height="16" />
-                    </RepeatButton>
-                    <Button Margin="12,0,0,0"
-                            Command="{Binding LastPageCommand}">
-                        <PathIcon Data="M4,5V19L11,12M18,5V19H20V5M11,5V19L18,12" Width="14" Height="14" />
-                    </Button>
-                </StackPanel>
+                
 
                 <TextBlock Grid.Column="0"
                            Grid.ColumnSpan="2"
