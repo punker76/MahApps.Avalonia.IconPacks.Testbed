@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AsyncAwaitBestPractices;
 using CommunityToolkit.Mvvm.ComponentModel;
-using IconPacks.Avalonia.Attributes;
+using IconPacks.Avalonia.Core.Attributes;
 
 namespace MahApps.IconPacksBrowser.Avalonia.ViewModels;
 
@@ -14,7 +14,7 @@ public partial class IconPackViewModel : ViewModelBase
     private IconPackViewModel(MainViewModel mainViewModel)
     {
         this.MainViewModel = mainViewModel;
-        
+
         // TODO
         // SaveAsPngCommand = new SimpleCommand((_) => SaveAsBitmapExecute(new PngBitmapEncoder()), (_) => SelectedIcon is not null);
         // SaveAsJpegCommand = new SimpleCommand((_) => SaveAsBitmapExecute(new JpegBitmapEncoder()), (_) => SelectedIcon is not null);
@@ -29,7 +29,7 @@ public partial class IconPackViewModel : ViewModelBase
 
         this.Caption = this.MetaData?.Name;
 
-        this.LoadIconsAsync(enumType, packType).SafeFireAndForget();
+        //this.LoadIconsAsync(enumType, packType).SafeFireAndForget();
     }
 
     public async Task<IEnumerable<IIconViewModel>> LoadIconsAsync(Type enumType, Type packType)
@@ -41,13 +41,13 @@ public partial class IconPackViewModel : ViewModelBase
 
         return Icons;
     }
-    
+
     [ObservableProperty]
     private IEnumerable<IIconViewModel> _icons;
-    
+
     [ObservableProperty]
     private int _iconCount;
-    
+
 
     // TODO: Move To MainViewModel?
     private static bool FilterIconsPredicate(string filterText, IIconViewModel iconViewModel)
@@ -94,13 +94,13 @@ public partial class IconPackViewModel : ViewModelBase
     public string? Caption { get; }
 
     public MetaDataAttribute? MetaData { get; }
-    
-    
+
+
     // [RelayCommand]
     // private async Task SaveAsSvgAsync()
     // {
     //     return;
-    //     
+    //
     //     var progress = await dialogCoordinator.ShowProgressAsync(MainViewModel, "Export", "Saving selected icon as SVG-file");
     //     progress.SetIndeterminate();
     //

@@ -3,7 +3,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:avaloniaApp="clr-namespace:AvaloniaApp"
-        xmlns:iconPacks="urn:iconpacks-avalonia"
+        xmlns:iconPacks="https://github.com/MahApps/IconPacks.Avalonia"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="AvaloniaApp.MainWindow"
         Title="AvaloniaApp"
