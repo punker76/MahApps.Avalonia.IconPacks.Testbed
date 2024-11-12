@@ -70,6 +70,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
         private bool _isWaitingForViewportUpdate;
         private double _lastEstimatedElementSizeU = 25;
         private double _lastEstimatedElementSizeV = 25;
+        private int _elementsPerRow = 1;
         private RealizedWrappedElements? _measureElements;
         private RealizedWrappedElements? _realizedElements;
         private IScrollAnchorProvider? _scrollAnchorProvider;
@@ -159,13 +160,14 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             // If we're bringing an item into view, ignore any layout passes until we receive a new
             // effective viewport.
             if (_isWaitingForViewportUpdate)
-                return EstimateDesiredSize(orientation, items.Count, availableSize);
+                return EstimateDesiredSize(orientation, items.Count);
 
             _isInLayout = true;
 
             try
             {
                 _realizedElements?.ValidateStartU(Orientation);
+                _realizedElements?.ValidateStartV(Orientation);
                 _realizedElements ??= new();
                 _measureElements ??= new();
 
@@ -220,12 +222,12 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                         var sizeU = _realizedElements.SizeU[i];
                         var sizeV = _realizedElements.SizeV[i];
 
-                        var nextLine = v + (orientation == Orientation.Horizontal ? sizeU : sizeV) >
+                        var nextLine = v + sizeV >
                                        (orientation == Orientation.Horizontal ? finalSize.Height : finalSize.Width);
 
                         if (nextLine)
                         {
-                            u += orientation == Orientation.Horizontal ? sizeU : sizeV;
+                            u += sizeU;
                             v = 0;
                         }
 
@@ -243,10 +245,14 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                 // Ensure that the focused element is in the correct position.
                 if (_focusedElement is not null && _focusedIndex >= 0)
                 {
-                    u = GetOrEstimateElementU(_focusedIndex, orientation == Orientation.Horizontal ? finalSize.Height : finalSize.Width);
+                    u = GetOrEstimateElementU(_focusedIndex,
+                        orientation == Orientation.Horizontal ? finalSize.Height : finalSize.Width);
+					v = GetOrEstimateElementV(_focusedIndex,
+                        orientation == Orientation.Horizontal ? finalSize.Height : finalSize.Width);
+						
                     var rect = orientation == Orientation.Horizontal
-                        ? new Rect(u, 0, _focusedElement.DesiredSize.Width, finalSize.Height)
-                        : new Rect(0, u, finalSize.Width, _focusedElement.DesiredSize.Height);
+                        ? new Rect(u, v, _focusedElement.DesiredSize.Width, finalSize.Height)
+                        : new Rect(v, u, finalSize.Width, _focusedElement.DesiredSize.Height);
                     _focusedElement.Arrange(rect);
                 }
 
@@ -287,16 +293,13 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                     _realizedElements.ItemsInserted(e.NewStartingIndex, e.NewItems!.Count, _updateElementIndex);
                     break;
                 case NotifyCollectionChangedAction.Remove:
-                    _realizedElements.ItemsRemoved(e.OldStartingIndex, e.OldItems!.Count, _updateElementIndex,
-                        _recycleElementOnItemRemoved);
+                    _realizedElements.ItemsRemoved(e.OldStartingIndex, e.OldItems!.Count, _updateElementIndex, _recycleElementOnItemRemoved);
                     break;
                 case NotifyCollectionChangedAction.Replace:
-                    _realizedElements.ItemsReplaced(e.OldStartingIndex, e.OldItems!.Count,
-                        _recycleElementOnItemRemoved);
+                    _realizedElements.ItemsReplaced(e.OldStartingIndex, e.OldItems!.Count, _recycleElementOnItemRemoved);
                     break;
                 case NotifyCollectionChangedAction.Move:
-                    _realizedElements.ItemsRemoved(e.OldStartingIndex, e.OldItems!.Count, _updateElementIndex,
-                        _recycleElementOnItemRemoved);
+                    _realizedElements.ItemsRemoved(e.OldStartingIndex, e.OldItems!.Count, _updateElementIndex, _recycleElementOnItemRemoved);
                     _realizedElements.ItemsInserted(e.NewStartingIndex, e.NewItems!.Count, _updateElementIndex);
                     break;
                 case NotifyCollectionChangedAction.Reset:
@@ -429,11 +432,16 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                 scrollToElement.Measure(Size.Infinity);
 
                 // Get the expected position of the element and put it in place.
-                var anchorU = GetOrEstimateElementU(index, Orientation == Orientation.Horizontal ? _viewport.Height : _viewport.Width);
-                
+                var anchorU = GetOrEstimateElementU(index,
+                    Orientation == Orientation.Horizontal ? _viewport.Height : _viewport.Width);
+					
+				var anchorV = GetOrEstimateElementV(index,
+                    Orientation == Orientation.Horizontal ? _viewport.Width : _viewport.Height);
+
+
                 var rect = Orientation == Orientation.Horizontal
-                    ? new Rect(anchorU, 0, scrollToElement.DesiredSize.Width, scrollToElement.DesiredSize.Height)
-                    : new Rect(0, anchorU, scrollToElement.DesiredSize.Width, scrollToElement.DesiredSize.Height);
+                    ? new Rect(anchorU, anchorV, scrollToElement.DesiredSize.Width, scrollToElement.DesiredSize.Height)
+                    : new Rect(anchorV, anchorU, scrollToElement.DesiredSize.Width, scrollToElement.DesiredSize.Height);
                 scrollToElement.Arrange(rect);
 
                 // Store the element and index so that they can be used in the layout pass.
@@ -506,12 +514,13 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             // scrolling to an element, use that as the anchor element. Otherwise, estimate the
             // anchor element based on the current viewport.
             int anchorIndex;
-            double anchorU;
+            double anchorU, anchorV;
 
             if (_scrollToIndex >= 0 && _scrollToElement is not null)
             {
                 anchorIndex = _scrollToIndex;
                 anchorU = _scrollToElement.Bounds.Top;
+                anchorV = _scrollToElement.Bounds.Left;
             }
             else
             {
@@ -521,7 +530,8 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                     viewportVEnd,
                     items.Count,
                     out anchorIndex,
-                    out anchorU);
+                    out anchorU, 
+                    out anchorV);
             }
 
             // Check if the anchor element is not within the currently realized elements.
@@ -532,7 +542,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             {
                 anchorIndex = anchorIndex,
                 anchorU = anchorU,
-                anchorV = 0d,
+                anchorV = anchorV,
                 viewportUStart = viewportUStart,
                 viewportUEnd = viewportUEnd,
                 viewportVEnd = viewportVEnd,
@@ -544,42 +554,28 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
         {
             var sizeU = 0.0;
             var sizeV = viewport.measuredV;
-            
-            var elementsPerRow = (int)(viewport.viewportVEnd / viewport.measuredV);
-            if (elementsPerRow == 0) elementsPerRow = 1;
-            
+
             if (viewport.lastIndex >= 0)
             {
                 var remaining = itemCount - viewport.lastIndex - 1;
-                sizeU = viewport.realizedEndU + (remaining * _lastEstimatedElementSizeU / elementsPerRow);
+                sizeU = viewport.realizedEndU + (remaining * _lastEstimatedElementSizeU / _elementsPerRow);
             }
-            
-            return orientation == Orientation.Horizontal ? new(sizeU, sizeV) : new(sizeV, sizeU);
+
+            return orientation == Orientation.Horizontal ? new(sizeU, viewport.viewportVEnd) : new(viewport.viewportVEnd, sizeU);
         }
 
-        private Size EstimateDesiredSize(Orientation orientation, int itemCount, Size availableSize)
+        private Size EstimateDesiredSize(Orientation orientation, int itemCount)
         {
             if (_scrollToIndex >= 0 && _scrollToElement is not null)
             {
-                // Estimate Element sizes as early as possible
-                _lastEstimatedElementSizeU = EstimateElementSizeU();
-                _lastEstimatedElementSizeV = EstimateElementSizeV();
-                
                 // We have an element to scroll to, so we can estimate the desired size based on the
                 // element's position and the remaining elements.
                 var remaining = itemCount - _scrollToIndex - 1;
                 var u = orientation == Orientation.Horizontal
                     ? _scrollToElement.Bounds.Right
                     : _scrollToElement.Bounds.Bottom;
-                var sizeU = u + (remaining * _lastEstimatedElementSizeU);
+                var sizeU = u + ((int)(remaining * 1.0 / _elementsPerRow) * _lastEstimatedElementSizeU );
 
-                var viewPortEndV = Orientation == Orientation.Horizontal ? availableSize.Height : availableSize.Width;
-                var elementsPerRow = (int)(viewPortEndV / _lastEstimatedElementSizeV);
-                
-                if (elementsPerRow == 0) elementsPerRow = 1;
-
-                sizeU /= elementsPerRow;
-                
                 return orientation == Orientation.Horizontal
                     ? new(sizeU, DesiredSize.Height)
                     : new(DesiredSize.Width, sizeU);
@@ -614,7 +610,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                 return _lastEstimatedElementSizeU;
 
             // Store and return the estimate.
-            return _lastEstimatedElementSizeU = total / divisor;
+            return _lastEstimatedElementSizeU = total / divisor / _elementsPerRow;
         }
 
         private double EstimateElementSizeV()
@@ -624,7 +620,9 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
 
             var orientation = Orientation;
             var total = 0.0;
-            var divisor = 0.0;
+            var divisor = 0;
+            var viewportEndV = orientation == Orientation.Horizontal ? _viewport.Height : _viewport.Width;
+
 
             // Average the desired size of the realized, measured elements.
             foreach (var element in _realizedElements.Elements)
@@ -635,16 +633,26 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                     ? element.DesiredSize.Height
                     : element.DesiredSize.Width;
                 total += sizeV;
-                ++divisor;
+                divisor++;
+
+                if (total + sizeV > viewportEndV)
+                {
+                    _elementsPerRow = divisor > 0 ? divisor : 1;
+                    break;
+                }
             }
 
             // Check we have enough information on which to base our estimate.
             if (divisor == 0 || total == 0)
+            {
+                _elementsPerRow = 1;
                 return _lastEstimatedElementSizeV;
+            }
 
             // Store and return the estimate.
             return _lastEstimatedElementSizeV = total / divisor;
         }
+
 
         private void GetOrEstimateAnchorElementForViewport(
             double viewportStartU,
@@ -652,13 +660,15 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             double viewportEndV,
             int itemCount,
             out int index,
-            out double position)
+            out double anchorU, 
+            out double anchorV)
         {
             // We have no elements, or we're at the start of the viewport.
             if (itemCount <= 0 || MathUtilities.IsZero(viewportStartU))
             {
                 index = 0;
-                position = 0;
+                anchorU = 0;
+                anchorV = 0;
                 return;
             }
 
@@ -700,15 +710,15 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                     if (endU > viewportStartU && u < viewportEndU)
                     {
                         idx++;
-                            itemsPerRow = (int)(viewportEndV / sizeV);
-                            index = _realizedElements.FirstIndex + idx * itemsPerRow;
-                            index = Math.Min(index, Items.Count - 1);
-                            position = u;
-                            return;
-                        }
+                        itemsPerRow = (int)(viewportEndV / sizeV);
+                        index = _realizedElements.FirstIndex + idx * itemsPerRow;
+                        index = Math.Min(index, Items.Count - 1);
+                        anchorU = u;
+                        anchorV = v;
+                        return;
                     }
                 }
-            
+            }
 
 
             // We don't have any realized elements in the requested viewport, or can't rely on
@@ -716,13 +726,11 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             var estimatedSizeU = EstimateElementSizeU();
             var estimatedSizeV = EstimateElementSizeV();
 
-            var elementsPerRow = (int)(viewportEndV / estimatedSizeV);
-            if (elementsPerRow == 0) elementsPerRow = 1;
-
             // Estimate the element at the start of the viewport.
-            var startIndex = Math.Min((int)(viewportStartU / estimatedSizeU / elementsPerRow), itemCount - 1);
+            var startIndex = Math.Min((int)(viewportStartU / estimatedSizeU / _elementsPerRow), itemCount - 1);
             index = startIndex;
-            position = startIndex * estimatedSizeU / elementsPerRow;
+            anchorU = (int)(startIndex * 1.0 / _elementsPerRow) * estimatedSizeU;
+            anchorV = (int)(startIndex * 1.0 / _elementsPerRow) * estimatedSizeV;
         }
 
         private double GetOrEstimateElementU(int index, double viewportEndV)
@@ -737,11 +745,24 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             var estimatedSizeU = EstimateElementSizeU();
             var estimatedSizeV = EstimateElementSizeV();
 
-            var elementsPerRow = (int)(viewportEndV / estimatedSizeV);
-            if (elementsPerRow == 0) elementsPerRow = 1;
-            
             // TODO: Use _startU to work this out.
-            return index * estimatedSizeU;
+            return (int)(index * 1.0 / _elementsPerRow) * estimatedSizeU;
+        }
+        
+        private double GetOrEstimateElementV(int index, double viewportEndV)
+        {
+            // Return the position of the existing element if realized.
+            var v = _realizedElements?.GetElementV(index) ?? double.NaN;
+
+            if (!double.IsNaN(v))
+                return v;
+
+            // Estimate the element size.
+            var estimatedSizeU = EstimateElementSizeU();
+            var estimatedSizeV = EstimateElementSizeV();
+
+            // TODO: Use _startU to work this out.
+            return (int)(index * 1.0 / _elementsPerRow) * estimatedSizeV;
         }
 
 
@@ -772,19 +793,24 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                 _realizingElement = e;
                 e.Measure(availableSize);
 
+
                 var sizeU = horizontal ? e.DesiredSize.Width : e.DesiredSize.Height;
                 var sizeV = horizontal ? e.DesiredSize.Height : e.DesiredSize.Width;
+
+                if (MathUtilities.IsZero(v)) v = sizeV;
+
+                _measureElements!.Add(index, e, u, v - sizeV, sizeU, sizeV);
+                viewport.measuredV = Math.Max(viewport.measuredV, sizeV);
 
                 if (v + sizeV > viewport.viewportVEnd)
                 {
                     u += sizeU;
-                    v = 0;
+                    v = sizeV;
                 }
-
-                _measureElements!.Add(index, e, u, v, sizeU, sizeV);
-                viewport.measuredV = Math.Max(viewport.measuredV, sizeV);
-
-                v += sizeV;
+                else
+                {
+                    v += sizeV;
+                }
 
                 ++index;
                 _realizingIndex = -1;
@@ -809,7 +835,16 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
 
                 var sizeU = horizontal ? e.DesiredSize.Width : e.DesiredSize.Height;
                 var sizeV = horizontal ? e.DesiredSize.Height : e.DesiredSize.Width;
-                u -= sizeU;
+
+                if (v - sizeV > 0)
+                {
+                    u -= sizeU;
+                    v = viewport.viewportVEnd;
+                }
+                else
+                {
+                    v -= sizeV;
+                }
 
                 _measureElements!.Add(index, e, u, v, sizeU, sizeV);
                 viewport.measuredV = Math.Max(viewport.measuredV, sizeV);
@@ -818,6 +853,8 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
 
             // We can now recycle elements before the first element.
             _realizedElements.RecycleElementsBefore(index + 1, _recycleElement);
+
+            Debug.WriteLine("Created {0} elements", viewport.lastIndex - viewport.anchorIndex);
         }
 
         private Control GetOrCreateElement(IReadOnlyList<object?> items, int index)

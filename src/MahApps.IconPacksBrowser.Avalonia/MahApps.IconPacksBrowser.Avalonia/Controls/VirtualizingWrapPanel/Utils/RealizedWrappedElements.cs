@@ -464,6 +464,17 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls.Utils
         /// </summary>
         public void ResetForReuse()
         {
+            if (_elements is null || _elements.Count == 0)
+                return;
+
+            for (var i = 0; i < _elements.Count; i++)
+            {
+                if (_elements[i] is Control e)
+                {
+                    _elements[i] = null;
+                }
+            }
+            
             _startU = _startV = _firstIndex = 0;
             _startUUnstable = false;
             _startVUnstable = false;
@@ -494,7 +505,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls.Utils
                     ? element.DesiredSize.Width
                     : element.DesiredSize.Height;
 
-                if (sizeU != _sizesU[i])
+                if (Math.Abs(sizeU - _sizesU[i]) > 0.01)
                 {
                     _startUUnstable = true;
                     break;
