@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Threading.Tasks;
@@ -11,7 +12,42 @@ using DynamicData;
 using DynamicData.Binding;
 using DynamicData.Operators;
 using FluentAvalonia.UI.Controls;
-using IconPacks.Avalonia;
+using IconPacks.Avalonia.BootstrapIcons;
+using IconPacks.Avalonia.BoxIcons;
+using IconPacks.Avalonia.CircumIcons;
+using IconPacks.Avalonia.Codicons;
+using IconPacks.Avalonia.Coolicons;
+using IconPacks.Avalonia.Entypo;
+using IconPacks.Avalonia.EvaIcons;
+using IconPacks.Avalonia.FeatherIcons;
+using IconPacks.Avalonia.FileIcons;
+using IconPacks.Avalonia.Fontaudio;
+using IconPacks.Avalonia.FontAwesome;
+using IconPacks.Avalonia.Fontisto;
+using IconPacks.Avalonia.ForkAwesome;
+using IconPacks.Avalonia.GameIcons;
+using IconPacks.Avalonia.Ionicons;
+using IconPacks.Avalonia.JamIcons;
+using IconPacks.Avalonia.Lucide;
+using IconPacks.Avalonia.Material;
+using IconPacks.Avalonia.MaterialDesign;
+using IconPacks.Avalonia.MaterialLight;
+using IconPacks.Avalonia.MemoryIcons;
+using IconPacks.Avalonia.Microns;
+using IconPacks.Avalonia.Modern;
+using IconPacks.Avalonia.Octicons;
+using IconPacks.Avalonia.PhosphorIcons;
+using IconPacks.Avalonia.PicolIcons;
+using IconPacks.Avalonia.PixelartIcons;
+using IconPacks.Avalonia.RadixIcons;
+using IconPacks.Avalonia.RemixIcon;
+using IconPacks.Avalonia.RPGAwesome;
+using IconPacks.Avalonia.SimpleIcons;
+using IconPacks.Avalonia.Typicons;
+using IconPacks.Avalonia.Unicons;
+using IconPacks.Avalonia.VaadinIcons;
+using IconPacks.Avalonia.WeatherIcons;
+using IconPacks.Avalonia.Zondicons;
 using MahApps.IconPacksBrowser.Avalonia.Helper;
 using ReactiveUI;
 
@@ -44,29 +80,68 @@ public partial class MainViewModel : ViewModelBase
 
         LoadIconPacks().SafeFireAndForget();
     }
-    
+
     [ObservableProperty] int _TotalItems;
-    
+
     private async Task LoadIconPacks()
     {
         var availableIconPacks = new List<(Type EnumType, Type IconPackType)>(
             new[]
             {
+                (typeof(PackIconBootstrapIconsKind), typeof(PackIconBootstrapIcons)),
                 (typeof(PackIconBoxIconsKind), typeof(PackIconBoxIcons)),
+                (typeof(PackIconCircumIconsKind), typeof(PackIconCircumIcons)),
+                (typeof(PackIconCodiconsKind), typeof(PackIconCodicons)),
+                (typeof(PackIconCooliconsKind), typeof(PackIconCoolicons)),
+                (typeof(PackIconEntypoKind), typeof(PackIconEntypo)),
+                (typeof(PackIconEvaIconsKind), typeof(PackIconEvaIcons)),
+                (typeof(PackIconFeatherIconsKind), typeof(PackIconFeatherIcons)),
+                (typeof(PackIconFileIconsKind), typeof(PackIconFileIcons)),
+                (typeof(PackIconFontaudioKind), typeof(PackIconFontaudio)),
+                (typeof(PackIconFontAwesomeKind), typeof(PackIconFontAwesome)),
+                (typeof(PackIconFontistoKind), typeof(PackIconFontisto)),
+                (typeof(PackIconForkAwesomeKind), typeof(PackIconForkAwesome)),
+                (typeof(PackIconGameIconsKind), typeof(PackIconGameIcons)),
+                (typeof(PackIconIoniconsKind), typeof(PackIconIonicons)),
+                (typeof(PackIconJamIconsKind), typeof(PackIconJamIcons)),
+                (typeof(PackIconLucideKind), typeof(PackIconLucide)),
+                (typeof(PackIconMaterialKind), typeof(PackIconMaterial)),
+                (typeof(PackIconMaterialLightKind), typeof(PackIconMaterialLight)),
+                (typeof(PackIconMaterialDesignKind), typeof(PackIconMaterialDesign)),
+                (typeof(PackIconMemoryIconsKind), typeof(PackIconMemoryIcons)),
+                (typeof(PackIconMicronsKind), typeof(PackIconMicrons)),
+                (typeof(PackIconModernKind), typeof(PackIconModern)),
+                (typeof(PackIconOcticonsKind), typeof(PackIconOcticons)),
+                (typeof(PackIconPhosphorIconsKind), typeof(PackIconPhosphorIcons)),
+                (typeof(PackIconPicolIconsKind), typeof(PackIconPicolIcons)),
+                (typeof(PackIconPixelartIconsKind), typeof(PackIconPixelartIcons)),
+                (typeof(PackIconRadixIconsKind), typeof(PackIconRadixIcons)),
+                (typeof(PackIconRemixIconKind), typeof(PackIconRemixIcon)),
+                (typeof(PackIconRPGAwesomeKind), typeof(PackIconRPGAwesome)),
+                (typeof(PackIconSimpleIconsKind), typeof(PackIconSimpleIcons)),
+                (typeof(PackIconTypiconsKind), typeof(PackIconTypicons)),
+                (typeof(PackIconUniconsKind), typeof(PackIconUnicons)),
+                (typeof(PackIconVaadinIconsKind), typeof(PackIconVaadinIcons)),
+                (typeof(PackIconWeatherIconsKind), typeof(PackIconWeatherIcons)),
+                (typeof(PackIconZondiconsKind), typeof(PackIconZondicons)),
             });
+
+        var loadIconsTasks = new List<Task<IEnumerable<IIconViewModel>>>();
 
         foreach (var (enumType, iconPackType) in availableIconPacks)
         {
             var iconPack = new IconPackViewModel(this, enumType, iconPackType);
             AvailableIconPacks.Add(new NavigationViewItem() { Content = iconPack.Caption, Tag = iconPack });
-            _iconsCache.AddOrUpdate(await iconPack.LoadIconsAsync(enumType, iconPackType));
+            loadIconsTasks.Add(iconPack.LoadIconsAsync(enumType, iconPackType));
         }
+
+        _iconsCache.AddOrUpdate((await Task.WhenAll(loadIconsTasks)).SelectMany(x => x));
     }
 
     /// <summary>
     /// Gets the navigation view items for all icon packs
     /// </summary>
-    public List<NavigationViewItemBase> AvailableIconPacks { get; } =
+    public ObservableCollection<NavigationViewItemBase> AvailableIconPacks { get; } =
     [
         new NavigationViewItem() { Content = "All Icons" },
         new NavigationViewItemSeparator()

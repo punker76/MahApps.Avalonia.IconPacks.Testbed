@@ -7,23 +7,19 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <AvaloniaResource Include="Assets\**"/>
+        <AvaloniaResource Include="Assets\**" />
     </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="AsyncAwaitBestPractices" Version="8.0.0" />
-        <PackageReference Include="Avalonia" Version="$(AvaloniaVersion)"/>
-        <PackageReference Include="Avalonia.Fonts.Inter" Version="$(AvaloniaVersion)"/>
+        <PackageReference Include="Avalonia" Version="$(AvaloniaVersion)" />
+        <PackageReference Include="Avalonia.Fonts.Inter" Version="$(AvaloniaVersion)" />
         <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
-        <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="$(AvaloniaVersion)"/>
-        <PackageReference Include="Avalonia.ReactiveUI" Version="$(AvaloniaVersion)"/>
+        <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="$(AvaloniaVersion)" />
+        <PackageReference Include="Avalonia.ReactiveUI" Version="$(AvaloniaVersion)" />
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
-        <PackageReference Include="FluentAvaloniaUI" Version="2.1.0"/>
+        <PackageReference Include="FluentAvaloniaUI" Version="2.1.0" />
+        <PackageReference Include="IconPacks.Avalonia" Version="1.0.0-rc0013" />
     </ItemGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\..\IconPacks.Avalonia.BoxIcons\IconPacks.Avalonia.BoxIcons.csproj" />
-      <ProjectReference Include="..\..\IconPacks.Avalonia.Core\IconPacks.Avalonia.Core.csproj" />
-      <ProjectReference Include="..\..\IconPacks.Avalonia\IconPacks.Avalonia.csproj" />
-    </ItemGroup>
 </Project>
