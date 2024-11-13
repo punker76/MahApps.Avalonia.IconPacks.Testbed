@@ -73,7 +73,7 @@ public partial class MainViewModel : ViewModelBase
 
         _iconsCache.Connect()
             .Filter(filterByText)
-            .Sort(SortExpressionComparer<IIconViewModel>.Ascending(e => e.Identifier))
+            .Sort(SortExpressionComparer<IIconViewModel>.Ascending(e => e.IconPackName).ThenByAscending(e => e.Name))
             .Page(_pager)
             .Do(change => PagingUpdate(change.Response))
             .ObserveOn(RxApp.MainThreadScheduler)
