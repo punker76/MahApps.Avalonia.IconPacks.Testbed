@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -73,7 +73,7 @@ public partial class MainViewModel : ViewModelBase
 
         _iconsCache.Connect()
             .Filter(filterByText)
-            .Sort(SortExpressionComparer<IIconViewModel>.Ascending(e => e.Identifier))
+            .Sort(SortExpressionComparer<IIconViewModel>.Ascending(e => e.IconPackName).ThenByAscending(e => e.Name))
             .ObserveOn(RxApp.MainThreadScheduler)
             .Bind(out _visibleIcons)
             .Subscribe();

@@ -5,7 +5,7 @@
              xmlns:vm="clr-namespace:MahApps.IconPacksBrowser.Avalonia.ViewModels"
              xmlns:controls="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
              xmlns:helper="clr-namespace:MahApps.IconPacksBrowser.Avalonia.Helper"
-             xmlns:controls1="clr-namespace:MahApps.IconPacksBrowser.Avalonia.Controls"
+             xmlns:iconPacks="https://github.com/MahApps/IconPacks.Avalonia"
              mc:Ignorable="d"
              d:DesignWidth="800"
              d:DesignHeight="450"
@@ -90,6 +90,16 @@
                          ItemTemplate="{StaticResource IconPacksBrowser.DataTemplates.ListBox.IconViewModel}"
                          ItemsSource="{Binding VisibleIcons}"
                          SelectedValue="{Binding SelectedIcon}">
+
+                    <ListBox.Styles>
+                        <Style Selector="ListBoxItem:selected iconPacks|PackIconControl#PackIcon">
+                            <Setter Property="Foreground" Value="{DynamicResource SystemAccentColor}" />
+                        </Style>
+                        <Style Selector="ListBoxItem:pointerover iconPacks|PackIconControl#PackIcon">
+                            <Setter Property="Foreground" Value="{DynamicResource ListBoxItemPointerOverForegroundThemeBrush}" />
+                        </Style>
+                    </ListBox.Styles>
+
                     <ListBox.ItemsPanel>
                         <ItemsPanelTemplate>
                             <!-- <VirtualizingStackPanel Orientation="Vertical" /> -->
