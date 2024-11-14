@@ -5,154 +5,217 @@ using System.Diagnostics;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
 using Avalonia.Input;
-using Avalonia.Interactivity;
 using Avalonia.Layout;
-using Avalonia.Utilities;
-using Avalonia.VisualTree;
 using MahApps.IconPacksBrowser.Avalonia.Controls.Utils;
 
 namespace MahApps.IconPacksBrowser.Avalonia.Controls
 {
     /// <summary>
-    /// Positions child elements in sequential position from left to right, 
-    /// breaking content to the next line at the edge of the containing box. 
-    /// Subsequent ordering happens sequentially from top to bottom or from right to left, 
-    /// depending on the value of the <see cref="Orientation"/> property.
+    /// A implementation of a wrap panel that supports virtualization and can be used in horizontal and vertical orientation.
     /// </summary>
-    public class VirtualizingWrapPanel : VirtualizingPanel, IScrollSnapPointsInfo
+    public class VirtualizingWrapPanel : VirtualizingPanelBase
     {
-        /// <summary>
-        /// Defines the <see cref="Orientation"/> property.
-        /// </summary>
-        public static readonly StyledProperty<Orientation> OrientationProperty =
-            StackPanel.OrientationProperty.AddOwner<VirtualizingWrapPanel>();
+        private static readonly Size EmptySize = new Size(0, 0);
 
-        /// <summary>
-        /// Defines the <see cref="AreHorizontalSnapPointsRegular"/> property.
-        /// </summary>
-        public static readonly StyledProperty<bool> AreHorizontalSnapPointsRegularProperty =
-            AvaloniaProperty.Register<VirtualizingWrapPanel, bool>(nameof(AreHorizontalSnapPointsRegular));
-
-        /// <summary>
-        /// Defines the <see cref="AreVerticalSnapPointsRegular"/> property.
-        /// </summary>
-        public static readonly StyledProperty<bool> AreVerticalSnapPointsRegularProperty =
-            AvaloniaProperty.Register<VirtualizingWrapPanel, bool>(nameof(AreVerticalSnapPointsRegular));
-
-        /// <summary>
-        /// Defines the <see cref="HorizontalSnapPointsChanged"/> event.
-        /// </summary>
-        public static readonly RoutedEvent<RoutedEventArgs> HorizontalSnapPointsChangedEvent =
-            RoutedEvent.Register<VirtualizingWrapPanel, RoutedEventArgs>(
-                nameof(HorizontalSnapPointsChanged),
-                RoutingStrategies.Bubble);
-
-        /// <summary>
-        /// Defines the <see cref="VerticalSnapPointsChanged"/> event.
-        /// </summary>
-        public static readonly RoutedEvent<RoutedEventArgs> VerticalSnapPointsChangedEvent =
-            RoutedEvent.Register<VirtualizingWrapPanel, RoutedEventArgs>(
-                nameof(VerticalSnapPointsChanged),
-                RoutingStrategies.Bubble);
-
-        private static readonly AttachedProperty<object?> RecycleKeyProperty =
-            AvaloniaProperty.RegisterAttached<VirtualizingWrapPanel, Control, object?>("RecycleKey");
-
-        private static readonly object s_itemIsItsOwnContainer = new object();
-        private readonly Action<Control, int> _recycleElement;
-        private readonly Action<Control> _recycleElementOnItemRemoved;
-        private readonly Action<Control, int, int> _updateElementIndex;
-        private int _scrollToIndex = -1;
-        private Control? _scrollToElement;
-        private bool _isInLayout;
-        private bool _isWaitingForViewportUpdate;
-        private double _lastEstimatedElementSizeU = 25;
-        private double _lastEstimatedElementSizeV = 25;
-        private int _elementsPerRow = 1;
-        private RealizedWrappedElements? _measureElements;
-        private RealizedWrappedElements? _realizedElements;
-        private IScrollAnchorProvider? _scrollAnchorProvider;
-        private Rect _viewport;
-        private Dictionary<object, Stack<Control>>? _recyclePool;
-        private Control? _focusedElement;
-        private int _focusedIndex = -1;
-        private Control? _realizingElement;
-        private int _realizingIndex = -1;
-
-        public VirtualizingWrapPanel()
+        static VirtualizingWrapPanel()
         {
-            _recycleElement = RecycleElement;
-            _recycleElementOnItemRemoved = RecycleElementOnItemRemoved;
-            _updateElementIndex = UpdateElementIndex;
-            EffectiveViewportChanged += OnEffectiveViewportChanged;
+            AffectsMeasure<VirtualizingWrapPanel>(
+                OrientationProperty,
+                ItemSizeProperty,
+                AllowDifferentSizedItemsProperty,
+                ItemSizeProviderProperty);
+
+            AffectsArrange<VirtualizingWrapPanel>(
+                SpacingModeProperty,
+                StretchItemsProperty,
+                IsGridLayoutEnabledProperty);
         }
 
+        public static readonly StyledProperty<Orientation> OrientationProperty =
+            WrapPanel.OrientationProperty.AddOwner<VirtualizingWrapPanel>(
+                new StyledPropertyMetadata<Orientation>(Orientation.Horizontal));
+        //TODO (obj, args) => ((VirtualizingWrapPanel)obj).Orientation_Changed()));
+
+        public static readonly StyledProperty<Size> ItemSizeProperty =
+            AvaloniaProperty.Register<VirtualizingWrapPanel, Size>(nameof(ItemSize), EmptySize);
+        // TODO (obj, args) => ((VirtualizingWrapPanel)obj).ItemSize_Changed()));
+
+        public static readonly StyledProperty<bool> AllowDifferentSizedItemsProperty =
+            AvaloniaProperty.Register<VirtualizingWrapPanel, bool>(nameof(AllowDifferentSizedItems), false);
+
+        // TODO (obj, args) => ((VirtualizingWrapPanel)obj).AllowDifferentSizedItems_Changed()));
+
+        public static readonly StyledProperty<IItemSizeProvider?> ItemSizeProviderProperty =
+            AvaloniaProperty.Register<VirtualizingWrapPanel, IItemSizeProvider?>(nameof(ItemSizeProvider), null);
+
+        public static readonly StyledProperty<SpacingMode> SpacingModeProperty =
+            AvaloniaProperty.Register<VirtualizingWrapPanel, SpacingMode>(nameof(SpacingMode), SpacingMode.Uniform);
+
+        public static readonly StyledProperty<bool> StretchItemsProperty =
+            AvaloniaProperty.Register<VirtualizingWrapPanel, bool>(nameof(StretchItems), false);
+
+        public static readonly StyledProperty<bool> IsGridLayoutEnabledProperty =
+            AvaloniaProperty.Register<VirtualizingWrapPanel, bool>(nameof(IsGridLayoutEnabled), true);
+
+        private static readonly AttachedProperty<object?> RecycleKeyProperty =
+            AvaloniaProperty.RegisterAttached<VirtualizingStackPanel, Control, object?>("RecycleKey");
+
         /// <summary>
-        /// Gets or sets the axis along which items are laid out.
+        /// Gets or sets a value that specifies the orientation in which items are arranged before wrapping. The default value is <see cref="Orientation.Horizontal"/>.
         /// </summary>
-        /// <value>
-        /// One of the enumeration values that specifies the axis along which items are laid out.
-        /// The default is Vertical.
-        /// </value>
         public Orientation Orientation
         {
-            get => GetValue(OrientationProperty);
+            get => (Orientation)GetValue(OrientationProperty);
             set => SetValue(OrientationProperty, value);
         }
 
         /// <summary>
-        /// Occurs when the measurements for horizontal snap points change.
+        /// Gets or sets a value that specifies the size of the items. The default value is <see cref="Size.Empty"/>. 
+        /// If the value is <see cref="Size.Empty"/> the item size is determined by measuring the first realized item.
         /// </summary>
-        public event EventHandler<RoutedEventArgs>? HorizontalSnapPointsChanged
+        public Size ItemSize
         {
-            add => AddHandler(HorizontalSnapPointsChangedEvent, value);
-            remove => RemoveHandler(HorizontalSnapPointsChangedEvent, value);
+            get => (Size)GetValue(ItemSizeProperty);
+            set => SetValue(ItemSizeProperty, value);
         }
 
         /// <summary>
-        /// Occurs when the measurements for vertical snap points change.
+        /// Specifies whether items can have different sizes. The default value is false. If this property is enabled, 
+        /// it is strongly recommended to also set the <see cref="ItemSizeProvider"/> property. Otherwise, the position 
+        /// of the items is not always guaranteed to be correct.
         /// </summary>
-        public event EventHandler<RoutedEventArgs>? VerticalSnapPointsChanged
+        public bool AllowDifferentSizedItems
         {
-            add => AddHandler(VerticalSnapPointsChangedEvent, value);
-            remove => RemoveHandler(VerticalSnapPointsChangedEvent, value);
+            get => (bool)GetValue(AllowDifferentSizedItemsProperty);
+            set => SetValue(AllowDifferentSizedItemsProperty, value);
         }
 
         /// <summary>
-        /// Gets or sets whether the horizontal snap points for the <see cref="VirtualizingWrapPanel"/> are equidistant from each other.
+        /// Specifies an instance of <see cref="IItemSizeProvider"/> which provides the size of the items. In order to allow
+        /// different sized items, also enable the <see cref="AllowDifferentSizedItems"/> property.
         /// </summary>
-        public bool AreHorizontalSnapPointsRegular
+        public IItemSizeProvider? ItemSizeProvider
         {
-            get => GetValue(AreHorizontalSnapPointsRegularProperty);
-            set => SetValue(AreHorizontalSnapPointsRegularProperty, value);
+            get => GetValue(ItemSizeProviderProperty);
+            set => SetValue(ItemSizeProviderProperty, value);
         }
 
         /// <summary>
-        /// Gets or sets whether the vertical snap points for the <see cref="VirtualizingWrapPanel"/> are equidistant from each other.
+        /// Gets or sets the spacing mode used when arranging the items. The default value is <see cref="SpacingMode.Uniform"/>.
         /// </summary>
-        public bool AreVerticalSnapPointsRegular
+        public SpacingMode SpacingMode
         {
-            get => GetValue(AreVerticalSnapPointsRegularProperty);
-            set => SetValue(AreVerticalSnapPointsRegularProperty, value);
+            get => GetValue(SpacingModeProperty);
+            set => SetValue(SpacingModeProperty, value);
         }
 
         /// <summary>
-        /// Gets the index of the first realized element, or -1 if no elements are realized.
+        /// Gets or sets a value that specifies if the items get stretched to fill up remaining space. The default value is false.
         /// </summary>
-        public int FirstRealizedIndex => _realizedElements?.FirstIndex ?? -1;
+        /// <remarks>
+        /// The MaxWidth and MaxHeight properties of the ItemContainerStyle can be used to limit the stretching. 
+        /// In this case the use of the remaining space will be determined by the SpacingMode property. 
+        /// </remarks>
+        public bool StretchItems
+        {
+            get => GetValue(StretchItemsProperty);
+            set => SetValue(StretchItemsProperty, value);
+        }
 
         /// <summary>
-        /// Gets the index of the last realized element, or -1 if no elements are realized.
+        /// Specifies whether the items are arranged in a grid-like layout. The default value is <c>true</c>.
+        /// When set to <c>true</c>, the items are arranged based on the number of items that can fit in a row. 
+        /// When set to <c>false</c>, the items are arranged based on the number of items that are actually placed in the row. 
         /// </summary>
-        public int LastRealizedIndex => _realizedElements?.LastIndex ?? -1;
+        /// <remarks>
+        /// If <see cref="AllowDifferentSizedItems"/> is enabled, this property has no effect and the items are always 
+        /// arranged based on the number of items that are actually placed in the row.
+        /// </remarks>
+        public bool IsGridLayoutEnabled
+        {
+            get => GetValue(IsGridLayoutEnabledProperty);
+            set => SetValue(IsGridLayoutEnabledProperty, value);
+        }
+
+        // INFO: Not yet possible in Avalonia
+        // /// <summary>
+        // /// Gets value that indicates whether the <see cref="VirtualizingPanel"/> can virtualize items 
+        // /// that are grouped or organized in a hierarchy.
+        // /// </summary>
+        // /// <returns>always true for <see cref="VirtualizingWrapPanel"/></returns>
+        // protected override bool CanHierarchicallyScrollAndVirtualizeCore => true;
+
+        private static readonly Size InfiniteSize = new Size(double.PositiveInfinity, double.PositiveInfinity);
+
+        private static readonly Size FallbackItemSize = new Size(48, 48);
+
+        private static readonly object s_itemIsItsOwnContainer = new object();
+
+        private ItemContainerManager ItemContainerManager
+        {
+            get
+            {
+                if (_itemContainerManager is null)
+                {
+                    _itemContainerManager = new ItemContainerManager(
+                        this,
+                        AddInternalChild,
+                        child => RemoveInternalChildRange(Items.IndexOf(child), 1));
+                    _itemContainerManager.ItemsChanged += ItemContainerManager_ItemsChanged;
+                }
+
+                return _itemContainerManager;
+            }
+        }
+
+        private ItemContainerManager? _itemContainerManager;
+
+        /// <summary>
+        /// The cache length before and after the viewport. 
+        /// </summary>
+        private VirtualizationCacheLength cacheLength;
+
+        /// <summary>
+        /// The Unit of the cache length. Can be Pixel, Item or Page. 
+        /// When the ItemsOwner is a group item it can only be pixel or item.
+        /// </summary>
+        private VirtualizationCacheLengthUnit cacheLengthUnit;
+
+        private Size? sizeOfFirstItem;
+
+        private readonly Dictionary<object, Size> itemSizesCache = new Dictionary<object, Size>();
+        private Size? averageItemSizeCache;
+
+        private int startItemIndex = -1;
+        private int endItemIndex = -1;
+
+        private double startItemOffsetX = 0;
+        private double startItemOffsetY = 0;
+
+        private double knownExtendX = 0;
+
+        private int bringIntoViewItemIndex = -1;
+        private Control? bringIntoViewContainer;
+
+        private Control? _focusedElement;
+        private int _focusedIndex = -1;
+        private Control? _realizingElement;
+        private int _realizingIndex = -1;
+        private bool _isWaitingForViewportUpdate;
+        private bool _isInLayout;
+        private Dictionary<object, Stack<Control>>? _recyclePool;
+        private IScrollAnchorProvider? _scrollAnchorProvider;
+
+        public void ClearItemSizeCache()
+        {
+            itemSizesCache.Clear();
+            averageItemSizeCache = null;
+        }
 
         protected override Size MeasureOverride(Size availableSize)
         {
-            var items = Items;
-
-            if (items.Count == 0)
+            if (Items.Count == 0)
                 return default;
 
             var orientation = Orientation;
@@ -160,39 +223,35 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             // If we're bringing an item into view, ignore any layout passes until we receive a new
             // effective viewport.
             if (_isWaitingForViewportUpdate)
-                return EstimateDesiredSize(orientation, items.Count);
+                return new Size(100, 100); // TODO  EstimateDesiredSize(orientation, items.Count);
 
             _isInLayout = true;
 
             try
             {
-                _realizedElements?.ValidateStartU(Orientation);
-                _realizedElements?.ValidateStartV(Orientation);
-                _realizedElements ??= new();
-                _measureElements ??= new();
+                ItemContainerManager.IsRecycling = true;
 
-                // We handle horizontal and vertical layouts here so X and Y are abstracted to:
-                // - Horizontal layouts: U = horizontal, V = vertical
-                // - Vertical layouts: U = vertical, V = horizontal
-                var viewport = CalculateMeasureViewport(items);
+                MeasureBringIntoViewContainer(InfiniteSize);
 
-                // If the viewport is disjunct then we can recycle everything.
-                if (viewport.viewportIsDisjunct)
-                    _realizedElements.RecycleAllElements(_recycleElement);
+                Size newViewportSize = ItemsControl.Bounds.Size;
 
-                // Do the measure, creating/recycling elements as necessary to fill the viewport. Don't
-                // write to _realizedElements yet, only _measureElements.
-                RealizeElements(items, availableSize, ref viewport);
+                averageItemSizeCache = null;
 
-                // Now swap the measureElements and realizedElements collection.
-                (_measureElements, _realizedElements) = (_realizedElements, _measureElements);
-                _measureElements.ResetForReuse();
+                UpdateViewportSize(newViewportSize);
+                RealizeAndVirtualizeItems();
+                UpdateExtent();
 
-                // If there is a focused element is outside the visible viewport (i.e.
-                // _focusedElement is non-null), ensure it's measured.
-                _focusedElement?.Measure(availableSize);
+                const double Tolerance = 0.001;
 
-                return CalculateDesiredSize(orientation, items.Count, viewport);
+                if (GetY(ScrollOffset) != 0
+                    && GetY(ScrollOffset) + GetHeight(ViewportSize) > GetHeight(Extent) + Tolerance)
+                {
+                    ScrollOffset = CreatePoint(GetX(ScrollOffset),
+                        Math.Max(0, GetHeight(Extent) - GetHeight(ViewportSize)));
+                    return MeasureOverride(availableSize); // repeat measure with correct ScrollOffset
+                }
+
+                return CalculateDesiredSize(availableSize);
             }
             finally
             {
@@ -202,194 +261,744 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
 
         protected override Size ArrangeOverride(Size finalSize)
         {
-            if (_realizedElements is null)
-                return default;
+            ViewportSize = ItemsControl!.Bounds.Size; // finalSize;
 
-            _isInLayout = true;
+            ArrangeBringIntoViewContainer();
 
-            try
+            foreach (var cachedContainer in ItemContainerManager.CachedContainers)
             {
-                var orientation = Orientation;
-                var u = _realizedElements!.StartU;
-                var v = 0d;
+                cachedContainer.Arrange(new Rect(0, 0, 0, 0));
+            }
 
-                for (var i = 0; i < _realizedElements.Count; ++i)
-                {
-                    var e = _realizedElements.Elements[i];
-
-                    if (e is not null)
-                    {
-                        var sizeU = _realizedElements.SizeU[i];
-                        var sizeV = _realizedElements.SizeV[i];
-
-                        var nextLine = v + sizeV >
-                                       (orientation == Orientation.Horizontal ? finalSize.Height : finalSize.Width);
-
-                        if (nextLine)
-                        {
-                            u += sizeU;
-                            v = 0;
-                        }
-
-                        var rect = orientation == Orientation.Horizontal
-                            ? new Rect(u, v, sizeU, sizeV)
-                            : new Rect(v, u, sizeV, sizeU);
-
-                        e.Arrange(rect);
-                        _scrollAnchorProvider?.RegisterAnchorCandidate(e);
-
-                        v += orientation == Orientation.Horizontal ? rect.Height : rect.Width;
-                    }
-                }
-
-                // Ensure that the focused element is in the correct position.
-                if (_focusedElement is not null && _focusedIndex >= 0)
-                {
-                    u = GetOrEstimateElementU(_focusedIndex,
-                        orientation == Orientation.Horizontal ? finalSize.Height : finalSize.Width);
-					v = GetOrEstimateElementV(_focusedIndex,
-                        orientation == Orientation.Horizontal ? finalSize.Height : finalSize.Width);
-						
-                    var rect = orientation == Orientation.Horizontal
-                        ? new Rect(u, v, _focusedElement.DesiredSize.Width, finalSize.Height)
-                        : new Rect(v, u, finalSize.Width, _focusedElement.DesiredSize.Height);
-                    _focusedElement.Arrange(rect);
-                }
-
+            if (startItemIndex == -1)
+            {
                 return finalSize;
             }
-            finally
+
+            if (ItemContainerManager.RealizedContainers.Count < endItemIndex - startItemIndex + 1)
             {
-                _isInLayout = false;
-
-                RaiseEvent(new RoutedEventArgs(Orientation == Orientation.Horizontal
-                    ? HorizontalSnapPointsChangedEvent
-                    : VerticalSnapPointsChangedEvent));
+                throw new InvalidOperationException("Items must be distinct");
             }
+
+            double x = startItemOffsetX + GetX(ScrollOffset);
+            double y = startItemOffsetY - GetY(ScrollOffset);
+            double rowHeight = 0;
+            var rowChilds = new List<Control>();
+            var childSizes = new List<Size>();
+
+            for (int i = startItemIndex; i <= endItemIndex; i++)
+            {
+                var item = Items[i];
+                var child = ItemContainerManager.RealizedContainers[item];
+
+                Size? upfrontKnownItemSize = GetUpfrontKnownItemSize(item);
+
+                Size childSize = upfrontKnownItemSize ?? itemSizesCache[item];
+
+                if (rowChilds.Count > 0 && x + GetWidth(childSize) > GetWidth(finalSize))
+                {
+                    ArrangeRow(GetWidth(finalSize), rowChilds, childSizes, y);
+                    x = 0;
+                    y += rowHeight;
+                    rowHeight = 0;
+                    rowChilds.Clear();
+                    childSizes.Clear();
+                }
+
+                x += GetWidth(childSize);
+                rowHeight = Math.Max(rowHeight, GetHeight(childSize));
+                rowChilds.Add(child);
+                childSizes.Add(childSize);
+            }
+
+            if (rowChilds.Any())
+            {
+                ArrangeRow(GetWidth(finalSize), rowChilds, childSizes, y);
+            }
+
+            return finalSize;
         }
 
-        protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+        protected override Control? ScrollIntoView(int index)
         {
-            base.OnAttachedToVisualTree(e);
-            _scrollAnchorProvider = this.FindAncestorOfType<IScrollAnchorProvider>();
-        }
+            if (index < 0 || index >= Items.Count)
+            {
+                throw new ArgumentOutOfRangeException(nameof(index),
+                    $"The argument {nameof(index)} must be >= 0 and < the count of items.");
+            }
 
-        protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
-        {
-            base.OnDetachedFromVisualTree(e);
-            _scrollAnchorProvider = null;
-        }
+            var container = ItemsControl!.ContainerFromIndex(index); // (Control)ItemContainerManager.Realize(index);
 
-        protected override void OnItemsChanged(IReadOnlyList<object?> items, NotifyCollectionChangedEventArgs e)
-        {
+            bringIntoViewItemIndex = index;
+            bringIntoViewContainer = container;
+
+            // make sure the container is measured and arranged before calling BringIntoView        
             InvalidateMeasure();
+            UpdateLayout();
 
-            if (_realizedElements is null)
+            container?.BringIntoView();
+
+            return container;
+        }
+
+        private void ItemContainerManager_ItemsChanged(object? sender, ItemContainerManagerItemsChangedEventArgs e)
+        {
+            if (bringIntoViewItemIndex >= Items.Count)
+            {
+                bringIntoViewItemIndex = -1;
+                bringIntoViewContainer = null;
+            }
+
+            if (e.Action == NotifyCollectionChangedAction.Remove
+                || e.Action == NotifyCollectionChangedAction.Replace)
+            {
+                foreach (var key in itemSizesCache.Keys.Except(Items).ToList())
+                {
+                    itemSizesCache.Remove(key);
+                }
+            }
+            else if (e.Action == NotifyCollectionChangedAction.Reset)
+            {
+                itemSizesCache.Clear();
+
+                if (AllowDifferentSizedItems && ItemSizeProvider is null)
+                {
+                    ScrollOffset = new Point(0, 0);
+                }
+            }
+        }
+
+        protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+        {
+            base.OnPropertyChanged(change);
+
+            if (change.Property == OrientationProperty)
+            {
+                MouseWheelScrollDirection = Orientation == Orientation.Horizontal
+                    ? ScrollDirection.Vertical
+                    : ScrollDirection.Horizontal;
+                SetVerticalOffset(0);
+                SetHorizontalOffset(0);
+            }
+
+            if (change.Property == AllowDifferentSizedItemsProperty || change.Property == ItemSizeProperty)
+            {
+                foreach (var child in Children)
+                {
+                    child.InvalidateMeasure();
+                }
+            }
+        }
+
+
+        private void MeasureBringIntoViewContainer(Size availableSize)
+        {
+            if (bringIntoViewContainer is not null && !bringIntoViewContainer.IsMeasureValid)
+            {
+                bringIntoViewContainer.Measure(GetUpfrontKnownItemSize(Items[bringIntoViewItemIndex]) ?? availableSize);
+                sizeOfFirstItem ??= bringIntoViewContainer.DesiredSize;
+            }
+        }
+
+        private void ArrangeBringIntoViewContainer()
+        {
+            if (bringIntoViewContainer is not null)
+            {
+                var offset = FindItemOffset(bringIntoViewItemIndex);
+                offset = new Point(offset.X - ScrollOffset.X, offset.Y - ScrollOffset.Y);
+                var size = GetUpfrontKnownItemSize(Items[bringIntoViewItemIndex]) ?? bringIntoViewContainer.DesiredSize;
+                bringIntoViewContainer.Arrange(new Rect(offset, size));
+            }
+        }
+
+        private void RealizeAndVirtualizeItems()
+        {
+            FindStartIndexAndOffset();
+            VirtualizeItemsBeforeStartIndex();
+            RealizeItemsAndFindEndIndex();
+            VirtualizeItemsAfterEndIndex();
+        }
+
+        private Size GetAverageItemSize()
+        {
+            if (!ItemSize.NearlyEquals(EmptySize))
+            {
+                return ItemSize;
+            }
+            else if (!AllowDifferentSizedItems)
+            {
+                return sizeOfFirstItem ?? FallbackItemSize;
+            }
+            else
+            {
+                return averageItemSizeCache ??= CalculateAverageItemSize();
+            }
+        }
+
+        private Point FindItemOffset(int itemIndex)
+        {
+            double x = 0, y = 0, rowHeight = 0;
+
+            for (int i = 0; i <= itemIndex; i++)
+            {
+                Size itemSize = GetAssumedItemSize(Items[i]);
+
+                if (x != 0 && x + GetWidth(itemSize) > GetWidth(ViewportSize))
+                {
+                    x = 0;
+                    y += rowHeight;
+                    rowHeight = 0;
+                }
+
+                if (i != itemIndex)
+                {
+                    x += GetWidth(itemSize);
+                    rowHeight = Math.Max(rowHeight, GetHeight(itemSize));
+                }
+            }
+
+            return CreatePoint(x, y);
+        }
+
+        private void UpdateViewportSize(Size newViewportSize)
+        {
+            if (newViewportSize != ViewportSize)
+            {
+                ViewportSize = newViewportSize;
+            }
+        }
+
+        private void FindStartIndexAndOffset()
+        {
+            if (ViewportSize.Width == 0 && ViewportSize.Height == 0)
+            {
+                startItemIndex = -1;
+                startItemOffsetX = 0;
+                startItemOffsetY = 0;
                 return;
+            }
 
-            switch (e.Action)
+            double startOffsetY = DetermineStartOffsetY();
+
+            if (startOffsetY <= 0)
             {
-                case NotifyCollectionChangedAction.Add:
-                    _realizedElements.ItemsInserted(e.NewStartingIndex, e.NewItems!.Count, _updateElementIndex);
+                startItemIndex = Items.Count > 0 ? 0 : -1;
+                startItemOffsetX = 0;
+                startItemOffsetY = 0;
+                return;
+            }
+
+            startItemIndex = -1;
+
+            double x = 0, y = 0, rowHeight = 0;
+            int indexOfFirstRowItem = 0;
+
+            int itemIndex = 0;
+            foreach (var item in Items)
+            {
+                Size itemSize = GetAssumedItemSize(item);
+
+                if (x + GetWidth(itemSize) > GetWidth(ViewportSize) && x != 0)
+                {
+                    x = 0;
+                    y += rowHeight;
+                    rowHeight = 0;
+                    indexOfFirstRowItem = itemIndex;
+                }
+
+                x += GetWidth(itemSize);
+                rowHeight = Math.Max(rowHeight, GetHeight(itemSize));
+
+                if (y + rowHeight > startOffsetY)
+                {
+                    if (cacheLengthUnit == VirtualizationCacheLengthUnit.Item)
+                    {
+                        startItemIndex = Math.Max(indexOfFirstRowItem - (int)cacheLength.CacheBeforeViewport, 0);
+                        var itemOffset = FindItemOffset(startItemIndex);
+                        startItemOffsetX = GetX(itemOffset);
+                        startItemOffsetY = GetY(itemOffset);
+                    }
+                    else
+                    {
+                        startItemIndex = indexOfFirstRowItem;
+                        startItemOffsetX = 0;
+                        startItemOffsetY = y;
+                    }
+
                     break;
-                case NotifyCollectionChangedAction.Remove:
-                    _realizedElements.ItemsRemoved(e.OldStartingIndex, e.OldItems!.Count, _updateElementIndex, _recycleElementOnItemRemoved);
-                    break;
-                case NotifyCollectionChangedAction.Replace:
-                    _realizedElements.ItemsReplaced(e.OldStartingIndex, e.OldItems!.Count, _recycleElementOnItemRemoved);
-                    break;
-                case NotifyCollectionChangedAction.Move:
-                    _realizedElements.ItemsRemoved(e.OldStartingIndex, e.OldItems!.Count, _updateElementIndex, _recycleElementOnItemRemoved);
-                    _realizedElements.ItemsInserted(e.NewStartingIndex, e.NewItems!.Count, _updateElementIndex);
-                    break;
-                case NotifyCollectionChangedAction.Reset:
-                    _realizedElements.ItemsReset(_recycleElementOnItemRemoved);
-                    break;
+                }
+
+                itemIndex++;
+            }
+
+            // make sure that at least one item is realized to allow correct calculation of the extend
+            if (startItemIndex == -1 && Items.Count > 0)
+            {
+                startItemIndex = Items.Count - 1;
+                startItemOffsetX = x;
+                startItemOffsetY = y;
             }
         }
 
-        protected override void OnItemsControlChanged(ItemsControl? oldValue)
+        private void RealizeItemsAndFindEndIndex()
         {
-            base.OnItemsControlChanged(oldValue);
+            if (startItemIndex == -1)
+            {
+                endItemIndex = -1;
+                knownExtendX = 0;
+                return;
+            }
 
-            if (oldValue is not null)
-                oldValue.PropertyChanged -= OnItemsControlPropertyChanged;
-            if (ItemsControl is not null)
-                ItemsControl.PropertyChanged += OnItemsControlPropertyChanged;
+            int newEndItemIndex = Items.Count - 1;
+            bool endItemIndexFound = false;
+
+            double endOffsetY = DetermineEndOffsetY();
+
+            double x = startItemOffsetX;
+            double y = startItemOffsetY;
+            double rowHeight = 0;
+
+            knownExtendX = 0;
+
+            for (int itemIndex = startItemIndex; itemIndex <= newEndItemIndex; itemIndex++)
+            {
+                if (itemIndex == 0)
+                {
+                    sizeOfFirstItem = null;
+                }
+
+                object item = Items[itemIndex];
+
+                var container = ItemContainerManager.Realize(itemIndex);
+                
+                if (container == bringIntoViewContainer)
+                {
+                    bringIntoViewItemIndex = -1;
+                    bringIntoViewContainer = null;
+                }
+
+                Size? upfrontKnownItemSize = GetUpfrontKnownItemSize(item);
+
+                container.Measure(upfrontKnownItemSize ?? InfiniteSize);
+
+                var containerSize = DetermineContainerSize(item, container, upfrontKnownItemSize);
+
+                if (AllowDifferentSizedItems == false && sizeOfFirstItem is null)
+                {
+                    sizeOfFirstItem = containerSize;
+                }
+
+                if (x != 0 && x + GetWidth(containerSize) > GetWidth(ViewportSize))
+                {
+                    x = 0;
+                    y += rowHeight;
+                    rowHeight = 0;
+                }
+
+                x += GetWidth(containerSize);
+                knownExtendX = Math.Max(x, knownExtendX);
+                rowHeight = Math.Max(rowHeight, GetHeight(containerSize));
+
+                if (endItemIndexFound == false)
+                {
+                    if (y >= endOffsetY
+                        || (AllowDifferentSizedItems == false
+                            && x + GetWidth(sizeOfFirstItem!.Value) > GetWidth(ViewportSize)
+                            && y + rowHeight >= endOffsetY))
+                    {
+                        endItemIndexFound = true;
+
+                        newEndItemIndex = itemIndex;
+
+                        if (cacheLengthUnit == VirtualizationCacheLengthUnit.Item)
+                        {
+                            newEndItemIndex = Math.Min(newEndItemIndex + (int)cacheLength.CacheAfterViewport,
+                                Items.Count - 1);
+                            // loop continues unitl newEndItemIndex is reached
+                        }
+                    }
+                }
+            }
+
+            endItemIndex = newEndItemIndex;
         }
 
-        protected override IInputElement? GetControl(NavigationDirection direction, IInputElement? from, bool wrap)
+        private Size DetermineContainerSize(object item, Control container, Size? upfrontKnownItemSize)
         {
-            var count = Items.Count;
-            var fromControl = from as Control;
+            Size containerSize = upfrontKnownItemSize ?? container.DesiredSize;
 
-            if (count == 0 ||
-                (fromControl is null && direction is not NavigationDirection.First and not NavigationDirection.Last))
-                return null;
-
-            var horiz = Orientation == Orientation.Horizontal;
-            var fromIndex = fromControl != null ? IndexFromContainer(fromControl) : -1;
-            var toIndex = fromIndex;
-
-            switch (direction)
+            if (AllowDifferentSizedItems)
             {
-                case NavigationDirection.First:
-                    toIndex = 0;
+                itemSizesCache[item] = containerSize;
+            }
+
+            return containerSize;
+        }
+
+        private void VirtualizeItemsBeforeStartIndex()
+        {
+            var containers = ItemContainerManager.RealizedContainers.Values.ToList();
+            foreach (var container in containers.Where(container => container != bringIntoViewContainer))
+            {
+                int itemIndex = GetIndexFromContainer(container);
+
+                if (itemIndex < startItemIndex)
+                {
+                    ItemContainerManager.Virtualize(container);
+                }
+            }
+        }
+
+        private void VirtualizeItemsAfterEndIndex()
+        {
+            var containers = ItemContainerManager.RealizedContainers.Values.ToList();
+            foreach (var container in containers.Where(container => container != bringIntoViewContainer))
+            {
+                int itemIndex = GetIndexFromContainer(container);
+
+                if (itemIndex > endItemIndex)
+                {
+                    ItemContainerManager.Virtualize(container);
+                }
+            }
+        }
+
+        private void UpdateExtent()
+        {
+            Size extent;
+
+            if (startItemIndex == -1)
+            {
+                extent = new Size(0, 0);
+            }
+            else if (!AllowDifferentSizedItems)
+            {
+                extent = CalculateExtentForSameSizedItems();
+            }
+            else
+            {
+                extent = CalculateExtentForDifferentSizedItems();
+            }
+
+            if (extent != Extent)
+            {
+                Extent = extent;
+            }
+        }
+
+        private Size CalculateExtentForSameSizedItems()
+        {
+            var itemSize = !ItemSize.NearlyEquals(EmptySize) ? ItemSize : sizeOfFirstItem!.Value;
+            int itemsPerRow = (int)Math.Max(1, Math.Floor(GetWidth(ViewportSize) / GetWidth(itemSize)));
+            double extentY = Math.Ceiling(((double)Items.Count) / itemsPerRow) * GetHeight(itemSize);
+            return CreateSize(knownExtendX, extentY);
+        }
+
+        private Size CalculateExtentForDifferentSizedItems()
+        {
+            double x = 0;
+            double y = 0;
+            double rowHeight = 0;
+
+            foreach (var item in Items)
+            {
+                Size itemSize = GetAssumedItemSize(item);
+
+                if (x + GetWidth(itemSize) > GetWidth(ViewportSize) && x != 0)
+                {
+                    x = 0;
+                    y += rowHeight;
+                    rowHeight = 0;
+                }
+
+                x += GetWidth(itemSize);
+                rowHeight = Math.Max(rowHeight, GetHeight(itemSize));
+            }
+
+            return CreateSize(knownExtendX, y + rowHeight);
+        }
+
+        private Size CalculateDesiredSize(Size availableSize)
+        {
+            double desiredWidth = Math.Min(availableSize.Width, Extent.Width);
+            double desiredHeight = Math.Min(availableSize.Height, Extent.Height);
+
+            return new Size(desiredWidth, desiredHeight);
+        }
+
+        private double DetermineStartOffsetY()
+        {
+            double cacheLength = 0;
+
+            if (cacheLengthUnit == VirtualizationCacheLengthUnit.Page)
+            {
+                cacheLength = this.cacheLength.CacheBeforeViewport * GetHeight(ViewportSize);
+            }
+            else if (cacheLengthUnit == VirtualizationCacheLengthUnit.Pixel)
+            {
+                cacheLength = this.cacheLength.CacheBeforeViewport;
+            }
+
+            return Math.Max(GetY(ScrollOffset) - cacheLength, 0);
+        }
+
+        private double DetermineEndOffsetY()
+        {
+            double cacheLength = 0;
+
+            if (cacheLengthUnit == VirtualizationCacheLengthUnit.Page)
+            {
+                cacheLength = this.cacheLength.CacheAfterViewport * GetHeight(ViewportSize);
+            }
+            else if (cacheLengthUnit == VirtualizationCacheLengthUnit.Pixel)
+            {
+                cacheLength = this.cacheLength.CacheAfterViewport;
+            }
+
+            return Math.Max(GetY(ScrollOffset), 0) + GetHeight(ViewportSize) + cacheLength;
+        }
+
+        private Size? GetUpfrontKnownItemSize(object item)
+        {
+            if (!ItemSize.NearlyEquals(EmptySize))
+            {
+                return ItemSize;
+            }
+
+            if (!AllowDifferentSizedItems && sizeOfFirstItem != null)
+            {
+                return sizeOfFirstItem;
+            }
+
+            if (ItemSizeProvider != null)
+            {
+                return ItemSizeProvider.GetSizeForItem(item);
+            }
+
+            return null;
+        }
+
+        private Size GetAssumedItemSize(object item)
+        {
+            if (GetUpfrontKnownItemSize(item) is Size upfrontKnownItemSize)
+            {
+                return upfrontKnownItemSize;
+            }
+
+            if (itemSizesCache.TryGetValue(item, out Size cachedItemSize))
+            {
+                return cachedItemSize;
+            }
+
+            return GetAverageItemSize();
+        }
+
+        private void ArrangeRow(double rowWidth, List<Control> children, List<Size> childSizes, double y)
+        {
+            double summedUpChildWidth;
+            double extraWidth = 0;
+
+            if (AllowDifferentSizedItems)
+            {
+                summedUpChildWidth = childSizes.Sum(childSize => GetWidth(childSize));
+
+                if (StretchItems)
+                {
+                    double unusedWidth = rowWidth - summedUpChildWidth;
+                    extraWidth = unusedWidth / children.Count;
+                    summedUpChildWidth = rowWidth;
+                }
+            }
+            else
+            {
+                double childWidth = GetWidth(childSizes[0]);
+                int itemsPerRow = IsGridLayoutEnabled
+                    ? (int)Math.Max(Math.Floor(rowWidth / childWidth), 1)
+                    : children.Count;
+
+                if (StretchItems)
+                {
+                    var firstChild = children[0];
+                    double maxWidth = Orientation == Orientation.Horizontal
+                        ? firstChild.MaxWidth
+                        : firstChild.MaxHeight;
+                    double stretchedChildWidth = Math.Min(rowWidth / itemsPerRow, maxWidth);
+                    stretchedChildWidth =
+                        Math.Max(stretchedChildWidth, childWidth); // ItemSize might be greater than MaxWidth/MaxHeight
+                    extraWidth = stretchedChildWidth - childWidth;
+                    summedUpChildWidth = itemsPerRow * stretchedChildWidth;
+                }
+                else
+                {
+                    summedUpChildWidth = itemsPerRow * childWidth;
+                }
+            }
+
+            double innerSpacing = 0;
+            double outerSpacing = 0;
+
+            if (summedUpChildWidth < rowWidth)
+            {
+                CalculateRowSpacing(rowWidth, children, summedUpChildWidth, out innerSpacing, out outerSpacing);
+            }
+
+            double x = -GetX(ScrollOffset) + outerSpacing;
+
+            for (int i = 0; i < children.Count; i++)
+            {
+                var child = children[i];
+                Size childSize = childSizes[i];
+                child.Arrange(CreateRect(x, y, GetWidth(childSize) + extraWidth, GetHeight(childSize)));
+                x += GetWidth(childSize) + extraWidth + innerSpacing;
+            }
+        }
+
+        private void CalculateRowSpacing(double rowWidth, List<Control> children, double summedUpChildWidth,
+            out double innerSpacing, out double outerSpacing)
+        {
+            int childCount;
+
+            if (AllowDifferentSizedItems)
+            {
+                childCount = children.Count;
+            }
+            else
+            {
+                childCount = IsGridLayoutEnabled
+                    ? (int)Math.Max(1, Math.Floor(rowWidth / GetWidth(sizeOfFirstItem!.Value)))
+                    : children.Count;
+            }
+
+            double unusedWidth = Math.Max(0, rowWidth - summedUpChildWidth);
+
+            switch (SpacingMode)
+            {
+                case SpacingMode.Uniform:
+                    innerSpacing = outerSpacing = unusedWidth / (childCount + 1);
                     break;
-                case NavigationDirection.Last:
-                    toIndex = count - 1;
+
+                case SpacingMode.BetweenItemsOnly:
+                    innerSpacing = unusedWidth / Math.Max(childCount - 1, 1);
+                    outerSpacing = 0;
                     break;
-                case NavigationDirection.Next:
-                    ++toIndex;
+
+                case SpacingMode.StartAndEndOnly:
+                    innerSpacing = 0;
+                    outerSpacing = unusedWidth / 2;
                     break;
-                case NavigationDirection.Previous:
-                    --toIndex;
-                    break;
-                case NavigationDirection.Left:
-                    if (horiz)
-                        --toIndex;
-                    break;
-                case NavigationDirection.Right:
-                    if (horiz)
-                        ++toIndex;
-                    break;
-                case NavigationDirection.Up:
-                    if (!horiz)
-                        --toIndex;
-                    break;
-                case NavigationDirection.Down:
-                    if (!horiz)
-                        ++toIndex;
-                    break;
+
+                case SpacingMode.None:
                 default:
-                    return null;
+                    innerSpacing = 0;
+                    outerSpacing = 0;
+                    break;
             }
-
-            if (fromIndex == toIndex)
-                return from;
-
-            if (wrap)
-            {
-                if (toIndex < 0)
-                    toIndex = count - 1;
-                else if (toIndex >= count)
-                    toIndex = 0;
-            }
-
-            return ScrollIntoView(toIndex);
         }
 
-        protected override IEnumerable<Control>? GetRealizedContainers()
+        private Size CalculateAverageItemSize()
         {
-            return _realizedElements?.Elements.Where(x => x is not null)!;
+            if (itemSizesCache.Values.Count > 0)
+            {
+                return new Size(
+                    Math.Round(itemSizesCache.Values.Average(size => size.Width)),
+                    Math.Round(itemSizesCache.Values.Average(size => size.Height)));
+            }
+
+            return FallbackItemSize;
         }
+
+        #region scroll info
+
+        // TODO determine exact scoll amount for item based scrolling when AllowDifferentSizedItems is true
+
+        protected override double GetLineUpScrollAmount()
+        {
+            return -Math.Min(GetAverageItemSize().Height * ScrollLineDeltaItem, ViewportSize.Height);
+        }
+
+        protected override double GetLineDownScrollAmount()
+        {
+            return Math.Min(GetAverageItemSize().Height * ScrollLineDeltaItem, ViewportSize.Height);
+        }
+
+        protected override double GetLineLeftScrollAmount()
+        {
+            return -Math.Min(GetAverageItemSize().Width * ScrollLineDeltaItem, ViewportSize.Width);
+        }
+
+        protected override double GetLineRightScrollAmount()
+        {
+            return Math.Min(GetAverageItemSize().Width * ScrollLineDeltaItem, ViewportSize.Width);
+        }
+
+        protected override double GetMouseWheelUpScrollAmount()
+        {
+            return -Math.Min(GetAverageItemSize().Height * MouseWheelDeltaItem, ViewportSize.Height);
+        }
+
+        protected override double GetMouseWheelDownScrollAmount()
+        {
+            return Math.Min(GetAverageItemSize().Height * MouseWheelDeltaItem, ViewportSize.Height);
+        }
+
+        protected override double GetMouseWheelLeftScrollAmount()
+        {
+            return -Math.Min(GetAverageItemSize().Width * MouseWheelDeltaItem, ViewportSize.Width);
+        }
+
+        protected override double GetMouseWheelRightScrollAmount()
+        {
+            return Math.Min(GetAverageItemSize().Width * MouseWheelDeltaItem, ViewportSize.Width);
+        }
+
+        protected override double GetPageUpScrollAmount()
+        {
+            return -ViewportSize.Height;
+        }
+
+        protected override double GetPageDownScrollAmount()
+        {
+            return ViewportSize.Height;
+        }
+
+        protected override double GetPageLeftScrollAmount()
+        {
+            return -ViewportSize.Width;
+        }
+
+        protected override double GetPageRightScrollAmount()
+        {
+            return ViewportSize.Width;
+        }
+
+        #endregion
+
+        #region orientation aware helper methods
+
+        private double GetX(Point point) => Orientation == Orientation.Horizontal ? point.X : point.Y;
+        private double GetY(Point point) => Orientation == Orientation.Horizontal ? point.Y : point.X;
+        private double GetRowWidth(Size size) => Orientation == Orientation.Vertical ? size.Width : size.Height;
+        private double GetWidth(Size size) => Orientation == Orientation.Horizontal ? size.Width : size.Height;
+        private double GetHeight(Size size) => Orientation == Orientation.Horizontal ? size.Height : size.Width;
+
+        private Point CreatePoint(double x, double y) =>
+            Orientation == Orientation.Horizontal ? new Point(x, y) : new Point(y, x);
+
+        private Size CreateSize(double width, double height) => Orientation == Orientation.Horizontal
+            ? new Size(width, height)
+            : new Size(height, width);
+
+        private Rect CreateRect(double x, double y, double width, double height) =>
+            Orientation == Orientation.Horizontal ? new Rect(x, y, width, height) : new Rect(y, x, height, width);
+
+        #endregion
 
         protected override Control? ContainerFromIndex(int index)
         {
             if (index < 0 || index >= Items.Count)
                 return null;
-            if (_scrollToIndex == index)
-                return _scrollToElement;
+            if (bringIntoViewItemIndex == index)
+                return bringIntoViewContainer;
             if (_focusedIndex == index)
                 return _focusedElement;
             if (index == _realizingIndex)
@@ -403,467 +1012,39 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
 
         protected override int IndexFromContainer(Control container)
         {
-            if (container == _scrollToElement)
-                return _scrollToIndex;
+            if (container == bringIntoViewContainer)
+                return bringIntoViewItemIndex;
             if (container == _focusedElement)
                 return _focusedIndex;
             if (container == _realizingElement)
                 return _realizingIndex;
-            return _realizedElements?.GetIndex(container) ?? -1;
+            return _itemContainerManager?.GetIndex(container) ?? -1;
         }
 
-        protected override Control? ScrollIntoView(int index)
+        internal int GetIndexFromContainer(Control container) => IndexFromContainer(container);
+
+        protected override IEnumerable<Control>? GetRealizedContainers()
         {
-            var items = Items;
-
-            if (_isInLayout || index < 0 || index >= items.Count || _realizedElements is null || !IsEffectivelyVisible)
-                return null;
-
-            if (GetRealizedElement(index) is Control element)
-            {
-                element.BringIntoView();
-                return element;
-            }
-            else if (this.GetVisualRoot() is ILayoutRoot root)
-            {
-                // Create and measure the element to be brought into view. Store it in a field so that
-                // it can be re-used in the layout pass.
-                var scrollToElement = GetOrCreateElement(items, index);
-                scrollToElement.Measure(Size.Infinity);
-
-                // Get the expected position of the element and put it in place.
-                var anchorU = GetOrEstimateElementU(index,
-                    Orientation == Orientation.Horizontal ? _viewport.Height : _viewport.Width);
-					
-				var anchorV = GetOrEstimateElementV(index,
-                    Orientation == Orientation.Horizontal ? _viewport.Width : _viewport.Height);
-
-
-                var rect = Orientation == Orientation.Horizontal
-                    ? new Rect(anchorU, anchorV, scrollToElement.DesiredSize.Width, scrollToElement.DesiredSize.Height)
-                    : new Rect(anchorV, anchorU, scrollToElement.DesiredSize.Width, scrollToElement.DesiredSize.Height);
-                scrollToElement.Arrange(rect);
-
-                // Store the element and index so that they can be used in the layout pass.
-                _scrollToElement = scrollToElement;
-                _scrollToIndex = index;
-
-                // If the item being brought into view was added since the last layout pass then
-                // our bounds won't be updated, so any containing scroll viewers will not have an
-                // updated extent. Do a layout pass to ensure that the containing scroll viewers
-                // will be able to scroll the new item into view.
-                if (!Bounds.Contains(rect) && !_viewport.Contains(rect))
-                {
-                    _isWaitingForViewportUpdate = true;
-                    root.ExecuteLayoutPass();
-                    _isWaitingForViewportUpdate = false;
-                }
-
-                // Try to bring the item into view.
-                scrollToElement.BringIntoView();
-
-                // If the viewport does not contain the item to scroll to, set _isWaitingForViewportUpdate:
-                // this should cause the following chain of events:
-                // - Measure is first done with the old viewport (which will be a no-op, see MeasureOverride)
-                // - The viewport is then updated by the layout system which invalidates our measure
-                // - Measure is then done with the new viewport.
-                _isWaitingForViewportUpdate = !_viewport.Contains(rect);
-                root.ExecuteLayoutPass();
-
-                // If for some reason the layout system didn't give us a new viewport during the layout, we
-                // need to do another layout pass as the one that took place was a no-op.
-                if (_isWaitingForViewportUpdate)
-                {
-                    _isWaitingForViewportUpdate = false;
-                    InvalidateMeasure();
-                    root.ExecuteLayoutPass();
-                }
-
-                // During the previous BringIntoView, the scroll width extent might have been out of date if
-                // elements have different widths. Because of that, the ScrollViewer might not scroll to the correct offset.
-                // After the previous BringIntoView, Y offset should be correct and an extra layout pass has been executed,
-                // hence the width extent should be correct now, and we can try to scroll again.
-                scrollToElement.BringIntoView();
-
-                _scrollToElement = null;
-                _scrollToIndex = -1;
-                return scrollToElement;
-            }
-
-            return null;
+            return ItemContainerManager.RealizedContainers.Values;
         }
 
-        internal IReadOnlyList<Control?> GetRealizedElements()
+        protected override IInputElement? GetControl(NavigationDirection direction, IInputElement? from, bool wrap)
         {
-            return _realizedElements?.Elements ?? Array.Empty<Control>();
+            throw new NotImplementedException();
         }
 
-        private MeasureViewport CalculateMeasureViewport(IReadOnlyList<object?> items)
+        internal ItemCollection? GetItems()
         {
-            Debug.Assert(_realizedElements is not null);
-
-            var viewport = _viewport;
-
-            // Get the viewport in the orientation direction.
-            var viewportUStart = Orientation == Orientation.Horizontal ? viewport.X : viewport.Y;
-            var viewportUEnd = Orientation == Orientation.Horizontal ? viewport.Right : viewport.Bottom;
-
-            var viewportVEnd = Orientation == Orientation.Horizontal ? viewport.Bottom : viewport.Right;
-
-            // Get or estimate the anchor element from which to start realization. If we are
-            // scrolling to an element, use that as the anchor element. Otherwise, estimate the
-            // anchor element based on the current viewport.
-            int anchorIndex;
-            double anchorU, anchorV;
-
-            if (_scrollToIndex >= 0 && _scrollToElement is not null)
-            {
-                anchorIndex = _scrollToIndex;
-                anchorU = _scrollToElement.Bounds.Top;
-                anchorV = _scrollToElement.Bounds.Left;
-            }
-            else
-            {
-                GetOrEstimateAnchorElementForViewport(
-                    viewportUStart,
-                    viewportUEnd,
-                    viewportVEnd,
-                    items.Count,
-                    out anchorIndex,
-                    out anchorU, 
-                    out anchorV);
-            }
-
-            // Check if the anchor element is not within the currently realized elements.
-            var disjunct = anchorIndex < _realizedElements.FirstIndex ||
-                           anchorIndex > _realizedElements.LastIndex;
-
-            return new MeasureViewport
-            {
-                anchorIndex = anchorIndex,
-                anchorU = anchorU,
-                anchorV = anchorV,
-                viewportUStart = viewportUStart,
-                viewportUEnd = viewportUEnd,
-                viewportVEnd = viewportVEnd,
-                viewportIsDisjunct = disjunct,
-            };
-        }
-
-        private Size CalculateDesiredSize(Orientation orientation, int itemCount, in MeasureViewport viewport)
-        {
-            var sizeU = 0.0;
-            var sizeV = viewport.measuredV;
-
-            if (viewport.lastIndex >= 0)
-            {
-                var remaining = itemCount - viewport.lastIndex - 1;
-                sizeU = viewport.realizedEndU + (remaining * _lastEstimatedElementSizeU / _elementsPerRow);
-            }
-
-            return orientation == Orientation.Horizontal ? new(sizeU, viewport.viewportVEnd) : new(viewport.viewportVEnd, sizeU);
-        }
-
-        private Size EstimateDesiredSize(Orientation orientation, int itemCount)
-        {
-            if (_scrollToIndex >= 0 && _scrollToElement is not null)
-            {
-                // We have an element to scroll to, so we can estimate the desired size based on the
-                // element's position and the remaining elements.
-                var remaining = itemCount - _scrollToIndex - 1;
-                var u = orientation == Orientation.Horizontal
-                    ? _scrollToElement.Bounds.Right
-                    : _scrollToElement.Bounds.Bottom;
-                var sizeU = u + ((int)(remaining * 1.0 / _elementsPerRow) * _lastEstimatedElementSizeU );
-
-                return orientation == Orientation.Horizontal
-                    ? new(sizeU, DesiredSize.Height)
-                    : new(DesiredSize.Width, sizeU);
-            }
-
-            return DesiredSize;
-        }
-
-        private double EstimateElementSizeU()
-        {
-            if (_realizedElements is null)
-                return _lastEstimatedElementSizeU;
-
-            var orientation = Orientation;
-            var total = 0.0;
-            var divisor = 0.0;
-
-            // Average the desired size of the realized, measured elements.
-            foreach (var element in _realizedElements.Elements)
-            {
-                if (element is null || !element.IsMeasureValid)
-                    continue;
-                var sizeU = orientation == Orientation.Horizontal
-                    ? element.DesiredSize.Width
-                    : element.DesiredSize.Height;
-                total += sizeU;
-                ++divisor;
-            }
-
-            // Check we have enough information on which to base our estimate.
-            if (divisor == 0 || total == 0)
-                return _lastEstimatedElementSizeU;
-
-            // Store and return the estimate.
-            return _lastEstimatedElementSizeU = total / divisor / _elementsPerRow;
-        }
-
-        private double EstimateElementSizeV()
-        {
-            if (_realizedElements is null)
-                return _lastEstimatedElementSizeV;
-
-            var orientation = Orientation;
-            var total = 0.0;
-            var divisor = 0;
-            var viewportEndV = orientation == Orientation.Horizontal ? _viewport.Height : _viewport.Width;
-
-
-            // Average the desired size of the realized, measured elements.
-            foreach (var element in _realizedElements.Elements)
-            {
-                if (element is null || !element.IsMeasureValid)
-                    continue;
-                var sizeV = orientation == Orientation.Horizontal
-                    ? element.DesiredSize.Height
-                    : element.DesiredSize.Width;
-                total += sizeV;
-                divisor++;
-
-                if (total + sizeV > viewportEndV)
-                {
-                    _elementsPerRow = divisor > 0 ? divisor : 1;
-                    break;
-                }
-            }
-
-            // Check we have enough information on which to base our estimate.
-            if (divisor == 0 || total == 0)
-            {
-                _elementsPerRow = 1;
-                return _lastEstimatedElementSizeV;
-            }
-
-            // Store and return the estimate.
-            return _lastEstimatedElementSizeV = total / divisor;
-        }
-
-
-        private void GetOrEstimateAnchorElementForViewport(
-            double viewportStartU,
-            double viewportEndU,
-            double viewportEndV,
-            int itemCount,
-            out int index,
-            out double anchorU, 
-            out double anchorV)
-        {
-            // We have no elements, or we're at the start of the viewport.
-            if (itemCount <= 0 || MathUtilities.IsZero(viewportStartU))
-            {
-                index = 0;
-                anchorU = 0;
-                anchorV = 0;
-                return;
-            }
-
-            // If we have realised elements and a valid StartU then try to use this information to
-            // get the anchor element.
-            if (_realizedElements?.StartU is { } u && !double.IsNaN(u))
-            {
-                var orientation = Orientation;
-
-                var idx = 0; // helper to get the index to use
-                var itemsPerRow = 0;
-                var v = 0d;
-                var endU = 0d;
-
-                for (var i = 0; i < _realizedElements.Elements.Count; ++i)
-                {
-                    if (_realizedElements.Elements[i] is not { } element)
-                        continue;
-
-                    var sizeU = orientation == Orientation.Horizontal
-                        ? element.DesiredSize.Width
-                        : element.DesiredSize.Height;
-
-                    var sizeV = orientation == Orientation.Horizontal
-                        ? element.DesiredSize.Height
-                        : element.DesiredSize.Width;
-
-
-                    v += sizeV;
-
-
-                    if (v > viewportEndV)
-                    {
-                        idx++;
-                        v = 0;
-                        endU = u + sizeU;
-                    }
-
-                    if (endU > viewportStartU && u < viewportEndU)
-                    {
-                        idx++;
-                        itemsPerRow = (int)(viewportEndV / sizeV);
-                        index = _realizedElements.FirstIndex + idx * itemsPerRow;
-                        index = Math.Min(index, Items.Count - 1);
-                        anchorU = u;
-                        anchorV = v;
-                        return;
-                    }
-                }
-            }
-
-
-            // We don't have any realized elements in the requested viewport, or can't rely on
-            // StartU being valid. Estimate the index using only the estimated element size.
-            var estimatedSizeU = EstimateElementSizeU();
-            var estimatedSizeV = EstimateElementSizeV();
-
-            // Estimate the element at the start of the viewport.
-            var startIndex = Math.Min((int)(viewportStartU / estimatedSizeU / _elementsPerRow), itemCount - 1);
-            index = startIndex;
-            anchorU = (int)(startIndex * 1.0 / _elementsPerRow) * estimatedSizeU;
-            anchorV = (int)(startIndex * 1.0 / _elementsPerRow) * estimatedSizeV;
-        }
-
-        private double GetOrEstimateElementU(int index, double viewportEndV)
-        {
-            // Return the position of the existing element if realized.
-            var u = _realizedElements?.GetElementU(index) ?? double.NaN;
-
-            if (!double.IsNaN(u))
-                return u;
-
-            // Estimate the element size.
-            var estimatedSizeU = EstimateElementSizeU();
-            var estimatedSizeV = EstimateElementSizeV();
-
-            // TODO: Use _startU to work this out.
-            return (int)(index * 1.0 / _elementsPerRow) * estimatedSizeU;
+            return ItemsControl?.Items;
         }
         
-        private double GetOrEstimateElementV(int index, double viewportEndV)
-        {
-            // Return the position of the existing element if realized.
-            var v = _realizedElements?.GetElementV(index) ?? double.NaN;
-
-            if (!double.IsNaN(v))
-                return v;
-
-            // Estimate the element size.
-            var estimatedSizeU = EstimateElementSizeU();
-            var estimatedSizeV = EstimateElementSizeV();
-
-            // TODO: Use _startU to work this out.
-            return (int)(index * 1.0 / _elementsPerRow) * estimatedSizeV;
-        }
-
-
-        private void RealizeElements(
-            IReadOnlyList<object?> items,
-            Size availableSize,
-            ref MeasureViewport viewport)
-        {
-            Debug.Assert(_measureElements is not null);
-            Debug.Assert(_realizedElements is not null);
-            Debug.Assert(items.Count > 0);
-
-            var index = viewport.anchorIndex;
-            var horizontal = Orientation == Orientation.Horizontal;
-            var u = viewport.anchorU;
-            var v = viewport.anchorV;
-
-            // If the anchor element is at the beginning of, or before, the start of the viewport
-            // then we can recycle all elements before it.
-            if (u <= viewport.anchorU)
-                _realizedElements.RecycleElementsBefore(viewport.anchorIndex, _recycleElement);
-
-            // Start at the anchor element and move forwards, realizing elements.
-            do
-            {
-                _realizingIndex = index;
-                var e = GetOrCreateElement(items, index);
-                _realizingElement = e;
-                e.Measure(availableSize);
-
-
-                var sizeU = horizontal ? e.DesiredSize.Width : e.DesiredSize.Height;
-                var sizeV = horizontal ? e.DesiredSize.Height : e.DesiredSize.Width;
-
-                if (MathUtilities.IsZero(v)) v = sizeV;
-
-                _measureElements!.Add(index, e, u, v - sizeV, sizeU, sizeV);
-                viewport.measuredV = Math.Max(viewport.measuredV, sizeV);
-
-                if (v + sizeV > viewport.viewportVEnd)
-                {
-                    u += sizeU;
-                    v = sizeV;
-                }
-                else
-                {
-                    v += sizeV;
-                }
-
-                ++index;
-                _realizingIndex = -1;
-                _realizingElement = null;
-            } while (u < viewport.viewportUEnd && index < items.Count);
-
-            // Store the last index and end U position for the desired size calculation.
-            viewport.lastIndex = index - 1;
-            viewport.realizedEndU = u;
-
-            // We can now recycle elements after the last element.
-            _realizedElements.RecycleElementsAfter(viewport.lastIndex, _recycleElement);
-
-            // Next move backwards from the anchor element, realizing elements.
-            index = viewport.anchorIndex - 1;
-            u = viewport.anchorU;
-
-            while (u > viewport.viewportUStart && index >= 0)
-            {
-                var e = GetOrCreateElement(items, index);
-                e.Measure(availableSize);
-
-                var sizeU = horizontal ? e.DesiredSize.Width : e.DesiredSize.Height;
-                var sizeV = horizontal ? e.DesiredSize.Height : e.DesiredSize.Width;
-
-                if (v - sizeV > 0)
-                {
-                    u -= sizeU;
-                    v = viewport.viewportVEnd;
-                }
-                else
-                {
-                    v -= sizeV;
-                }
-
-                _measureElements!.Add(index, e, u, v, sizeU, sizeV);
-                viewport.measuredV = Math.Max(viewport.measuredV, sizeV);
-                --index;
-            }
-
-            // We can now recycle elements before the first element.
-            _realizedElements.RecycleElementsBefore(index + 1, _recycleElement);
-
-            Debug.WriteLine("Created {0} elements", viewport.lastIndex - viewport.anchorIndex);
-        }
-
-        private Control GetOrCreateElement(IReadOnlyList<object?> items, int index)
+        internal Control GetOrCreateElement(IReadOnlyList<object?> items, int index)
         {
             Debug.Assert(ItemContainerGenerator is not null);
 
             if ((GetRealizedElement(index) ??
                  GetRealizedElement(index, ref _focusedIndex, ref _focusedElement) ??
-                 GetRealizedElement(index, ref _scrollToIndex, ref _scrollToElement)) is { } realized)
+                 GetRealizedElement(index, ref bringIntoViewItemIndex, ref bringIntoViewContainer)) is { } realized)
                 return realized;
 
             var item = items[index];
@@ -882,7 +1063,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
 
         private Control? GetRealizedElement(int index)
         {
-            return _realizedElements?.GetElement(index);
+            return _itemContainerManager?.GetRealizedElement(index);
         }
 
         private static Control? GetRealizedElement(
@@ -954,7 +1135,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             generator.PrepareItemContainer(container, item, index);
             AddInternalChild(container);
             generator.ItemContainerPrepared(container, item, index);
-
+            
             return container;
         }
 
@@ -1024,121 +1205,6 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             Debug.Assert(ItemContainerGenerator is not null);
 
             ItemContainerGenerator.ItemContainerIndexChanged(element, oldIndex, newIndex);
-        }
-
-        private void OnEffectiveViewportChanged(object? sender, EffectiveViewportChangedEventArgs e)
-        {
-            var vertical = Orientation == Orientation.Vertical;
-            var oldViewportStart = vertical ? _viewport.Top : _viewport.Left;
-            var oldViewportEnd = vertical ? _viewport.Bottom : _viewport.Right;
-
-            _viewport = e.EffectiveViewport.Intersect(new(Bounds.Size));
-            _isWaitingForViewportUpdate = false;
-
-            var newViewportStart = vertical ? _viewport.Top : _viewport.Left;
-            var newViewportEnd = vertical ? _viewport.Bottom : _viewport.Right;
-
-            if (!MathUtilities.AreClose(oldViewportStart, newViewportStart) ||
-                !MathUtilities.AreClose(oldViewportEnd, newViewportEnd))
-            {
-                InvalidateMeasure();
-            }
-        }
-
-        private void OnItemsControlPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
-        {
-            if (_focusedElement is not null &&
-                e.Property == KeyboardNavigation.TabOnceActiveElementProperty &&
-                e.GetOldValue<IInputElement?>() == _focusedElement)
-            {
-                // TabOnceActiveElement has moved away from _focusedElement so we can recycle it.
-                RecycleElement(_focusedElement, _focusedIndex);
-                _focusedElement = null;
-                _focusedIndex = -1;
-            }
-        }
-
-        /// <inheritdoc/>
-        public IReadOnlyList<double> GetIrregularSnapPoints(Orientation orientation,
-            SnapPointsAlignment snapPointsAlignment)
-        {
-            if (_realizedElements == null)
-                return new List<double>();
-
-            return new VirtualizingWrapPanelSnapPointsList(_realizedElements, ItemsControl?.ItemsSource?.Count() ?? 0,
-                orientation, Orientation, snapPointsAlignment, EstimateElementSizeU());
-        }
-
-        /// <inheritdoc/>
-        public double GetRegularSnapPoints(Orientation orientation, SnapPointsAlignment snapPointsAlignment,
-            out double offset)
-        {
-            offset = 0f;
-            var firstRealizedChild = _realizedElements?.Elements.FirstOrDefault();
-
-            if (firstRealizedChild == null)
-            {
-                return 0;
-            }
-
-            double snapPoint = 0;
-
-            switch (Orientation)
-            {
-                case Orientation.Horizontal:
-                    if (!AreHorizontalSnapPointsRegular)
-                        throw new InvalidOperationException();
-
-                    snapPoint = firstRealizedChild.Bounds.Width;
-                    switch (snapPointsAlignment)
-                    {
-                        case SnapPointsAlignment.Near:
-                            offset = 0;
-                            break;
-                        case SnapPointsAlignment.Center:
-                            offset = (firstRealizedChild.Bounds.Right - firstRealizedChild.Bounds.Left) / 2;
-                            break;
-                        case SnapPointsAlignment.Far:
-                            offset = firstRealizedChild.Bounds.Width;
-                            break;
-                    }
-
-                    break;
-                case Orientation.Vertical:
-                    if (!AreVerticalSnapPointsRegular)
-                        throw new InvalidOperationException();
-                    snapPoint = firstRealizedChild.Bounds.Height;
-                    switch (snapPointsAlignment)
-                    {
-                        case SnapPointsAlignment.Near:
-                            offset = 0;
-                            break;
-                        case SnapPointsAlignment.Center:
-                            offset = (firstRealizedChild.Bounds.Bottom - firstRealizedChild.Bounds.Top) / 2;
-                            break;
-                        case SnapPointsAlignment.Far:
-                            offset = firstRealizedChild.Bounds.Height;
-                            break;
-                    }
-
-                    break;
-            }
-
-            return snapPoint;
-        }
-
-        private struct MeasureViewport
-        {
-            public int anchorIndex;
-            public double anchorU;
-            public double anchorV;
-            public double viewportUStart;
-            public double viewportUEnd;
-            public double viewportVEnd;
-            public double measuredV;
-            public double realizedEndU;
-            public int lastIndex;
-            public bool viewportIsDisjunct;
         }
     }
 }

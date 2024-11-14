@@ -3,9 +3,10 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:MahApps.IconPacksBrowser.Avalonia.ViewModels"
-             xmlns:controls="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+             xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
              xmlns:helper="clr-namespace:MahApps.IconPacksBrowser.Avalonia.Helper"
              xmlns:iconPacks="https://github.com/MahApps/IconPacks.Avalonia"
+             xmlns:controls="clr-namespace:MahApps.IconPacksBrowser.Avalonia.Controls"
              mc:Ignorable="d"
              d:DesignWidth="800"
              d:DesignHeight="450"
@@ -63,7 +64,7 @@
         </Border>
 
 
-        <controls:NavigationView Grid.Row="1"
+        <fa:NavigationView Grid.Row="1"
                                  PaneDisplayMode="Left"
                                  IsPaneOpen="True"
                                  OpenPaneLength="205"
@@ -103,7 +104,7 @@
                     <ListBox.ItemsPanel>
                         <ItemsPanelTemplate>
                             <!-- <VirtualizingStackPanel Orientation="Vertical" /> -->
-                            <controls1:VirtualizingWrapPanel />
+                            <controls:VirtualizingWrapPanel />
                         </ItemsPanelTemplate>
                     </ListBox.ItemsPanel>
 
@@ -151,7 +152,7 @@
                            Text="{Binding TotalItems, StringFormat={}{0} icons}" />
 
             </Grid>
-        </controls:NavigationView>
+        </fa:NavigationView>
 
         <!-- <TODO: StatusBar Grid.Row="2" -->
         <!--            Height="24"> -->

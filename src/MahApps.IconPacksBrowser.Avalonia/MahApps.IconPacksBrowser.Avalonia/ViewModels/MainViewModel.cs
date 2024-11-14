@@ -12,6 +12,7 @@ using DynamicData;
 using DynamicData.Binding;
 using DynamicData.Operators;
 using FluentAvalonia.UI.Controls;
+using IconPacks.Avalonia;
 using IconPacks.Avalonia.BootstrapIcons;
 using IconPacks.Avalonia.BoxIcons;
 using IconPacks.Avalonia.CircumIcons;
@@ -132,10 +133,10 @@ public partial class MainViewModel : ViewModelBase
         {
             var iconPack = new IconPackViewModel(this, enumType, iconPackType);
             AvailableIconPacks.Add(new NavigationViewItem() { Content = iconPack.Caption, Tag = iconPack });
-            loadIconsTasks.Add(iconPack.LoadIconsAsync(enumType, iconPackType));
+            _iconsCache.AddOrUpdate(await iconPack.LoadIconsAsync(enumType, iconPackType));
         }
 
-        _iconsCache.AddOrUpdate((await Task.WhenAll(loadIconsTasks)).SelectMany(x => x));
+        // _iconsCache.AddOrUpdate((await Task.WhenAll(loadIconsTasks)).SelectMany(x => x).Take(100));
     }
 
     /// <summary>
