@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using AsyncAwaitBestPractices;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -58,11 +59,11 @@ public partial class MainViewModel : ViewModelBase
     public MainViewModel()
     {
         _SelectedIconPack = AvailableIconPacks[0];
-        
+
         // for ui synchronization safety of viewmodel
-        
+
         VisibleIcons = _iconsCache.ToNotifyCollectionChanged(SynchronizationContextCollectionEventDispatcher.Current);
-        
+
         // var filterByText = this.WhenAnyValue(x => x.FilterText, x => x.SelectedIconPack)
         //     .Throttle(TimeSpan.FromMilliseconds(350), RxApp.MainThreadScheduler)
         //     .Select(IconFilter);
@@ -82,8 +83,7 @@ public partial class MainViewModel : ViewModelBase
     private async Task LoadIconPacks()
     {
         var availableIconPacks = new List<(Type EnumType, Type IconPackType)>(
-            new[]
-            {
+            [
                 (typeof(PackIconBootstrapIconsKind), typeof(PackIconBootstrapIcons)),
                 (typeof(PackIconBoxIconsKind), typeof(PackIconBoxIcons)),
                 (typeof(PackIconCircumIconsKind), typeof(PackIconCircumIcons)),
@@ -119,26 +119,18 @@ public partial class MainViewModel : ViewModelBase
                 (typeof(PackIconUniconsKind), typeof(PackIconUnicons)),
                 (typeof(PackIconVaadinIconsKind), typeof(PackIconVaadinIcons)),
                 (typeof(PackIconWeatherIconsKind), typeof(PackIconWeatherIcons)),
-                (typeof(PackIconZondiconsKind), typeof(PackIconZondicons)),
+                (typeof(PackIconZondiconsKind), typeof(PackIconZondicons))
+            ])
+            .Select(tuple =>
+            {
+                var iconPack = new IconPackViewModel(this, tuple.EnumType, tuple.IconPackType);
+                AvailableIconPacks.Add(new NavigationViewItem() { Content = iconPack.Caption, Tag = iconPack });
+                return iconPack;
             });
 
-        var loadIconsTasks = new List<Task<IEnumerable<IIconViewModel>>>();
 
-        foreach (var (enumType, iconPackType) in availableIconPacks)
-        {
-            var iconPack = new IconPackViewModel(this, enumType, iconPackType);
-            AvailableIconPacks.Add(new NavigationViewItem() { Content = iconPack.Caption, Tag = iconPack });
-            // loadIconsTasks.Add(iconPack.LoadIconsAsync(enumType, iconPackType));
-            
-            _iconsCache.AddRange(await iconPack.LoadIconsAsync(enumType, iconPackType));
-        }
-
-        // var icons = (await Task.WhenAll(loadIconsTasks)).SelectMany(x => x);
-        //
-        //  _iconsCache.Edit((e) =>
-        //  {
-        //      e.AddRange(icons);
-        //  });
+        var loadIconsTasks = availableIconPacks.Select(ip => ip.LoadIconsAsync(ip.EnumType, ip.PackType));
+        _iconsCache.AddRange((await Task.WhenAll(loadIconsTasks)).SelectMany(x => x));
     }
 
     /// <summary>

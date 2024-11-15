@@ -11,6 +11,9 @@ namespace MahApps.IconPacksBrowser.Avalonia.ViewModels;
 
 public partial class IconPackViewModel : ViewModelBase
 {
+    public Type EnumType { get; }
+    public Type PackType { get; }
+
     private IconPackViewModel(MainViewModel mainViewModel)
     {
         this.MainViewModel = mainViewModel;
@@ -24,6 +27,8 @@ public partial class IconPackViewModel : ViewModelBase
     public IconPackViewModel(MainViewModel mainViewModel, Type enumType, Type packType)
         : this(mainViewModel)
     {
+        EnumType = enumType;
+        PackType = packType;
         // Get the Name of the IconPack via Attributes
         this.MetaData = Attribute.GetCustomAttribute(packType, typeof(MetaDataAttribute)) as MetaDataAttribute;
 
