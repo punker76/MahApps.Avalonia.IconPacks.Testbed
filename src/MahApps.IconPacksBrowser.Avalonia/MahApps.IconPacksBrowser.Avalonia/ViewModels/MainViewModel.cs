@@ -1,16 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Reactive.Linq;
-using System.Reactive.Subjects;
 using System.Threading.Tasks;
 using AsyncAwaitBestPractices;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using DynamicData;
-using DynamicData.Binding;
-using DynamicData.Operators;
 using FluentAvalonia.UI.Controls;
 using IconPacks.Avalonia;
 using IconPacks.Avalonia.BootstrapIcons;
@@ -50,7 +44,7 @@ using IconPacks.Avalonia.VaadinIcons;
 using IconPacks.Avalonia.WeatherIcons;
 using IconPacks.Avalonia.Zondicons;
 using MahApps.IconPacksBrowser.Avalonia.Helper;
-using ReactiveUI;
+using ObservableCollections;
 
 namespace MahApps.IconPacksBrowser.Avalonia.ViewModels;
 
@@ -58,26 +52,27 @@ public partial class MainViewModel : ViewModelBase
 {
     private const int PAGE_SIZE = 100;
     private const int FIRST_PAGE = 1;
-    private readonly ISubject<PageRequest> _pager;
 
     public static MainViewModel Instance { get; } = new();
 
     public MainViewModel()
     {
         _SelectedIconPack = AvailableIconPacks[0];
-
-        var filterByText = this.WhenAnyValue(x => x.FilterText, x => x.SelectedIconPack)
-            .Throttle(TimeSpan.FromMilliseconds(350), RxApp.MainThreadScheduler)
-            .Select(IconFilter);
-
-        _pager = new BehaviorSubject<PageRequest>(new PageRequest(FIRST_PAGE, PAGE_SIZE));
-
-        _iconsCache.Connect()
-            .Filter(filterByText)
-            .Sort(SortExpressionComparer<IIconViewModel>.Ascending(e => e.IconPackName).ThenByAscending(e => e.Name))
-            .ObserveOn(RxApp.MainThreadScheduler)
-            .Bind(out _visibleIcons)
-            .Subscribe();
+        
+        // for ui synchronization safety of viewmodel
+        
+        VisibleIcons = _iconsCache.ToNotifyCollectionChanged(SynchronizationContextCollectionEventDispatcher.Current);
+        
+        // var filterByText = this.WhenAnyValue(x => x.FilterText, x => x.SelectedIconPack)
+        //     .Throttle(TimeSpan.FromMilliseconds(350), RxApp.MainThreadScheduler)
+        //     .Select(IconFilter);
+        //
+        // _iconsCache.Connect()
+        //     .Filter(filterByText)
+        //     .Sort(SortExpressionComparer<IIconViewModel>.Ascending(e => e.IconPackName).ThenByAscending(e => e.Name))
+        //     .ObserveOn(RxApp.MainThreadScheduler)
+        //     .Bind(out _visibleIcons)
+        //     .Subscribe();
 
         LoadIconPacks().SafeFireAndForget();
     }
@@ -155,11 +150,9 @@ public partial class MainViewModel : ViewModelBase
         new NavigationViewItemSeparator()
     ];
 
-    private readonly SourceList<IIconViewModel> _iconsCache = new();
+    private readonly ObservableList<IIconViewModel> _iconsCache = new();
 
-    private ReadOnlyObservableCollection<IIconViewModel> _visibleIcons;
-
-    public ReadOnlyObservableCollection<IIconViewModel> VisibleIcons => _visibleIcons;
+    public NotifyCollectionChangedSynchronizedViewList<IIconViewModel> VisibleIcons { get; set; }
 
     [ObservableProperty] private NavigationViewItemBase _SelectedIconPack;
 
