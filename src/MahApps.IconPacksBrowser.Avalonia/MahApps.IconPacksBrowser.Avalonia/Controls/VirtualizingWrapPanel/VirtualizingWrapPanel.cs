@@ -224,22 +224,22 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
 
             try
             {
-                _realizedElements?.ValidateStartU(Orientation);
+                // _realizedElements?.ValidateStartU(Orientation);
                 _realizedElements ??= new();
                 _measureElements ??= new();
 
                 // We handle horizontal and vertical layouts here so X and Y are abstracted to:
                 // - Horizontal layouts: U = horizontal, V = vertical
                 // - Vertical layouts: U = vertical, V = horizontal
-                var viewport = CalculateMeasureViewport(items);
+                // var viewport = CalculateMeasureViewport(items);
 
                 // If the viewport is disjunct then we can recycle everything.
-                if (viewport.viewportIsDisjunct)
-                    _realizedElements.RecycleAllElements(_recycleElement);
+                // if (viewport.viewportIsDisjunct)
+                //     _realizedElements.RecycleAllElements(_recycleElement);
 
                 // Do the measure, creating/recycling elements as necessary to fill the viewport. Don't
                 // write to _realizedElements yet, only _measureElements.
-                RealizeAndVirtualizeItems(items, availableSize, ref viewport);
+                RealizeAndVirtualizeItems(items, availableSize);
 
                 // Now swap the measureElements and realizedElements collection.
                 (_measureElements, _realizedElements) = (_realizedElements, _measureElements);
@@ -249,7 +249,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                 // _focusedElement is non-null), ensure it's measured.
                 _focusedElement?.Measure(availableSize);
 
-                return CalculateDesiredSize(orientation, items.Count, viewport);
+                return CalculateDesiredSize(orientation, items.Count);
             }
             finally
             {
@@ -276,7 +276,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                     throw new InvalidOperationException("Items must be distinct");
                 }
 
-                var viewport = CalculateMeasureViewport(Items);
+                // var viewport = CalculateMeasureViewport(Items);
 
                 double x = startItemOffsetX; // + GetX(_viewport.TopLeft);
                 double y = startItemOffsetY; // - GetY(_viewport.TopLeft);
@@ -525,7 +525,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                 var scrollToElement = GetOrCreateElement(items, index);
                 scrollToElement.Measure(Size.Infinity);
 
-                var viewport = CalculateMeasureViewport(Items);
+                // var viewport = CalculateMeasureViewport(Items);
 
                 // Get the expected position of the element and put it in place.
                 var start = FindItemOffset(index);
@@ -589,52 +589,52 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             return _realizedElements?.Elements ?? Array.Empty<Control>();
         }
 
-        private MeasureViewport CalculateMeasureViewport(IReadOnlyList<object?> items)
-        {
-            Debug.Assert(_realizedElements is not null);
-
-            var viewport = _viewport;
-
-            // Get the viewport in the orientation direction.
-            var viewportStart = GetY(_viewport.TopLeft);
-            var viewportEnd = GetY(_viewport.BottomRight);
-            var viewportWidth = GetWidth(_viewport.Size);
-
-            // Get or estimate the anchor element from which to start realization. If we are
-            // scrolling to an element, use that as the anchor element. Otherwise, estimate the
-            // anchor element based on the current viewport.
-            int anchorIndex;
-            double anchorU;
-
-            if (_scrollToIndex >= 0 && _scrollToElement is not null)
-            {
-                anchorIndex = _scrollToIndex;
-                anchorU = _scrollToElement.Bounds.Top;
-            }
-            else
-            {
-                GetOrEstimateAnchorElementForViewport(
-                    viewportStart,
-                    viewportEnd,
-                    items.Count,
-                    out anchorIndex,
-                    out anchorU);
-            }
-
-            // Check if the anchor element is not within the currently realized elements.
-            var disjunct = anchorIndex < _realizedElements.FirstIndex ||
-                           anchorIndex > _realizedElements.LastIndex;
-
-            return new MeasureViewport
-            {
-                anchorIndex = anchorIndex,
-                anchorU = anchorU,
-                viewportUStart = viewportStart,
-                viewportUEnd = viewportEnd,
-                viewportWidth = viewportWidth,
-                viewportIsDisjunct = disjunct,
-            };
-        }
+        // private MeasureViewport CalculateMeasureViewport(IReadOnlyList<object?> items)
+        // {
+        //     Debug.Assert(_realizedElements is not null);
+        //
+        //     var viewport = _viewport;
+        //
+        //     // Get the viewport in the orientation direction.
+        //     var viewportStart = GetY(_viewport.TopLeft);
+        //     var viewportEnd = GetY(_viewport.BottomRight);
+        //     var viewportWidth = GetWidth(_viewport.Size);
+        //
+        //     // Get or estimate the anchor element from which to start realization. If we are
+        //     // scrolling to an element, use that as the anchor element. Otherwise, estimate the
+        //     // anchor element based on the current viewport.
+        //     int anchorIndex;
+        //     double anchorU;
+        //
+        //     if (_scrollToIndex >= 0 && _scrollToElement is not null)
+        //     {
+        //         anchorIndex = _scrollToIndex;
+        //         anchorU = _scrollToElement.Bounds.Top;
+        //     }
+        //     else
+        //     {
+        //         GetOrEstimateAnchorElementForViewport(
+        //             viewportStart,
+        //             viewportEnd,
+        //             items.Count,
+        //             out anchorIndex,
+        //             out anchorU);
+        //     }
+        //
+        //     // Check if the anchor element is not within the currently realized elements.
+        //     var disjunct = anchorIndex < _realizedElements.FirstIndex ||
+        //                    anchorIndex > _realizedElements.LastIndex;
+        //
+        //     return new MeasureViewport
+        //     {
+        //         anchorIndex = anchorIndex,
+        //         anchorU = anchorU,
+        //         viewportUStart = viewportStart,
+        //         viewportUEnd = viewportEnd,
+        //         viewportWidth = viewportWidth,
+        //         viewportIsDisjunct = disjunct,
+        //     };
+        // }
 
         private void GetOrEstimateAnchorElementForViewport(
             double viewportStartU,
@@ -688,23 +688,26 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             position = startIndex * GetHeight(estimatedSize);
         }
 
-        private Size CalculateDesiredSize(Orientation orientation, int itemCount, in MeasureViewport viewport)
+        private Size CalculateDesiredSize(Orientation orientation, int itemCount)
         {
             var itemSize = GetAverageItemSize();
 
-            if (itemCount == 0 || MathUtilities.IsZero(viewport.viewportWidth)) return new Size(0, 0);
+            var viewportWidth = GetWidth(_viewport.Size);
+            
+            if (itemCount == 0 || MathUtilities.IsZero(viewportWidth)) return new Size(0, 0);
             
             return orientation == Orientation.Horizontal
-                ? new Size(viewport.viewportWidth, GetHeight(itemSize) * itemCount / Math.Ceiling(viewport.viewportWidth / GetWidth(itemSize)))
-                : new Size(GetHeight(itemSize) * itemCount / Math.Ceiling(viewport.viewportWidth / GetWidth(itemSize)), viewport.viewportWidth);
+                ? new Size(viewportWidth, GetHeight(itemSize) * itemCount / Math.Ceiling(viewportWidth / GetWidth(itemSize)))
+                : new Size(GetHeight(itemSize) * itemCount / Math.Ceiling(viewportWidth / GetWidth(itemSize)), viewportWidth);
             
             var sizeU = 0.0;
-            var sizeV = viewport.viewportWidth;
+            var sizeV = viewportWidth;
 
-            if (viewport.lastIndex >= 0)
+            if (endItemIndex >= 0)
             {
-                var remaining = itemCount - viewport.lastIndex - 1;
-                sizeU = viewport.realizedEndU + (remaining * _lastEstimatedElementSizeU);
+                var itemsPerRow = Math.Floor(GetWidth(_viewport.Size) / GetWidth(averageItemSizeCache ?? itemSize));
+                var remaining = Math.Ceiling((itemCount - endItemIndex - 1) / itemsPerRow);
+                sizeU = GetY(_viewport.BottomRight) + (remaining * GetHeight(averageItemSizeCache ?? itemSize));
             }
 
             return orientation == Orientation.Horizontal ? new(sizeU, sizeV) : new(sizeV, sizeU);
@@ -755,8 +758,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
 
         private void RealizeAndVirtualizeItems(
             IReadOnlyList<object?> items,
-            Size availableSize,
-            ref MeasureViewport viewport)
+            Size availableSize)
         {
             FindStartIndexAndOffset();
             VirtualizeItemsBeforeStartIndex();
@@ -1026,15 +1028,15 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
         //     }
         // }
 
-        private Size CalculateExtentForSameSizedItems(ref MeasureViewport viewport)
+        private Size CalculateExtentForSameSizedItems()
         {
             var itemSize = !ItemSize.NearlyEquals(EmptySize) ? ItemSize : sizeOfFirstItem!.Value;
-            int itemsPerRow = (int)Math.Max(1, Math.Floor(viewport.viewportWidth / GetWidth(itemSize)));
+            int itemsPerRow = (int)Math.Max(1, Math.Floor(GetWidth(_viewport.Size) / GetWidth(itemSize)));
             double extentY = Math.Ceiling(((double)Items.Count) / itemsPerRow) * GetHeight(itemSize);
             return CreateSize(knownExtendX, extentY);
         }
 
-        private Size CalculateExtentForDifferentSizedItems(ref MeasureViewport viewport)
+        private Size CalculateExtentForDifferentSizedItems()
         {
             double x = 0;
             double y = 0;
@@ -1044,7 +1046,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             {
                 Size itemSize = GetAssumedItemSize(item);
 
-                if (x + GetWidth(itemSize) > viewport.viewportWidth && x != 0)
+                if (x + GetWidth(itemSize) > GetWidth(_viewport.Size))
                 {
                     x = 0;
                     y += rowHeight;
@@ -1542,18 +1544,18 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
         }
 
 
-        private struct MeasureViewport
-        {
-            public int anchorIndex;
-            public double anchorU;
-            public double viewportUStart;
-            public double viewportUEnd;
-            public double measuredV;
-            public double realizedEndU;
-            public int lastIndex;
-            public bool viewportIsDisjunct;
-            public double viewportHeight => viewportUEnd - viewportUStart;
-            public double viewportWidth;
-        }
+        // private struct MeasureViewport
+        // {
+        //     public int anchorIndex;
+        //     public double anchorU;
+        //     public double viewportUStart;
+        //     public double viewportUEnd;
+        //     public double measuredV;
+        //     public double realizedEndU;
+        //     public int lastIndex;
+        //     public bool viewportIsDisjunct;
+        //     public double viewportHeight => viewportUEnd - viewportUStart;
+        //     public double viewportWidth;
+        // }
     }
 }
