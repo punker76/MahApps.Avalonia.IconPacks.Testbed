@@ -133,15 +133,17 @@ public partial class MainViewModel : ViewModelBase
         {
             var iconPack = new IconPackViewModel(this, enumType, iconPackType);
             AvailableIconPacks.Add(new NavigationViewItem() { Content = iconPack.Caption, Tag = iconPack });
-            loadIconsTasks.Add(iconPack.LoadIconsAsync(enumType, iconPackType));
+            // loadIconsTasks.Add(iconPack.LoadIconsAsync(enumType, iconPackType));
+            
+            _iconsCache.AddRange(await iconPack.LoadIconsAsync(enumType, iconPackType));
         }
 
-        var icons = (await Task.WhenAll(loadIconsTasks)).SelectMany(x => x);
-        
-         _iconsCache.Edit(async (e) =>
-         {
-             e.Load(icons);
-         });
+        // var icons = (await Task.WhenAll(loadIconsTasks)).SelectMany(x => x);
+        //
+        //  _iconsCache.Edit((e) =>
+        //  {
+        //      e.AddRange(icons);
+        //  });
     }
 
     /// <summary>
@@ -153,7 +155,7 @@ public partial class MainViewModel : ViewModelBase
         new NavigationViewItemSeparator()
     ];
 
-    private readonly SourceCache<IIconViewModel, string> _iconsCache = new(x => x.Identifier);
+    private readonly SourceList<IIconViewModel> _iconsCache = new();
 
     private ReadOnlyObservableCollection<IIconViewModel> _visibleIcons;
 

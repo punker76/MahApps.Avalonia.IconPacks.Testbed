@@ -207,7 +207,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
 
 
         protected override Size MeasureOverride(Size availableSize)
-        {
+        { 
             var items = Items;
 
             if (items.Count == 0)
@@ -278,8 +278,8 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
 
                 var viewport = CalculateMeasureViewport(Items);
 
-                double x = startItemOffsetX + GetX(_viewport.TopLeft);
-                double y = startItemOffsetY - GetY(_viewport.TopLeft);
+                double x = startItemOffsetX; // + GetX(_viewport.TopLeft);
+                double y = startItemOffsetY; // - GetY(_viewport.TopLeft);
                 double rowHeight = 0;
                 var rowChilds = new List<Control>();
                 var childSizes = new List<Size>();
@@ -319,7 +319,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                 // Ensure that the focused element is in the correct position.                
                 if (_focusedElement is not null && _focusedIndex >= 0)
                 {
-                    var startPoint = FindItemOffset(_focusedIndex, ref viewport);
+                    var startPoint = FindItemOffset(_focusedIndex);
 
                     startItemOffsetX = GetX(startPoint);
                     startItemOffsetY = GetY(startPoint);
@@ -528,7 +528,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                 var viewport = CalculateMeasureViewport(Items);
 
                 // Get the expected position of the element and put it in place.
-                var start = FindItemOffset(index, ref viewport);
+                var start = FindItemOffset(index);
                 var rect = Orientation == Orientation.Horizontal
                     ? new Rect(GetX(start), 0, scrollToElement.DesiredSize.Width, scrollToElement.DesiredSize.Height)
                     : new Rect(0, GetX(start), scrollToElement.DesiredSize.Width, scrollToElement.DesiredSize.Height);
@@ -695,8 +695,8 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             if (itemCount == 0 || MathUtilities.IsZero(viewport.viewportWidth)) return new Size(0, 0);
             
             return orientation == Orientation.Horizontal
-                ? new Size(viewport.viewportWidth, GetHeight(itemSize) * itemCount / Math.Floor(viewport.viewportWidth / GetWidth(itemSize)))
-                : new Size(GetHeight(itemSize) * itemCount / Math.Floor(viewport.viewportWidth / GetWidth(itemSize)), viewport.viewportWidth);
+                ? new Size(viewport.viewportWidth, GetHeight(itemSize) * itemCount / Math.Ceiling(viewport.viewportWidth / GetWidth(itemSize)))
+                : new Size(GetHeight(itemSize) * itemCount / Math.Ceiling(viewport.viewportWidth / GetWidth(itemSize)), viewport.viewportWidth);
             
             var sizeU = 0.0;
             var sizeV = viewport.viewportWidth;
@@ -719,7 +719,9 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                 var remaining = itemCount - _scrollToIndex - 1;
                 var u = orientation == Orientation.Horizontal ? _scrollToElement.Bounds.Right : _scrollToElement.Bounds.Bottom;
                 var sizeU = u + (remaining * _lastEstimatedElementSizeU);
-                return orientation == Orientation.Horizontal ? new(sizeU, DesiredSize.Height) : new(DesiredSize.Width, sizeU);
+                return orientation == Orientation.Horizontal 
+                    ? new(sizeU, DesiredSize.Height) 
+                    : new(DesiredSize.Width, sizeU);
             }
 
             return DesiredSize;
@@ -756,9 +758,9 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             Size availableSize,
             ref MeasureViewport viewport)
         {
-            FindStartIndexAndOffset(ref viewport);
+            FindStartIndexAndOffset();
             VirtualizeItemsBeforeStartIndex();
-            RealizeItemsAndFindEndIndex(ref viewport);
+            RealizeItemsAndFindEndIndex();
             VirtualizeItemsAfterEndIndex();
         }
 
@@ -778,7 +780,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             }
         }
 
-        private Point FindItemOffset(int itemIndex, ref MeasureViewport viewport)
+        private Point FindItemOffset(int itemIndex)
         {
             double x = 0, y = 0, rowHeight = 0;
 
@@ -786,7 +788,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             {
                 Size itemSize = GetAssumedItemSize(Items[i]);
 
-                if (x != 0 && x + GetWidth(itemSize) > viewport.measuredV)
+                if (x != 0 && x + GetWidth(itemSize) > GetWidth(_viewport.Size))
                 {
                     x = 0;
                     y += rowHeight;
@@ -804,9 +806,9 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
         }
 
 
-        private void FindStartIndexAndOffset(ref MeasureViewport viewport)
+        private void FindStartIndexAndOffset()
         {
-            if (viewport.measuredV == 0 && viewport.viewportUEnd == 0)
+            if (GetY(_viewport.TopLeft) == 0 && GetY(_viewport.BottomRight) == 0)
             {
                 startItemIndex = -1;
                 startItemOffsetX = 0;
@@ -814,7 +816,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                 return;
             }
 
-            double startOffsetY = DetermineStartOffsetY(ref viewport);
+            double startOffsetY = DetermineStartOffsetY();
 
             if (startOffsetY <= 0)
             {
@@ -834,7 +836,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             {
                 Size itemSize = GetAssumedItemSize(item);
 
-                if (x + GetWidth(itemSize) > viewport.measuredV && x != 0)
+                if (x + GetWidth(itemSize) > GetWidth(_viewport.Size) && x != 0)
                 {
                     x = 0;
                     y += rowHeight;
@@ -850,7 +852,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                     if (cacheLengthUnit == VirtualizationCacheLengthUnit.Item)
                     {
                         startItemIndex = Math.Max(indexOfFirstRowItem - (int)cacheLength.CacheBeforeViewport, 0);
-                        var itemOffset = FindItemOffset(viewport.anchorIndex, ref viewport);
+                        var itemOffset = FindItemOffset(startItemIndex);
                         startItemOffsetX = GetX(itemOffset);
                         startItemOffsetY = GetY(itemOffset);
                     }
@@ -876,7 +878,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             }
         }
 
-        private void RealizeItemsAndFindEndIndex(ref MeasureViewport viewport)
+        private void RealizeItemsAndFindEndIndex()
         {
             if (startItemIndex == -1)
             {
@@ -888,7 +890,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             int newEndItemIndex = Items.Count - 1;
             bool endItemIndexFound = false;
 
-            double endOffsetY = DetermineEndOffsetY(ref viewport);
+            double endOffsetY = DetermineEndOffsetY();
 
             double x = startItemOffsetX;
             double y = startItemOffsetY;
@@ -926,7 +928,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                     sizeOfFirstItem = containerSize;
                 }
 
-                if (x != 0 && x + GetWidth(containerSize) > viewport.viewportWidth)
+                if (x != 0 && x + GetWidth(containerSize) > GetWidth(_viewport.Size))
                 {
                     x = 0;
                     y += rowHeight;
@@ -941,7 +943,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                 {
                     if (y >= endOffsetY
                         || (AllowDifferentSizedItems == false
-                            && x + GetWidth(sizeOfFirstItem!.Value) > viewport.viewportWidth
+                            && x + GetWidth(sizeOfFirstItem!.Value) > GetWidth(_viewport.Size)
                             && y + rowHeight >= endOffsetY))
                     {
                         endItemIndexFound = true;
@@ -972,6 +974,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
         private void VirtualizeItemsBeforeStartIndex()
         {
             _realizedElements!.RecycleElementsAfter(startItemIndex, RecycleElement);
+            
             // var containers = ItemContainerManager.Elements;
             // foreach (var container in containers.Where(container => container != bringIntoViewContainer))
             // {
@@ -987,6 +990,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
         private void VirtualizeItemsAfterEndIndex()
         {
             _realizedElements!.RecycleElementsAfter(endItemIndex, RecycleElement);
+            
             // var containers = ItemContainerManager.Elements;
             // foreach (var container in containers.Where(container => container != bringIntoViewContainer))
             // {
@@ -1062,36 +1066,36 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
         //     return new Size(desiredWidth, desiredHeight);
         // }
 
-        private double DetermineStartOffsetY(ref MeasureViewport viewport)
+        private double DetermineStartOffsetY()
         {
             double cacheLength = 0;
 
             if (cacheLengthUnit == VirtualizationCacheLengthUnit.Page)
             {
-                cacheLength = this.cacheLength.CacheBeforeViewport * viewport.viewportHeight;
+                cacheLength = this.cacheLength.CacheBeforeViewport * GetHeight(_viewport.Size); // viewport.viewportHeight;
             }
             else if (cacheLengthUnit == VirtualizationCacheLengthUnit.Pixel)
             {
                 cacheLength = this.cacheLength.CacheBeforeViewport;
             }
-
-            return Math.Max(viewport.viewportUStart - cacheLength, 0);
+            
+            return Math.Max(GetY(_viewport.TopLeft) - cacheLength, 0);
         }
 
-        private double DetermineEndOffsetY(ref MeasureViewport viewport)
+        private double DetermineEndOffsetY()
         {
             double cacheLength = 0;
 
             if (cacheLengthUnit == VirtualizationCacheLengthUnit.Page)
             {
-                cacheLength = this.cacheLength.CacheAfterViewport * viewport.viewportHeight;
+                cacheLength = this.cacheLength.CacheAfterViewport * GetHeight(_viewport.Size);
             }
             else if (cacheLengthUnit == VirtualizationCacheLengthUnit.Pixel)
             {
                 cacheLength = this.cacheLength.CacheAfterViewport;
             }
 
-            return Math.Max(0, viewport.viewportUEnd + cacheLength);
+            return Math.Max(0, GetY(_viewport.BottomRight) + cacheLength);
         }
 
         private Size? GetUpfrontKnownItemSize(object item)
@@ -1421,7 +1425,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             {
                 generator.PrepareItemContainer(controlItem, controlItem, index);
                 // TODO: Handle this here or in ItemsContainerManaager?
-                // AddInternalChild(controlItem);
+                AddInternalChild(controlItem);
                 controlItem.SetValue(RecycleKeyProperty, s_itemIsItsOwnContainer);
                 generator.ItemContainerPrepared(controlItem, item, index);
             }
@@ -1491,6 +1495,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             }
             else
             {
+                // RemoveInternalChild(element);
                 ItemContainerGenerator!.ClearItemContainer(element);
                 PushToRecyclePool(recycleKey, element);
                 element.SetCurrentValue(Visual.IsVisibleProperty, false);
@@ -1509,6 +1514,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             }
             else
             {
+                // RemoveInternalChild(element);
                 ItemContainerGenerator!.ClearItemContainer(element);
                 PushToRecyclePool(recycleKey, element);
                 element.SetCurrentValue(Visual.IsVisibleProperty, false);
