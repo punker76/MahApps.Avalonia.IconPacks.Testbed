@@ -133,10 +133,15 @@ public partial class MainViewModel : ViewModelBase
         {
             var iconPack = new IconPackViewModel(this, enumType, iconPackType);
             AvailableIconPacks.Add(new NavigationViewItem() { Content = iconPack.Caption, Tag = iconPack });
-            _iconsCache.AddOrUpdate(await iconPack.LoadIconsAsync(enumType, iconPackType));
+            loadIconsTasks.Add(iconPack.LoadIconsAsync(enumType, iconPackType));
         }
 
-        // _iconsCache.AddOrUpdate((await Task.WhenAll(loadIconsTasks)).SelectMany(x => x).Take(100));
+        var icons = (await Task.WhenAll(loadIconsTasks)).SelectMany(x => x);
+        
+         _iconsCache.Edit(async (e) =>
+         {
+             e.Load(icons);
+         });
     }
 
     /// <summary>

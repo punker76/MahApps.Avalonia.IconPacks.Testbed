@@ -79,8 +79,10 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
         public double ViewportHeight => ViewportSize.Height;
 
         public Size Extent { get; set; } = new Size(0, 0);
-        protected Size ViewportSize { get; set; } = new Size(0, 0);
-        protected Point ScrollOffset { get; set; } = new Point(0, 0);
+        
+        protected Rect Viewport { get; set; } = new Rect(0, 0, 0, 0);
+        protected Size ViewportSize => Viewport.Size;
+        protected Point ScrollOffset => Viewport.TopLeft;
         
         public ScrollUnit ScrollUnit { get; set; }
 
@@ -135,117 +137,118 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
         //     return new Rect(visibleX, visibleY, visibleWidth, visibleHeight);
         // }
 
-        public void SetVerticalOffset(double offset)
-        {
-            if (offset < 0 || ViewportSize.Height >= Extent.Height)
-            {
-                offset = 0;
-            }
-            else if (offset + ViewportSize.Height >= Extent.Height)
-            {
-                offset = Extent.Height - ViewportSize.Height;
-            }
-            
-            if (Math.Abs(offset - ScrollOffset.Y) > TOLERANCE)
-            {
-                ScrollOffset = new Point(ScrollOffset.X, offset);
-                ScrollOwner?.InvalidateArrange();
-                InvalidateMeasure();
-            }
-        }
+        // public void SetVerticalOffset(double offset)
+        // {
+        //     if (offset < 0 || ViewportSize.Height >= Extent.Height)
+        //     {
+        //         offset = 0;
+        //     }
+        //     else if (offset + ViewportSize.Height >= Extent.Height)
+        //     {
+        //         offset = Extent.Height - ViewportSize.Height;
+        //     }
+        //     
+        //     if (Math.Abs(offset - ScrollOffset.Y) > TOLERANCE)
+        //     {
+        //         ScrollOffset = new Point(ScrollOffset.X, offset);
+        //         ScrollOwner?.InvalidateArrange();
+        //         InvalidateMeasure();
+        //     }
+        // }
+        //
+        // public void SetHorizontalOffset(double offset)
+        // {
+        //     if (offset < 0 || ViewportSize.Width >= Extent.Width)
+        //     {
+        //         offset = 0;
+        //     }
+        //     else if (offset + ViewportSize.Width >= Extent.Width)
+        //     {
+        //         offset = Extent.Width - ViewportSize.Width;
+        //     }
+        //
+        //     if (offset != ScrollOffset.X)
+        //     {
+        //         ScrollOffset = new Point(offset, ScrollOffset.Y);
+        //         // TODO: ScrollOwner?.InvalidateScrollInfo();
+        //         InvalidateMeasure();
+        //     }
+        // }
 
-        public void SetHorizontalOffset(double offset)
-        {
-            if (offset < 0 || ViewportSize.Width >= Extent.Width)
-            {
-                offset = 0;
-            }
-            else if (offset + ViewportSize.Width >= Extent.Width)
-            {
-                offset = Extent.Width - ViewportSize.Width;
-            }
+        // TODO 
+        // public virtual void LineUp()
+        // {
+        //     ScrollVertical(ScrollUnit == ScrollUnit.Pixel ? -ScrollLineDelta : GetLineUpScrollAmount());
+        // }
+        //
+        // public virtual void LineDown()
+        // {
+        //     ScrollVertical(ScrollUnit == ScrollUnit.Pixel ? ScrollLineDelta : GetLineDownScrollAmount());
+        // }
+        //
+        // public virtual void LineLeft()
+        // {
+        //     ScrollHorizontal(ScrollUnit == ScrollUnit.Pixel ? -ScrollLineDelta : GetLineLeftScrollAmount());
+        // }
+        //
+        // public virtual void LineRight()
+        // {
+        //     ScrollHorizontal(ScrollUnit == ScrollUnit.Pixel ? ScrollLineDelta : GetLineRightScrollAmount());
+        // }
+        //
+        // public virtual void MouseWheelUp()
+        // {
+        //     if (MouseWheelScrollDirection == ScrollDirection.Vertical)
+        //     {
+        //         ScrollVertical(ScrollUnit == ScrollUnit.Pixel ? -MouseWheelDelta : GetMouseWheelUpScrollAmount());
+        //     }
+        //     else
+        //     {
+        //         MouseWheelLeft();
+        //     }
+        // }
+        //
+        // public virtual void MouseWheelDown()
+        // {
+        //     if (MouseWheelScrollDirection == ScrollDirection.Vertical)
+        //     {
+        //         ScrollVertical(ScrollUnit == ScrollUnit.Pixel ? MouseWheelDelta : GetMouseWheelDownScrollAmount());
+        //     }
+        //     else
+        //     {
+        //         MouseWheelRight();
+        //     }
+        // }
 
-            if (offset != ScrollOffset.X)
-            {
-                ScrollOffset = new Point(offset, ScrollOffset.Y);
-                // TODO: ScrollOwner?.InvalidateScrollInfo();
-                InvalidateMeasure();
-            }
-        }
-
-        public virtual void LineUp()
-        {
-            ScrollVertical(ScrollUnit == ScrollUnit.Pixel ? -ScrollLineDelta : GetLineUpScrollAmount());
-        }
-
-        public virtual void LineDown()
-        {
-            ScrollVertical(ScrollUnit == ScrollUnit.Pixel ? ScrollLineDelta : GetLineDownScrollAmount());
-        }
-
-        public virtual void LineLeft()
-        {
-            ScrollHorizontal(ScrollUnit == ScrollUnit.Pixel ? -ScrollLineDelta : GetLineLeftScrollAmount());
-        }
-
-        public virtual void LineRight()
-        {
-            ScrollHorizontal(ScrollUnit == ScrollUnit.Pixel ? ScrollLineDelta : GetLineRightScrollAmount());
-        }
-
-        public virtual void MouseWheelUp()
-        {
-            if (MouseWheelScrollDirection == ScrollDirection.Vertical)
-            {
-                ScrollVertical(ScrollUnit == ScrollUnit.Pixel ? -MouseWheelDelta : GetMouseWheelUpScrollAmount());
-            }
-            else
-            {
-                MouseWheelLeft();
-            }
-        }
-
-        public virtual void MouseWheelDown()
-        {
-            if (MouseWheelScrollDirection == ScrollDirection.Vertical)
-            {
-                ScrollVertical(ScrollUnit == ScrollUnit.Pixel ? MouseWheelDelta : GetMouseWheelDownScrollAmount());
-            }
-            else
-            {
-                MouseWheelRight();
-            }
-        }
-
-        public virtual void MouseWheelLeft()
-        {
-            ScrollHorizontal(ScrollUnit == ScrollUnit.Pixel ? -MouseWheelDelta : GetMouseWheelLeftScrollAmount());
-        }
-
-        public virtual void MouseWheelRight()
-        {
-            ScrollHorizontal(ScrollUnit == ScrollUnit.Pixel ? MouseWheelDelta : GetMouseWheelRightScrollAmount());
-        }
-
-        public virtual void PageUp()
-        {
-            ScrollVertical(ScrollUnit == ScrollUnit.Pixel ? -ViewportSize.Height : GetPageUpScrollAmount());
-        }
-
-        public virtual void PageDown()
-        {
-            ScrollVertical(ScrollUnit == ScrollUnit.Pixel ? ViewportSize.Height : GetPageDownScrollAmount());
-        }
-
-        public virtual void PageLeft()
-        {
-            ScrollHorizontal(ScrollUnit == ScrollUnit.Pixel ? -ViewportSize.Width : GetPageLeftScrollAmount());
-        }
-
-        public virtual void PageRight()
-        {
-            ScrollHorizontal(ScrollUnit == ScrollUnit.Pixel ? ViewportSize.Width : GetPageRightScrollAmount());
-        }
+        // public virtual void MouseWheelLeft()
+        // {
+        //     ScrollHorizontal(ScrollUnit == ScrollUnit.Pixel ? -MouseWheelDelta : GetMouseWheelLeftScrollAmount());
+        // }
+        //
+        // public virtual void MouseWheelRight()
+        // {
+        //     ScrollHorizontal(ScrollUnit == ScrollUnit.Pixel ? MouseWheelDelta : GetMouseWheelRightScrollAmount());
+        // }
+        //
+        // public virtual void PageUp()
+        // {
+        //     ScrollVertical(ScrollUnit == ScrollUnit.Pixel ? -ViewportSize.Height : GetPageUpScrollAmount());
+        // }
+        //
+        // public virtual void PageDown()
+        // {
+        //     ScrollVertical(ScrollUnit == ScrollUnit.Pixel ? ViewportSize.Height : GetPageDownScrollAmount());
+        // }
+        //
+        // public virtual void PageLeft()
+        // {
+        //     ScrollHorizontal(ScrollUnit == ScrollUnit.Pixel ? -ViewportSize.Width : GetPageLeftScrollAmount());
+        // }
+        //
+        // public virtual void PageRight()
+        // {
+        //     ScrollHorizontal(ScrollUnit == ScrollUnit.Pixel ? ViewportSize.Width : GetPageRightScrollAmount());
+        // }
 
         protected abstract double GetLineUpScrollAmount();
         protected abstract double GetLineDownScrollAmount();
@@ -262,15 +265,15 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
         protected abstract double GetPageLeftScrollAmount();
         protected abstract double GetPageRightScrollAmount();
 
-        private void ScrollVertical(double amount)
-        {
-            SetVerticalOffset(ScrollOffset.Y + amount);
-        }
-
-        private void ScrollHorizontal(double amount)
-        {
-            SetHorizontalOffset(ScrollOffset.X + amount);
-        }
+    //     private void ScrollVertical(double amount)
+    //     {
+    //         SetVerticalOffset(ScrollOffset.Y + amount);
+    //     }
+    //
+    //     private void ScrollHorizontal(double amount)
+    //     {
+    //         SetHorizontalOffset(ScrollOffset.X + amount);
+    //     }
     }
 
     public enum ScrollUnit
