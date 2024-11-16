@@ -234,8 +234,12 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                 // var viewport = CalculateMeasureViewport(items);
 
                 // If the viewport is disjunct then we can recycle everything.
-                // if (viewport.viewportIsDisjunct)
-                //     _realizedElements.RecycleAllElements(_recycleElement);
+                // TODO: if (viewport.viewportIsDisjunct)
+                var disjunct = startItemIndex < _realizedElements.FirstIndex 
+                               || startItemIndex > _realizedElements.LastIndex;
+                              
+                // if (disjunct) 
+                    _realizedElements.RecycleAllElements(_recycleElement);
 
                 // Do the measure, creating/recycling elements as necessary to fill the viewport. Don't
                 // write to _realizedElements yet, only _measureElements.
