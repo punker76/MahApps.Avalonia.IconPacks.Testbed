@@ -1,13 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using AsyncAwaitBestPractices;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FluentAvalonia.UI.Controls;
 using IconPacks.Avalonia;
+using R3.Avalonia;
 using IconPacks.Avalonia.BootstrapIcons;
 using IconPacks.Avalonia.BoxIcons;
 using IconPacks.Avalonia.CircumIcons;
@@ -46,6 +49,7 @@ using IconPacks.Avalonia.WeatherIcons;
 using IconPacks.Avalonia.Zondicons;
 using MahApps.IconPacksBrowser.Avalonia.Helper;
 using ObservableCollections;
+using R3;
 
 namespace MahApps.IconPacksBrowser.Avalonia.ViewModels;
 
@@ -62,8 +66,21 @@ public partial class MainViewModel : ViewModelBase
 
         // for ui synchronization safety of viewmodel
 
-        VisibleIcons = _iconsCache.ToNotifyCollectionChanged(SynchronizationContextCollectionEventDispatcher.Current);
+        var view = _iconsCache.CreateView(x => x);
 
+        var filter = new IconFilter(this);
+       // view.AttachFilter(filter);
+        
+        this.ObservePropertyChanged(x=> x.FilterText)
+            .Delay(TimeSpan.FromSeconds(0.3))
+            .ObserveOn(SynchronizationContext.Current)
+            .Subscribe(_ => view.AttachFilter(filter));
+        
+        this.ObservePropertyChanged(x=> x.SelectedIconPack)
+            .ObserveOn(SynchronizationContext.Current)
+            .Subscribe(_ => view.AttachFilter(filter));
+        
+        VisibleIcons = view.ToNotifyCollectionChanged(SynchronizationContextCollectionEventDispatcher.Current);
         // var filterByText = this.WhenAnyValue(x => x.FilterText, x => x.SelectedIconPack)
         //     .Throttle(TimeSpan.FromMilliseconds(350), RxApp.MainThreadScheduler)
         //     .Select(IconFilter);
@@ -74,6 +91,7 @@ public partial class MainViewModel : ViewModelBase
         //     .ObserveOn(RxApp.MainThreadScheduler)
         //     .Bind(out _visibleIcons)
         //     .Subscribe();
+        
 
         LoadIconPacks().SafeFireAndForget();
     }
@@ -131,6 +149,8 @@ public partial class MainViewModel : ViewModelBase
 
         var loadIconsTasks = availableIconPacks.Select(ip => ip.LoadIconsAsync(ip.EnumType, ip.PackType));
         _iconsCache.AddRange((await Task.WhenAll(loadIconsTasks)).SelectMany(x => x));
+        
+        TotalItems = AvailableIconPacks.Count;
     }
 
     /// <summary>
@@ -153,15 +173,18 @@ public partial class MainViewModel : ViewModelBase
 
 
     [ObservableProperty] string? _FilterText;
+    
 
-    Func<IIconViewModel, bool> IconFilter((string? filterText, NavigationViewItemBase selectedIocnPack) args) => icon =>
+    private class IconFilter(MainViewModel viewModel) : ISynchronizedViewFilter<IIconViewModel, IIconViewModel>
     {
-        return
-            // Filter for IconPackType
-            (args.selectedIocnPack == AvailableIconPacks[0] || icon.MetaData.Name == args.selectedIocnPack.Content?.ToString()) &&
-
-            // Filter for IconName
-            (string.IsNullOrWhiteSpace(args.filterText) || icon.Name.Contains(args.filterText.Trim(), StringComparison.OrdinalIgnoreCase));
+        public bool IsMatch(IIconViewModel icon, IIconViewModel transformedIcon)
+        {
+            return 
+                // Filter for IconPackType
+                (viewModel.SelectedIconPack == viewModel.AvailableIconPacks[0] || icon.MetaData.Name == viewModel.SelectedIconPack.Content?.ToString())
+                // Filter for IconName
+                && (string.IsNullOrWhiteSpace(viewModel.FilterText) || icon.Name.Contains(viewModel.FilterText.Trim(), StringComparison.OrdinalIgnoreCase));
+        }
     };
 
     private async Task DoCopyTextToClipboard(string? text)

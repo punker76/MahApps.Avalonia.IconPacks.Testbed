@@ -55,6 +55,7 @@
         <PackageReference Include="IconPacks.Avalonia.VaadinIcons" Version="1.0.0-rc0016" />
         <PackageReference Include="IconPacks.Avalonia.WeatherIcons" Version="1.0.0-rc0016" />
         <PackageReference Include="IconPacks.Avalonia.Zondicons" Version="1.0.0-rc0016" />
+        <PackageReference Include="R3Extensions.Avalonia" Version="1.2.9" />
     </ItemGroup>
 
 </Project>
