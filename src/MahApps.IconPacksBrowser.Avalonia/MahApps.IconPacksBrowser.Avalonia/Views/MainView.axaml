@@ -103,7 +103,7 @@
 
                     <ListBox.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <!-- <VirtualizingStackPanel Orientation="Vertical" /> -->
+                            <!-- <VirtualizingStackPanel  /> -->
                             <controls:VirtualizingWrapPanel />
                         </ItemsPanelTemplate>
                     </ListBox.ItemsPanel>

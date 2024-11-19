@@ -109,6 +109,21 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
         /// <returns>
         /// The size of the element or Infinite if not found
         /// </returns>
+        public Size? GetElementSize(Control? child)
+        {
+            if (child == null) return null;
+            
+            var index = GetIndex(child);
+            
+            if (index < FirstIndex || _sizes is null)
+                return null;
+
+            if (index >= _sizes.Count)
+                return null;
+            
+            return _sizes[index];
+        }
+        
         public Size? GetElementSize(int index)
         {
             if (index < FirstIndex || _sizes is null)

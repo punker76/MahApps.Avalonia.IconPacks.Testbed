@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using Avalonia;
 using Avalonia.Media;
+using Avalonia.Platform;
 using MahApps.IconPacksBrowser.Avalonia.ViewModels;
 
 namespace MahApps.IconPacksBrowser.Avalonia.Helper;
@@ -26,27 +27,27 @@ namespace MahApps.IconPacksBrowser.Avalonia.Helper;
         // Clipboard - WPF
         private static string? _ClipboardWpf;
 
-        internal static string ClipboardWpf => _ClipboardWpf ??= File.ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ExportTemplates", "Clipboard.WPF.xml"));
+        internal static string ClipboardWpf => _ClipboardWpf ??=  LoadTemplateString("Clipboard.WPF.xml");
 
         // Clipboard - WPF
-        private static string _ClipboardWpfGeometry;
+        private static string? _ClipboardWpfGeometry;
 
-        internal static string ClipboardWpfGeometry => _ClipboardWpfGeometry ??= File.ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ExportTemplates", "Clipboard.WPF.Geometry.xml"));
+        internal static string ClipboardWpfGeometry => _ClipboardWpfGeometry ??=  LoadTemplateString("Clipboard.WPF.Geometry.xml");
 
         // Clipboard - UWP
         private static string? _ClipboardUwp;
 
-        internal static string ClipboardUwp => _ClipboardUwp ??= File.ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ExportTemplates", "Clipboard.UWP.xml"));
+        internal static string ClipboardUwp => _ClipboardUwp ??=  LoadTemplateString( "Clipboard.UWP.xml");
 
         // Clipboard - Content
         private static string? _ClipboardContent;
 
-        internal static string ClipboardContent => _ClipboardContent ??= File.ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ExportTemplates", "Clipboard.Content.xml"));
+        internal static string ClipboardContent => _ClipboardContent ??= LoadTemplateString("Clipboard.Content.xml");
 
         // Clipboard - PathData
         private static string? _ClipboardData;
 
-        internal static string ClipboardData => _ClipboardData ??= File.ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ExportTemplates", "Clipboard.PathData.xml"));
+        internal static string ClipboardData => _ClipboardData ??= LoadTemplateString("Clipboard.PathData.xml");
 
         internal static string? FillTemplate(string template, ExportParameters parameters)
         {
@@ -68,7 +69,13 @@ namespace MahApps.IconPacksBrowser.Avalonia.Helper;
 
         internal static string? LoadTemplateString(string fileName)
         {
-            return File.ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ExportTemplates", fileName));
+            var uri = new Uri($"avares://MahApps.IconPacksBrowser.Avalonia/Assets/ExportTemplates/{fileName}");
+            
+            using var stream = AssetLoader.Open(uri);
+            
+            using var streamReader = new StreamReader(stream);
+            
+            return streamReader.ReadToEnd();
             
             // TODO: Implement Settings
 
