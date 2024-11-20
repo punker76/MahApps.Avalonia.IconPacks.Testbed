@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
@@ -613,15 +613,24 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
 
         private Size CalculateDesiredSize(Orientation orientation, int itemCount)
         {
+            if (itemCount == 0) return EmptySize;
+            
             var itemSize = GetAverageItemSize();
 
             var viewportWidth = GetWidth(_viewport.Size);
             
-            if (itemCount == 0 || MathUtilities.IsZero(viewportWidth)) return new Size(0, 0);
+            var itemWidth = GetWidth(itemSize);
+            var itemHeight = GetHeight(itemSize);
+
+            if (itemWidth == 0 || itemHeight == 0) return EmptySize; 
+                
+            var itemsPerRow = Math.Max(Math.Floor(viewportWidth / itemWidth), 1);
+            
+            var sizeU = Math.Ceiling(Items.Count / itemsPerRow) * itemHeight;
             
             return orientation == Orientation.Horizontal
-                ? new Size(viewportWidth, GetHeight(itemSize) * itemCount / Math.Ceiling(viewportWidth / GetWidth(itemSize)))
-                : new Size(GetHeight(itemSize) * itemCount / Math.Ceiling(viewportWidth / GetWidth(itemSize)), viewportWidth);
+                ? new Size(viewportWidth, sizeU)
+                : new Size(sizeU, viewportWidth);
         }
 
         private Size EstimateDesiredSize(Orientation orientation, int itemCount)
@@ -744,6 +753,23 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             int indexOfFirstRowItem = 0;
 
             int itemIndex = 0;
+
+            if (!AllowDifferentSizedItems && Items.Count > 0)
+            {
+                var itemWidth = GetWidth(GetAssumedItemSize(Items[0]));
+                var itemHeight = GetHeight(GetAssumedItemSize(Items[0]));
+
+                if (itemWidth == 0 || itemHeight == 0) return; 
+                
+                var itemsPerRow = Math.Max(Math.Floor(GetWidth(_viewport.Size) / itemWidth), 1);
+                
+                var startRowIndex = (int)Math.Floor(startOffsetY / itemHeight ); 
+                startItemIndex = (int)(startRowIndex * itemsPerRow); 
+                startItemOffsetX = 0;
+                startItemOffsetY = startRowIndex * itemHeight;
+                return;
+            }
+            
             foreach (var item in Items)
             {
                 Size itemSize = GetAssumedItemSize(item);
