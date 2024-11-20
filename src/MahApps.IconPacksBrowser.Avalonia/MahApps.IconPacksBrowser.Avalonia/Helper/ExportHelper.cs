@@ -69,7 +69,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Helper;
 
         internal static string? LoadTemplateString(string fileName)
         {
-            var uri = new Uri($"avares://MahApps.IconPacksBrowser.Avalonia/Assets/ExportTemplates/{fileName}");
+            var uri = new Uri($"avares://MahApps.IconPacksBrowser.Avalonia/Assets/ExportTemplates/{fileName}", UriKind.RelativeOrAbsolute);
             
             using var stream = AssetLoader.Open(uri);
             
