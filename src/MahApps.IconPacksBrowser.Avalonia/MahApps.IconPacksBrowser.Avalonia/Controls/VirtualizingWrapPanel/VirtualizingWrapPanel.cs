@@ -267,7 +267,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
 
                 if (_realizedElements.Count < endItemIndex - startItemIndex + 1)
                 {
-                    throw new InvalidOperationException("Items must be distinct");
+                    return finalSize;
                 }
 
                 double x = startItemOffsetX; // + GetX(_viewport.TopLeft);
@@ -705,6 +705,21 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
         {
             double x = 0, y = 0, rowHeight = 0;
 
+            if (!AllowDifferentSizedItems && Items.Count > 0)
+            {
+                var itemWidth = GetWidth(GetAssumedItemSize(Items[0]));
+                var itemHeight = GetHeight(GetAssumedItemSize(Items[0]));
+
+                if (itemWidth == 0 || itemHeight == 0) return new Point(); 
+                
+                var itemsPerRow = Math.Max(Math.Floor(GetWidth(_viewport.Size) / itemWidth), 1);
+                
+                var itemRowIndex = (int)Math.Floor(itemIndex * 1.0 / itemsPerRow); 
+                x = (itemIndex- itemRowIndex) * itemWidth;
+                y = itemRowIndex * itemHeight;
+                return new Point(x, y);
+            }
+            
             for (int i = 0; i <= itemIndex; i++)
             {
                 Size itemSize = GetAssumedItemSize(Items[i]);
@@ -1404,14 +1419,13 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             {
                 element.SetCurrentValue(Visual.IsVisibleProperty, false);
             }
-            else if (KeyboardNavigation.GetTabOnceActiveElement(ItemsControl) == element)
+            else if (ReferenceEquals(KeyboardNavigation.GetTabOnceActiveElement(ItemsControl), element))
             {
                 _focusedElement = element;
                 _focusedIndex = index;
             }
             else
             {
-                // RemoveInternalChild(element);
                 ItemContainerGenerator!.ClearItemContainer(element);
                 PushToRecyclePool(recycleKey, element);
                 element.SetCurrentValue(Visual.IsVisibleProperty, false);
