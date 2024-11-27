@@ -141,7 +141,7 @@
                 <!--     </ctrls:SidebarExpander.Header> -->
                 <!--     <ctrls:SideBar /> -->
                 <!-- </ctrls:SidebarExpander> -->
-                
+
 
                 <TextBlock Grid.Column="0"
                            Grid.ColumnSpan="2"
@@ -149,7 +149,7 @@
                            Margin="0,0,15,0"
                            HorizontalAlignment="Right"
                            VerticalAlignment="Center"
-                           Text="{Binding TotalItems, StringFormat={}{0} icons}" />
+                           Text="{Binding VisibleIcons.Count, StringFormat={}{0} icons}" />
 
             </Grid>
         </fa:NavigationView>

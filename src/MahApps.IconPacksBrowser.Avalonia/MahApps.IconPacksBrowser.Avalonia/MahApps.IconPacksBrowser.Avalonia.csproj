@@ -19,42 +19,7 @@
         <PackageReference Include="ObservableCollections" Version="3.3.2" />
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
         <PackageReference Include="FluentAvaloniaUI" Version="2.1.0" />
-        <PackageReference Include="IconPacks.Avalonia" Version="1.0.0-rc0022" />
-        <PackageReference Include="IconPacks.Avalonia.BootstrapIcons" Version="1.0.0-rc0022" />
-        <PackageReference Include="IconPacks.Avalonia.CircumIcons" Version="1.0.0-rc0022" />
-        <PackageReference Include="IconPacks.Avalonia.Codicons" Version="1.0.0-rc0022" />
-        <PackageReference Include="IconPacks.Avalonia.Coolicons" Version="1.0.0-rc0022" />
-        <PackageReference Include="IconPacks.Avalonia.Entypo" Version="1.0.0-rc0022" />
-        <PackageReference Include="IconPacks.Avalonia.EvaIcons" Version="1.0.0-rc0022" />
-        <PackageReference Include="IconPacks.Avalonia.FeatherIcons" Version="1.0.0-rc0022" />
-        <PackageReference Include="IconPacks.Avalonia.FileIcons" Version="1.0.0-rc0022" />
-        <PackageReference Include="IconPacks.Avalonia.Fontaudio" Version="1.0.0-rc0022" />
-        <PackageReference Include="IconPacks.Avalonia.FontAwesome" Version="1.0.0-rc0022" />
-        <PackageReference Include="IconPacks.Avalonia.Fontisto" Version="1.0.0-rc0022" />
-        <PackageReference Include="IconPacks.Avalonia.ForkAwesome" Version="1.0.0-rc0022" />
-        <PackageReference Include="IconPacks.Avalonia.GameIcons" Version="1.0.0-rc0022" />
-        <PackageReference Include="IconPacks.Avalonia.Ionicons" Version="1.0.0-rc0022" />
-        <PackageReference Include="IconPacks.Avalonia.JamIcons" Version="1.0.0-rc0022" />
-        <PackageReference Include="IconPacks.Avalonia.Lucide" Version="1.0.0-rc0022" />
-        <PackageReference Include="IconPacks.Avalonia.Material" Version="1.0.0-rc0022" />
-        <PackageReference Include="IconPacks.Avalonia.MaterialDesign" Version="1.0.0-rc0022" />
-        <PackageReference Include="IconPacks.Avalonia.MaterialLight" Version="1.0.0-rc0022" />
-        <PackageReference Include="IconPacks.Avalonia.MemoryIcons" Version="1.0.0-rc0022" />
-        <PackageReference Include="IconPacks.Avalonia.Microns" Version="1.0.0-rc0022" />
-        <PackageReference Include="IconPacks.Avalonia.Modern" Version="1.0.0-rc0022" />
-        <PackageReference Include="IconPacks.Avalonia.Octicons" Version="1.0.0-rc0022" />
-        <PackageReference Include="IconPacks.Avalonia.PhosphorIcons" Version="1.0.0-rc0022" />
-        <PackageReference Include="IconPacks.Avalonia.PicolIcons" Version="1.0.0-rc0022" />
-        <PackageReference Include="IconPacks.Avalonia.PixelartIcons" Version="1.0.0-rc0022" />
-        <PackageReference Include="IconPacks.Avalonia.RadixIcons" Version="1.0.0-rc0022" />
-        <PackageReference Include="IconPacks.Avalonia.RemixIcon" Version="1.0.0-rc0022" />
-        <PackageReference Include="IconPacks.Avalonia.RPGAwesome" Version="1.0.0-rc0022" />
-        <PackageReference Include="IconPacks.Avalonia.SimpleIcons" Version="1.0.0-rc0022" />
-        <PackageReference Include="IconPacks.Avalonia.Typicons" Version="1.0.0-rc0022" />
-        <PackageReference Include="IconPacks.Avalonia.Unicons" Version="1.0.0-rc0022" />
-        <PackageReference Include="IconPacks.Avalonia.VaadinIcons" Version="1.0.0-rc0022" />
-        <PackageReference Include="IconPacks.Avalonia.WeatherIcons" Version="1.0.0-rc0022" />
-        <PackageReference Include="IconPacks.Avalonia.Zondicons" Version="1.0.0-rc0022" />
+        <PackageReference Include="IconPacks.Avalonia" Version="1.0.0" />
         <PackageReference Include="R3Extensions.Avalonia" Version="1.2.9" />
     </ItemGroup>
 
