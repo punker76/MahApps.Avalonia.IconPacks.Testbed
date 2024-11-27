@@ -16,11 +16,12 @@
         <PackageReference Include="Avalonia.Fonts.Inter" Version="11.2.0" />
         <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
         <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.2.0" />
+        <PackageReference Include="IconPacks.Avalonia" Version="1.0.0-rc0016" />
     </ItemGroup>
 
-    <ItemGroup>
-        <!-- <ProjectReference Include="..\IconPacks.Avalonia.BoxIcons\IconPacks.Avalonia.BoxIcons.csproj" /> -->
+<!--    <ItemGroup>
+        <ProjectReference Include="..\IconPacks.Avalonia.BoxIcons\IconPacks.Avalonia.BoxIcons.csproj" />
         <ProjectReference Include="..\IconPacks.Avalonia\IconPacks.Avalonia.csproj" />
-    </ItemGroup>
+    </ItemGroup>-->
 
 </Project>
