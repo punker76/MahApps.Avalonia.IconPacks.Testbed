@@ -5,19 +5,24 @@ using System.Diagnostics;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
-using Avalonia.Layout;
-using Avalonia.Utilities;
-using Avalonia.VisualTree;
+using Avalonia.Interactivity;
 using MahApps.IconPacksBrowser.Avalonia.Controls.Utils;
+using Avalonia.Layout;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
 
 namespace MahApps.IconPacksBrowser.Avalonia.Controls
 {
     /// <summary>
     /// A implementation of a wrap panel that supports virtualization and can be used in horizontal and vertical orientation.
     /// </summary>
-    public class VirtualizingWrapPanel : VirtualizingPanel
+    public class VirtualizingWrapPanel : VirtualizingPanel, IScrollSnapPointsInfo
     {
+        /// <summary>
+        /// Gets an empty size
+        /// </summary>
         private static readonly Size EmptySize = new Size(0, 0);
 
         static VirtualizingWrapPanel()
@@ -42,16 +47,16 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             AvaloniaProperty.Register<VirtualizingWrapPanel, Size>(nameof(ItemSize), EmptySize);
 
         public static readonly StyledProperty<bool> AllowDifferentSizedItemsProperty =
-            AvaloniaProperty.Register<VirtualizingWrapPanel, bool>(nameof(AllowDifferentSizedItems), false);
+            AvaloniaProperty.Register<VirtualizingWrapPanel, bool>(nameof(AllowDifferentSizedItems));
 
         public static readonly StyledProperty<IItemSizeProvider?> ItemSizeProviderProperty =
-            AvaloniaProperty.Register<VirtualizingWrapPanel, IItemSizeProvider?>(nameof(ItemSizeProvider), null);
+            AvaloniaProperty.Register<VirtualizingWrapPanel, IItemSizeProvider?>(nameof(ItemSizeProvider));
 
         public static readonly StyledProperty<SpacingMode> SpacingModeProperty =
             AvaloniaProperty.Register<VirtualizingWrapPanel, SpacingMode>(nameof(SpacingMode), SpacingMode.Uniform);
 
         public static readonly StyledProperty<bool> StretchItemsProperty =
-            AvaloniaProperty.Register<VirtualizingWrapPanel, bool>(nameof(StretchItems), false);
+            AvaloniaProperty.Register<VirtualizingWrapPanel, bool>(nameof(StretchItems));
 
         public static readonly StyledProperty<bool> IsGridLayoutEnabledProperty =
             AvaloniaProperty.Register<VirtualizingWrapPanel, bool>(nameof(IsGridLayoutEnabled), true);
@@ -59,6 +64,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
         private static readonly AttachedProperty<object?> RecycleKeyProperty =
             AvaloniaProperty.RegisterAttached<VirtualizingStackPanel, Control, object?>("RecycleKey");
 
+        // ReSharper disable once InconsistentNaming
         private static readonly object s_itemIsItsOwnContainer = new object();
         private readonly Action<Control, int> _recycleElement;
         private readonly Action<Control> _recycleElementOnItemRemoved;
@@ -86,7 +92,8 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
         }
 
         /// <summary>
-        /// Gets or sets a value that specifies the orientation in which items are arranged before wrapping. The default value is <see cref="Orientation.Horizontal"/>.
+        /// Gets or sets a value that specifies the orientation in which items are arranged before wrapping.
+        /// The default value is <see cref="Orientation.Horizontal"/>.
         /// </summary>
         public Orientation Orientation
         {
@@ -111,7 +118,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
         /// </summary>
         public bool AllowDifferentSizedItems
         {
-            get => (bool)GetValue(AllowDifferentSizedItemsProperty);
+            get => GetValue(AllowDifferentSizedItemsProperty);
             set => SetValue(AllowDifferentSizedItemsProperty, value);
         }
 
@@ -177,33 +184,21 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
         /// </summary>
         private static readonly Size FallbackItemSize = new Size(48, 48);
 
+        private Size? _sizeOfFirstItem;
 
-        /// <summary>
-        /// The cache length before and after the viewport. 
-        /// </summary>
-        private VirtualizationCacheLength cacheLength;
+        private Size? _averageItemSizeCache;
 
-        /// <summary>
-        /// The Unit of the cache length. Can be Pixel, Item or Page. 
-        /// When the ItemsOwner is a group item it can only be pixel or item.
-        /// </summary>
-        private VirtualizationCacheLengthUnit cacheLengthUnit;
+        private int _startItemIndex = -1;
+        private int _endItemIndex = -1;
 
-        private Size? sizeOfFirstItem;
+        private double _startItemOffsetX;
+        private double _startItemOffsetY;
 
-        private Size? averageItemSizeCache;
+        private double _knownExtendX;
 
-        private int startItemIndex = -1;
-        private int endItemIndex = -1;
-
-        private double startItemOffsetX = 0;
-        private double startItemOffsetY = 0;
-
-        private double knownExtendX = 0;
-
-
+        /// <inheritdoc />
         protected override Size MeasureOverride(Size availableSize)
-        { 
+        {
             var items = Items;
 
             if (items.Count == 0)
@@ -223,17 +218,17 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                 // _realizedElements?.ValidateStartU(Orientation);
                 _realizedElements ??= new();
                 _measureElements ??= new();
-                
+
                 // If the viewport is disjunct then we can recycle everything
-                var disjunct = startItemIndex < _realizedElements.FirstIndex 
-                               || startItemIndex > _realizedElements.LastIndex;
+                var disjunct = _startItemIndex < _realizedElements.FirstIndex
+                               || _startItemIndex > _realizedElements.LastIndex;
 
                 if (disjunct)
                     _realizedElements.RecycleAllElements(_recycleElement);
-                
+
                 // Do the measure, creating/recycling elements as necessary to fill the viewport. Don't
                 // write to _realizedElements yet, only _measureElements.
-                RealizeAndVirtualizeItems(items, availableSize);
+                RealizeAndVirtualizeItems();
 
                 // Now swap the measureElements and realizedElements collection.
                 (_measureElements, _realizedElements) = (_realizedElements, _measureElements);
@@ -251,6 +246,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             }
         }
 
+        /// <inheritdoc />
         protected override Size ArrangeOverride(Size finalSize)
         {
             if (_realizedElements is null)
@@ -260,36 +256,37 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
 
             try
             {
-                if (startItemIndex == -1)
+                if (_startItemIndex == -1)
                 {
                     return finalSize;
                 }
 
-                if (_realizedElements.Count < endItemIndex - startItemIndex + 1)
+                if (_realizedElements.Count < _endItemIndex - _startItemIndex + 1)
                 {
                     return finalSize;
                 }
 
-                double x = startItemOffsetX; // + GetX(_viewport.TopLeft);
-                double y = startItemOffsetY; // - GetY(_viewport.TopLeft);
+                double x = _startItemOffsetX; // + GetX(_viewport.TopLeft);
+                double y = _startItemOffsetY; // - GetY(_viewport.TopLeft);
                 double rowHeight = 0;
                 var rowChilds = new List<Control>();
                 var childSizes = new List<Size>();
 
-                for (int i = startItemIndex; i <= endItemIndex; i++)
+                for (int i = _startItemIndex; i <= _endItemIndex; i++)
                 {
                     var item = Items[i];
                     var child = _realizedElements.GetElement(i);
 
-                    Size? upfrontKnownItemSize = item is not null ? GetUpfrontKnownItemSize(item) : null;
+                    Size? upfrontKnownItemSize = GetUpfrontKnownItemSize(item);
 
-                    Size childSize = upfrontKnownItemSize ?? _realizedElements.GetElementSize(child) ?? FallbackItemSize;
+                    Size childSize = upfrontKnownItemSize ??
+                                     _realizedElements.GetElementSize(child) ?? FallbackItemSize;
 
                     if (rowChilds.Count > 0 && x + GetWidth(childSize) > GetWidth(finalSize))
                     {
                         ArrangeRow(GetWidth(finalSize), rowChilds, childSizes, y);
                         x = 0;
-                        y += rowHeight;
+                        y += childSizes.Max(x1 => GetHeight(x1));
                         rowHeight = 0;
                         rowChilds.Clear();
                         childSizes.Clear();
@@ -297,10 +294,13 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
 
                     x += GetWidth(childSize);
                     rowHeight = Math.Max(rowHeight, GetHeight(childSize));
-                    rowChilds.Add(child);
-                    childSizes.Add(childSize);
+                    if (child != null)
+                    {
+                        rowChilds.Add(child);
+                        childSizes.Add(childSize);
 
-                    _scrollAnchorProvider?.RegisterAnchorCandidate(child);
+                        _scrollAnchorProvider?.RegisterAnchorCandidate(child);
+                    }
                 }
 
                 if (rowChilds.Any())
@@ -313,13 +313,29 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                 {
                     var startPoint = FindItemOffset(_focusedIndex);
 
-                    startItemOffsetX = GetX(startPoint);
-                    startItemOffsetY = GetY(startPoint);
+                    _startItemOffsetX = GetX(startPoint);
+                    _startItemOffsetY = GetY(startPoint);
 
-                    var rect = Orientation == Orientation.Horizontal
-                        ? new Rect(startItemOffsetX, startItemOffsetY, _focusedElement.DesiredSize.Width, finalSize.Height)
-                        : new Rect(startItemOffsetY, startItemOffsetX, finalSize.Width, _focusedElement.DesiredSize.Height);
+                    var rect = Orientation == Orientation.Horizontal ?
+                        new Rect(_startItemOffsetX, _startItemOffsetY, _focusedElement.DesiredSize.Width, _focusedElement.DesiredSize.Height) :
+                        new Rect(_startItemOffsetY, _startItemOffsetX, _focusedElement.DesiredSize.Width, _focusedElement.DesiredSize.Height);
                     _focusedElement.Arrange(rect);
+                }
+
+                // Ensure that the scrollTo element is in the correct position.                
+                if (_scrollToElement is not null && _scrollToIndex >= 0)
+                {
+                    var startPoint = FindItemOffset(_scrollToIndex);
+
+                    _startItemOffsetX = GetX(startPoint);
+                    _startItemOffsetY = GetY(startPoint);
+
+                    var rect = Orientation == Orientation.Horizontal ?
+                        new Rect(_startItemOffsetX, _startItemOffsetY, _scrollToElement.DesiredSize.Width,
+                            finalSize.Height) :
+                        new Rect(_startItemOffsetY, _startItemOffsetX, finalSize.Width,
+                            _scrollToElement.DesiredSize.Height);
+                    _scrollToElement.Arrange(rect);
                 }
 
                 return finalSize;
@@ -328,22 +344,27 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             {
                 _isInLayout = false;
 
-                // TODO: RaiseEvent(new RoutedEventArgs(Orientation == Orientation.Horizontal ? HorizontalSnapPointsChangedEvent : VerticalSnapPointsChangedEvent));
+                RaiseEvent(new RoutedEventArgs(Orientation == Orientation.Horizontal ?
+                    HorizontalSnapPointsChangedEvent :
+                    VerticalSnapPointsChangedEvent));
             }
         }
 
+        /// <inheritdoc />
         protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
         {
             base.OnAttachedToVisualTree(e);
             _scrollAnchorProvider = this.FindAncestorOfType<IScrollAnchorProvider>();
         }
 
+        /// <inheritdoc />
         protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
         {
             base.OnDetachedFromVisualTree(e);
             _scrollAnchorProvider = null;
         }
 
+        /// <inheritdoc />
         protected override void OnItemsChanged(IReadOnlyList<object?> items, NotifyCollectionChangedEventArgs e)
         {
             InvalidateMeasure();
@@ -357,13 +378,16 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                     _realizedElements.ItemsInserted(e.NewStartingIndex, e.NewItems!.Count, _updateElementIndex);
                     break;
                 case NotifyCollectionChangedAction.Remove:
-                    _realizedElements.ItemsRemoved(e.OldStartingIndex, e.OldItems!.Count, _updateElementIndex, _recycleElementOnItemRemoved);
+                    _realizedElements.ItemsRemoved(e.OldStartingIndex, e.OldItems!.Count, _updateElementIndex,
+                        _recycleElementOnItemRemoved);
                     break;
                 case NotifyCollectionChangedAction.Replace:
-                    _realizedElements.ItemsReplaced(e.OldStartingIndex, e.OldItems!.Count, _recycleElementOnItemRemoved);
+                    _realizedElements.ItemsReplaced(e.OldStartingIndex, e.OldItems!.Count,
+                        _recycleElementOnItemRemoved);
                     break;
                 case NotifyCollectionChangedAction.Move:
-                    _realizedElements.ItemsRemoved(e.OldStartingIndex, e.OldItems!.Count, _updateElementIndex, _recycleElementOnItemRemoved);
+                    _realizedElements.ItemsRemoved(e.OldStartingIndex, e.OldItems!.Count, _updateElementIndex,
+                        _recycleElementOnItemRemoved);
                     _realizedElements.ItemsInserted(e.NewStartingIndex, e.NewItems!.Count, _updateElementIndex);
                     break;
                 case NotifyCollectionChangedAction.Reset:
@@ -372,6 +396,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             }
         }
 
+        /// <inheritdoc />
         protected override void OnItemsControlChanged(ItemsControl? oldValue)
         {
             base.OnItemsControlChanged(oldValue);
@@ -382,6 +407,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                 ItemsControl.PropertyChanged += OnItemsControlPropertyChanged;
         }
 
+        /// <inheritdoc />
         protected override IInputElement? GetControl(NavigationDirection direction, IInputElement? from, bool wrap)
         {
             var count = Items.Count;
@@ -391,7 +417,6 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                 (fromControl is null && direction is not NavigationDirection.First and not NavigationDirection.Last))
                 return null;
 
-            var horiz = Orientation == Orientation.Horizontal;
             var fromIndex = fromControl != null ? IndexFromContainer(fromControl) : -1;
             var toIndex = fromIndex;
 
@@ -404,26 +429,22 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                     toIndex = count - 1;
                     break;
                 case NavigationDirection.Next:
-                    ++toIndex;
+                    NavigateRight(ref toIndex);
                     break;
                 case NavigationDirection.Previous:
-                    --toIndex;
+                    NavigateLeft(ref toIndex);
                     break;
                 case NavigationDirection.Left:
-                    if (horiz)
-                        --toIndex;
+                    NavigateLeft(ref toIndex);
                     break;
                 case NavigationDirection.Right:
-                    if (horiz)
-                        ++toIndex;
+                    NavigateRight(ref toIndex);
                     break;
                 case NavigationDirection.Up:
-                    if (!horiz)
-                        --toIndex;
+                    NavigateUp(ref toIndex);
                     break;
                 case NavigationDirection.Down:
-                    if (!horiz)
-                        ++toIndex;
+                    NavigateDown(ref toIndex);
                     break;
                 default:
                     return null;
@@ -439,15 +460,24 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                 else if (toIndex >= count)
                     toIndex = 0;
             }
+            else
+            {
+                if (toIndex < 0)
+                    toIndex = 0;
+                else if (toIndex >= count)
+                    toIndex = count - 1;
+            }
 
             return ScrollIntoView(toIndex);
         }
 
+        /// <inheritdoc />
         protected override IEnumerable<Control>? GetRealizedContainers()
         {
-            return _realizedElements?.Elements.Where(x => x is not null)!;
+            return _realizedElements?.Elements.Where(x => x is not null).Select(x => x!);
         }
 
+        /// <inheritdoc />
         protected override Control? ContainerFromIndex(int index)
         {
             if (index < 0 || index >= Items.Count)
@@ -465,6 +495,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             return null;
         }
 
+        /// <inheritdoc />
         protected override int IndexFromContainer(Control container)
         {
             if (container == _scrollToElement)
@@ -476,6 +507,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             return _realizedElements?.GetIndex(container) ?? -1;
         }
 
+        /// <inheritdoc />
         protected override Control? ScrollIntoView(int index)
         {
             var items = Items;
@@ -483,7 +515,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             if (_isInLayout || index < 0 || index >= items.Count || _realizedElements is null || !IsEffectivelyVisible)
                 return null;
 
-            if (GetRealizedElement(index) is Control element)
+            if (GetRealizedElement(index) is { } element)
             {
                 element.BringIntoView();
                 return element;
@@ -495,13 +527,10 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                 var scrollToElement = GetOrCreateElement(items, index);
                 scrollToElement.Measure(Size.Infinity);
 
-                // var viewport = CalculateMeasureViewport(Items);
-
                 // Get the expected position of the element and put it in place.
                 var start = FindItemOffset(index);
-                var rect = Orientation == Orientation.Horizontal
-                    ? new Rect(GetX(start), 0, scrollToElement.DesiredSize.Width, scrollToElement.DesiredSize.Height)
-                    : new Rect(0, GetX(start), scrollToElement.DesiredSize.Width, scrollToElement.DesiredSize.Height);
+                var rect = new Rect(GetX(start), GetY(start), GetWidth(scrollToElement.DesiredSize),
+                    GetHeight(scrollToElement.DesiredSize));
                 scrollToElement.Arrange(rect);
 
                 // Store the element and index so that they can be used in the layout pass.
@@ -515,7 +544,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                 if (!Bounds.Contains(rect) && !_viewport.Contains(rect))
                 {
                     _isWaitingForViewportUpdate = true;
-                    root.ExecuteLayoutPass();
+                    (root as Layoutable)?.UpdateLayout();
                     _isWaitingForViewportUpdate = false;
                 }
 
@@ -528,7 +557,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                 // - The viewport is then updated by the layout system which invalidates our measure
                 // - Measure is then done with the new viewport.
                 _isWaitingForViewportUpdate = !_viewport.Contains(rect);
-                root.ExecuteLayoutPass();
+                (root as Layoutable)?.UpdateLayout();
 
                 // If for some reason the layout system didn't give us a new viewport during the layout, we
                 // need to do another layout pass as the one that took place was a no-op.
@@ -536,7 +565,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                 {
                     _isWaitingForViewportUpdate = false;
                     InvalidateMeasure();
-                    root.ExecuteLayoutPass();
+                    (root as Layoutable)?.UpdateLayout();
                 }
 
                 // During the previous BringIntoView, the scroll width extent might have been out of date if
@@ -544,6 +573,11 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                 // After the previous BringIntoView, Y offset should be correct and an extra layout pass has been executed,
                 // hence the width extent should be correct now, and we can try to scroll again.
                 scrollToElement.BringIntoView();
+
+                if (_scrollToElement is not null)
+                {
+                    RecycleElement(_scrollToElement, _scrollToIndex);
+                }
 
                 _scrollToElement = null;
                 _scrollToIndex = -1;
@@ -553,131 +587,116 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             return null;
         }
 
-
-        internal IReadOnlyList<Control?> GetRealizedElements()
-        {
-            return _realizedElements?.Elements ?? Array.Empty<Control>();
-        }
-        
-        private void GetOrEstimateAnchorElementForViewport(
-            double viewportStartU,
-            double viewportEndU,
-            int itemCount,
-            out int index,
-            out double position)
-        {
-            // We have no elements, or we're at the start of the viewport.
-            if (itemCount <= 0 || MathUtilities.IsZero(viewportStartU))
-            {
-                index = 0;
-                position = 0;
-                return;
-            }
-
-            // If we have realised elements and a valid StartU then try to use this information to
-            // get the anchor element.
-            if (_realizedElements?.StartU is { } u && !double.IsNaN(u))
-            {
-                var orientation = Orientation;
-
-                for (var i = 0; i < _realizedElements.Elements.Count; ++i)
-                {
-                    if (_realizedElements.Elements[i] is not { } element)
-                        continue;
-
-                    var sizeU = orientation == Orientation.Horizontal ? element.DesiredSize.Width : element.DesiredSize.Height;
-                    var endU = u + sizeU;
-
-                    if (endU > viewportStartU && u < viewportEndU)
-                    {
-                        index = _realizedElements.FirstIndex + i;
-                        position = u;
-                        return;
-                    }
-
-                    u = endU;
-                }
-            }
-
-            // We don't have any realized elements in the requested viewport, or can't rely on
-            // StartU being valid. Estimate the index using only the estimated element size.
-            var estimatedSize = CalculateAverageItemSize();
-
-            var itemsPerRow = Math.Floor(GetWidth(_viewport.Size) / GetWidth(estimatedSize));
-
-            // Estimate the element at the start of the viewport.
-            var startIndex = Math.Min((int)(viewportStartU / GetHeight(estimatedSize) / itemsPerRow), itemCount - 1);
-            index = startIndex;
-            position = startIndex * GetHeight(estimatedSize);
-        }
-
+        /// <summary>
+        /// Calculates the desired size of the viewport.
+        /// </summary>
+        /// <param name="orientation">the <see cref="Orientation"/> to use</param>
+        /// <param name="itemCount">The number of items</param>
+        /// <returns>the desired size</returns>
         private Size CalculateDesiredSize(Orientation orientation, int itemCount)
         {
             if (itemCount == 0) return EmptySize;
-            
-            var itemSize = GetAverageItemSize();
+
+            var avarageItemSize = GetAverageItemSize();
 
             var viewportWidth = GetWidth(_viewport.Size);
-            
-            var itemWidth = GetWidth(itemSize);
-            var itemHeight = GetHeight(itemSize);
 
-            if (itemWidth == 0 || itemHeight == 0) return EmptySize; 
-                
+            var itemWidth = GetWidth(avarageItemSize);
+            var itemHeight = GetHeight(avarageItemSize);
+
+            if (itemWidth == 0 || itemHeight == 0) return EmptySize;
+
             var itemsPerRow = Math.Max(Math.Floor(viewportWidth / itemWidth), 1);
-            
-            var sizeU = Math.Ceiling(Items.Count / itemsPerRow) * itemHeight;
-            
-            return orientation == Orientation.Horizontal
-                ? new Size(viewportWidth, sizeU)
-                : new Size(sizeU, viewportWidth);
+
+            double sizeU = 0d;
+            if (AllowDifferentSizedItems)
+            {
+                double x = 0;
+                double rowHeight = 0;
+
+                foreach (var item in Items)
+                {
+                    Size itemSize = GetAssumedItemSize(item);
+
+                    if (x + GetWidth(itemSize) > GetWidth(_viewport.Size) && x != 0)
+                    {
+                        x = 0;
+                        sizeU += rowHeight;
+                        rowHeight = 0;
+                    }
+
+                    x += GetWidth(itemSize);
+                    rowHeight = Math.Max(rowHeight, GetHeight(itemSize));
+                }
+
+                sizeU += rowHeight;
+            }
+            else
+            {
+                sizeU = Math.Ceiling(Items.Count / itemsPerRow) * itemHeight;
+            }
+
+            return orientation == Orientation.Horizontal ?
+                new Size(viewportWidth, sizeU) :
+                new Size(sizeU, viewportWidth);
         }
 
+        /// <summary>
+        /// Estimates the desired size
+        /// </summary>
+        /// <param name="orientation">the <see cref="Orientation"/> to use</param>
+        /// <param name="itemCount">The number of items</param>
+        /// <returns>the estimated desired size</returns>
         private Size EstimateDesiredSize(Orientation orientation, int itemCount)
         {
             if (_scrollToIndex >= 0 && _scrollToElement is not null)
             {
                 // We have an element to scroll to, so we can estimate the desired size based on the
                 // element's position and the remaining elements.
-                var remaining = itemCount - _scrollToIndex - 1;
+                var remainingItems = itemCount - _scrollToIndex - 1;
+                var itemsPerRow = Math.Max(Math.Floor(GetWidth(_viewport.Size) / GetWidth(GetAverageItemSize())), 1);
+                var remainingRows = (int)Math.Ceiling(remainingItems / itemsPerRow);
                 var u = GetY(_scrollToElement.Bounds.BottomRight);
-                var sizeU = u + (remaining * GetHeight(GetAverageItemSize()));
-                return orientation == Orientation.Horizontal 
-                    ? new(sizeU, DesiredSize.Height) 
-                    : new(DesiredSize.Width, sizeU);
+                var sizeU = u + (remainingRows * GetHeight(GetAverageItemSize()));
+                return orientation == Orientation.Horizontal ?
+                    new(sizeU, DesiredSize.Height) :
+                    new(DesiredSize.Width, sizeU);
             }
 
             return DesiredSize;
         }
 
+        /// <inheritdoc />
         protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
         {
-            base.OnPropertyChanged(change);
 
             if (change.Property == OrientationProperty)
             {
-                // MouseWheelScrollDirection = Orientation == Orientation.Horizontal
-                //     ? ScrollDirection.Vertical
-                //     : ScrollDirection.Horizontal;
-                // SetVerticalOffset(0);
-                // SetHorizontalOffset(0);
+                ScrollIntoView(0);
                 InvalidateMeasure();
                 InvalidateArrange();
             }
 
-            if (change.Property == AllowDifferentSizedItemsProperty || change.Property == ItemSizeProperty)
+            if (change.Property == AllowDifferentSizedItemsProperty || change.Property == ItemSizeProperty ||
+                change.Property == IsGridLayoutEnabledProperty || change.Property == StretchItemsProperty)
             {
                 foreach (var child in Children)
                 {
                     child.InvalidateMeasure();
                 }
+
+                InvalidateMeasure();
+                InvalidateArrange();
             }
+            
+            
+            base.OnPropertyChanged(change);
         }
 
-
-        private void RealizeAndVirtualizeItems(
-            IReadOnlyList<object?> items,
-            Size availableSize)
+        /// <summary>
+        /// Realizes visible items and virtualizes non visible items
+        /// </summary>
+        private void RealizeAndVirtualizeItems()
         {
             FindStartIndexAndOffset();
             VirtualizeItemsBeforeStartIndex();
@@ -685,6 +704,10 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             VirtualizeItemsAfterEndIndex();
         }
 
+        /// <summary>
+        /// Calculates the predicted avarage item size
+        /// </summary>
+        /// <returns>the estimated avarage Size</returns>
         private Size GetAverageItemSize()
         {
             if (!ItemSize.NearlyEquals(EmptySize))
@@ -693,14 +716,19 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             }
             else if (!AllowDifferentSizedItems)
             {
-                return sizeOfFirstItem ?? FallbackItemSize;
+                return _sizeOfFirstItem ?? FallbackItemSize;
             }
             else
             {
-                return averageItemSizeCache ??= CalculateAverageItemSize();
+                return _averageItemSizeCache ??= CalculateAverageItemSize();
             }
         }
 
+        /// <summary>
+        /// Calculates the start offset for a given item index 
+        /// </summary>
+        /// <param name="itemIndex">the index of the requested item</param>
+        /// <returns>the starting point</returns>
         private Point FindItemOffset(int itemIndex)
         {
             double x = 0, y = 0, rowHeight = 0;
@@ -710,16 +738,16 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                 var itemWidth = GetWidth(GetAssumedItemSize(Items[0]));
                 var itemHeight = GetHeight(GetAssumedItemSize(Items[0]));
 
-                if (itemWidth == 0 || itemHeight == 0) return new Point(); 
-                
+                if (itemWidth == 0 || itemHeight == 0) return new Point();
+
                 var itemsPerRow = Math.Max(Math.Floor(GetWidth(_viewport.Size) / itemWidth), 1);
-                
-                var itemRowIndex = (int)Math.Floor(itemIndex * 1.0 / itemsPerRow); 
-                x = (itemIndex- itemRowIndex) * itemWidth;
+
+                var itemRowIndex = (int)Math.Floor(itemIndex * 1.0 / itemsPerRow);
+                x = (itemIndex - itemRowIndex * itemsPerRow) * itemWidth;
                 y = itemRowIndex * itemHeight;
-                return new Point(x, y);
+                return CreatePoint(x, y);
             }
-            
+
             for (int i = 0; i <= itemIndex; i++)
             {
                 Size itemSize = GetAssumedItemSize(Items[i]);
@@ -741,14 +769,16 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             return CreatePoint(x, y);
         }
 
-
+        /// <summary>
+        ///  Calculates the anchor index and scroll offset for the anchor
+        /// </summary>
         private void FindStartIndexAndOffset()
         {
             if (GetY(_viewport.TopLeft) == 0 && GetY(_viewport.BottomRight) == 0)
             {
-                startItemIndex = -1;
-                startItemOffsetX = 0;
-                startItemOffsetY = 0;
+                _startItemIndex = -1;
+                _startItemOffsetX = 0;
+                _startItemOffsetY = 0;
                 return;
             }
 
@@ -756,13 +786,13 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
 
             if (startOffsetY <= 0)
             {
-                startItemIndex = Items.Count > 0 ? 0 : -1;
-                startItemOffsetX = 0;
-                startItemOffsetY = 0;
+                _startItemIndex = Items.Count > 0 ? 0 : -1;
+                _startItemOffsetX = 0;
+                _startItemOffsetY = 0;
                 return;
             }
 
-            startItemIndex = -1;
+            _startItemIndex = -1;
 
             double x = 0, y = 0, rowHeight = 0;
             int indexOfFirstRowItem = 0;
@@ -774,17 +804,17 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                 var itemWidth = GetWidth(GetAssumedItemSize(Items[0]));
                 var itemHeight = GetHeight(GetAssumedItemSize(Items[0]));
 
-                if (itemWidth == 0 || itemHeight == 0) return; 
-                
+                if (itemWidth == 0 || itemHeight == 0) return;
+
                 var itemsPerRow = Math.Max(Math.Floor(GetWidth(_viewport.Size) / itemWidth), 1);
-                
-                var startRowIndex = (int)Math.Floor(startOffsetY / itemHeight ); 
-                startItemIndex = (int)(startRowIndex * itemsPerRow); 
-                startItemOffsetX = 0;
-                startItemOffsetY = startRowIndex * itemHeight;
+
+                var startRowIndex = (int)Math.Floor(startOffsetY / itemHeight);
+                _startItemIndex = (int)(startRowIndex * itemsPerRow);
+                _startItemOffsetX = 0;
+                _startItemOffsetY = startRowIndex * itemHeight;
                 return;
             }
-            
+
             foreach (var item in Items)
             {
                 Size itemSize = GetAssumedItemSize(item);
@@ -802,20 +832,9 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
 
                 if (y + rowHeight > startOffsetY)
                 {
-                    if (cacheLengthUnit == VirtualizationCacheLengthUnit.Item)
-                    {
-                        startItemIndex = Math.Max(indexOfFirstRowItem - (int)cacheLength.CacheBeforeViewport, 0);
-                        var itemOffset = FindItemOffset(startItemIndex);
-                        startItemOffsetX = GetX(itemOffset);
-                        startItemOffsetY = GetY(itemOffset);
-                    }
-                    else
-                    {
-                        startItemIndex = indexOfFirstRowItem;
-                        startItemOffsetX = 0;
-                        startItemOffsetY = y;
-                    }
-
+                    _startItemIndex = indexOfFirstRowItem;
+                    _startItemOffsetX = 0;
+                    _startItemOffsetY = y;
                     break;
                 }
 
@@ -823,20 +842,23 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             }
 
             // make sure that at least one item is realized to allow correct calculation of the extend
-            if (startItemIndex == -1 && Items.Count > 0)
+            if (_startItemIndex == -1 && Items.Count > 0)
             {
-                startItemIndex = Items.Count - 1;
-                startItemOffsetX = x;
-                startItemOffsetY = y;
+                _startItemIndex = Items.Count - 1;
+                _startItemOffsetX = x;
+                _startItemOffsetY = y;
             }
         }
 
+        /// <summary>
+        /// Realizes all elements until the visible ViewPort is full
+        /// </summary>
         private void RealizeItemsAndFindEndIndex()
         {
-            if (startItemIndex == -1)
+            if (_startItemIndex == -1)
             {
-                endItemIndex = -1;
-                knownExtendX = 0;
+                _endItemIndex = -1;
+                _knownExtendX = 0;
                 return;
             }
 
@@ -845,20 +867,20 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
 
             double endOffsetY = DetermineEndOffsetY();
 
-            double x = startItemOffsetX;
-            double y = startItemOffsetY;
+            double x = _startItemOffsetX;
+            double y = _startItemOffsetY;
             double rowHeight = 0;
 
-            knownExtendX = 0;
+            _knownExtendX = 0;
 
-            for (int itemIndex = startItemIndex; itemIndex <= newEndItemIndex; itemIndex++)
+            for (int itemIndex = _startItemIndex; itemIndex <= newEndItemIndex; itemIndex++)
             {
                 if (itemIndex == 0)
                 {
-                    sizeOfFirstItem = null;
+                    _sizeOfFirstItem = null;
                 }
 
-                object item = Items[itemIndex];
+                object? item = Items[itemIndex];
 
                 var container = GetOrCreateElement(Items, itemIndex);
 
@@ -874,11 +896,11 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
 
                 var containerSize = DetermineContainerSize(item, container, upfrontKnownItemSize);
 
-                _measureElements!.Add(itemIndex, container, 0, containerSize);
+                _measureElements!.Add(itemIndex, container, containerSize);
 
-                if (AllowDifferentSizedItems == false && sizeOfFirstItem is null)
+                if (AllowDifferentSizedItems == false && _sizeOfFirstItem is null)
                 {
-                    sizeOfFirstItem = containerSize;
+                    _sizeOfFirstItem = containerSize;
                 }
 
                 if (x != 0 && x + GetWidth(containerSize) > GetWidth(_viewport.Size))
@@ -889,156 +911,98 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                 }
 
                 x += GetWidth(containerSize);
-                knownExtendX = Math.Max(x, knownExtendX);
+                _knownExtendX = Math.Max(x, _knownExtendX);
                 rowHeight = Math.Max(rowHeight, GetHeight(containerSize));
 
                 if (endItemIndexFound == false)
                 {
                     if (y >= endOffsetY
                         || (AllowDifferentSizedItems == false
-                            && x + GetWidth(sizeOfFirstItem!.Value) > GetWidth(_viewport.Size)
+                            && x + GetWidth(_sizeOfFirstItem!.Value) > GetWidth(_viewport.Size)
                             && y + rowHeight >= endOffsetY))
                     {
                         endItemIndexFound = true;
 
                         newEndItemIndex = itemIndex;
-
-                        if (cacheLengthUnit == VirtualizationCacheLengthUnit.Item)
-                        {
-                            newEndItemIndex = Math.Min(newEndItemIndex + (int)cacheLength.CacheAfterViewport,
-                                Items.Count - 1);
-                            // loop continues unitl newEndItemIndex is reached
-                        }
                     }
                 }
             }
 
-            endItemIndex = newEndItemIndex;
-            Debug.WriteLine($"Start: {startItemIndex} - End: {endItemIndex}");
+            _endItemIndex = newEndItemIndex;
+            Debug.WriteLine($"Start: {_startItemIndex} - End: {_endItemIndex}");
         }
 
-        private Size DetermineContainerSize(object item, Control container, Size? upfrontKnownItemSize)
+        /// <summary>
+        /// Determines the container size
+        /// </summary>
+        /// <param name="item">the item to use</param>
+        /// <param name="container">the container</param>
+        /// <param name="upfrontKnownItemSize">the known item size, if any</param>
+        /// <returns></returns>
+        private Size DetermineContainerSize(object? item, Control container, Size? upfrontKnownItemSize)
         {
-            Size containerSize = upfrontKnownItemSize ?? container.DesiredSize;
+            if (ItemSizeProvider is not null && item is not null)
+            {
+                return ItemSizeProvider.GetSizeForItem(item);
+            }
 
-            return containerSize;
+            return upfrontKnownItemSize ?? _realizedElements?.GetElementSize(container) ?? container.DesiredSize;
         }
 
+        /// <summary>
+        /// Removes all items that are realized before start index
+        /// </summary>
         private void VirtualizeItemsBeforeStartIndex()
         {
-            _realizedElements!.RecycleElementsBefore(startItemIndex, RecycleElement);
+            _realizedElements!.RecycleElementsBefore(_startItemIndex, RecycleElement);
         }
 
+        /// <summary>
+        /// Removes all items that are realized after start index
+        /// </summary>
         private void VirtualizeItemsAfterEndIndex()
         {
-            _realizedElements!.RecycleElementsAfter(endItemIndex, RecycleElement);
+            _realizedElements!.RecycleElementsAfter(_endItemIndex, RecycleElement);
         }
 
-        // private void UpdateExtent()
-        // {
-        //     Size extent;
-        //
-        //     if (startItemIndex == -1)
-        //     {
-        //         extent = new Size(0, 0);
-        //     }
-        //     else if (!AllowDifferentSizedItems)
-        //     {
-        //         extent = CalculateExtentForSameSizedItems();
-        //     }
-        //     else
-        //     {
-        //         extent = CalculateExtentForDifferentSizedItems();
-        //     }
-        //
-        //     if (extent != Extent)
-        //     {
-        //         Extent = extent;
-        //     }
-        // }
-
-        private Size CalculateExtentForSameSizedItems()
-        {
-            var itemSize = !ItemSize.NearlyEquals(EmptySize) ? ItemSize : sizeOfFirstItem!.Value;
-            int itemsPerRow = (int)Math.Max(1, Math.Floor(GetWidth(_viewport.Size) / GetWidth(itemSize)));
-            double extentY = Math.Ceiling(((double)Items.Count) / itemsPerRow) * GetHeight(itemSize);
-            return CreateSize(knownExtendX, extentY);
-        }
-
-        private Size CalculateExtentForDifferentSizedItems()
-        {
-            double x = 0;
-            double y = 0;
-            double rowHeight = 0;
-
-            foreach (var item in Items)
-            {
-                Size itemSize = GetAssumedItemSize(item);
-
-                if (x + GetWidth(itemSize) > GetWidth(_viewport.Size))
-                {
-                    x = 0;
-                    y += rowHeight;
-                    rowHeight = 0;
-                }
-
-                x += GetWidth(itemSize);
-                rowHeight = Math.Max(rowHeight, GetHeight(itemSize));
-            }
-
-            return CreateSize(knownExtendX, y + rowHeight);
-        }
-
-        // private Size CalculateDesiredSize(Size availableSize)
-        // {
-        //     double desiredWidth = Math.Min(availableSize.Width, Extent.Width);
-        //     double desiredHeight = Math.Min(availableSize.Height, Extent.Height);
-        //
-        //     return new Size(desiredWidth, desiredHeight);
-        // }
-
+        /// <summary>
+        /// Calculates the start y-offset of the effective viewport
+        /// </summary>
+        /// <returns>the y-component of the effective viewport</returns>
         private double DetermineStartOffsetY()
         {
-            double cacheLength = 0;
-
-            if (cacheLengthUnit == VirtualizationCacheLengthUnit.Page)
-            {
-                cacheLength = this.cacheLength.CacheBeforeViewport * GetHeight(_viewport.Size); // viewport.viewportHeight;
-            }
-            else if (cacheLengthUnit == VirtualizationCacheLengthUnit.Pixel)
-            {
-                cacheLength = this.cacheLength.CacheBeforeViewport;
-            }
-            
-            return Math.Max(GetY(_viewport.TopLeft) - cacheLength, 0);
+            return Math.Max(GetY(_viewport.TopLeft), 0);
         }
 
+        /// <summary>
+        /// Calculates the end y-offset of the effective viewport
+        /// </summary>
+        /// <returns>the y-component of the effective viewport</returns>
         private double DetermineEndOffsetY()
         {
-            double cacheLength = 0;
-
-            if (cacheLengthUnit == VirtualizationCacheLengthUnit.Page)
-            {
-                cacheLength = this.cacheLength.CacheAfterViewport * GetHeight(_viewport.Size);
-            }
-            else if (cacheLengthUnit == VirtualizationCacheLengthUnit.Pixel)
-            {
-                cacheLength = this.cacheLength.CacheAfterViewport;
-            }
-
-            return Math.Max(0, GetY(_viewport.BottomRight) + cacheLength);
+            return Math.Max(0, GetY(_viewport.BottomRight));
         }
 
-        private Size? GetUpfrontKnownItemSize(object item)
+        /// <summary>
+        /// Calculates the upfront known item size
+        /// </summary>
+        /// <param name="item">the item to use</param>
+        /// <returns>the size of the item or null if not known</returns>
+        private Size? GetUpfrontKnownItemSize(object? item)
         {
+            if (item is null)
+            {
+                return null;
+            }
+
             if (!ItemSize.NearlyEquals(EmptySize))
             {
                 return ItemSize;
             }
 
-            if (!AllowDifferentSizedItems && sizeOfFirstItem != null)
+            if (!AllowDifferentSizedItems && _sizeOfFirstItem != null)
             {
-                return sizeOfFirstItem;
+                return _sizeOfFirstItem;
             }
 
             if (ItemSizeProvider != null)
@@ -1049,16 +1013,22 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             return null;
         }
 
-        private Size GetAssumedItemSize(object item)
+        /// <summary>
+        /// Calculates the assumed item size
+        /// </summary>
+        /// <param name="item">the item to use</param>
+        /// <returns>the assumed size of the item</returns>
+        private Size GetAssumedItemSize(object? item)
         {
+            if (item is null) return EmptySize;
             var index = Items.IndexOf(item);
 
-            if (GetUpfrontKnownItemSize(item) is Size upfrontKnownItemSize)
+            if (GetUpfrontKnownItemSize(item) is { } upfrontKnownItemSize)
             {
                 return upfrontKnownItemSize;
             }
 
-            if (_realizedElements!.GetElementSize(index) is Size cachedItemSize)
+            if (_realizedElements!.GetElementSize(index) is { } cachedItemSize)
             {
                 return cachedItemSize;
             }
@@ -1066,6 +1036,13 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             return GetAverageItemSize();
         }
 
+        /// <summary>
+        /// Arranges items in a single row
+        /// </summary>
+        /// <param name="rowWidth">the available row width</param>
+        /// <param name="children">the children to arrange</param>
+        /// <param name="childSizes">the sizes of the childres</param>
+        /// <param name="y">the y offset of the row</param>
         private void ArrangeRow(double rowWidth, List<Control> children, List<Size> childSizes, double y)
         {
             double summedUpChildWidth;
@@ -1085,16 +1062,16 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             else
             {
                 double childWidth = GetWidth(childSizes[0]);
-                int itemsPerRow = IsGridLayoutEnabled
-                    ? (int)Math.Max(Math.Floor(rowWidth / childWidth), 1)
-                    : children.Count;
+                int itemsPerRow = IsGridLayoutEnabled ?
+                    (int)Math.Max(Math.Floor(rowWidth / childWidth), 1) :
+                    children.Count;
 
                 if (StretchItems)
                 {
                     var firstChild = children[0];
-                    double maxWidth = Orientation == Orientation.Horizontal
-                        ? firstChild.MaxWidth
-                        : firstChild.MaxHeight;
+                    double maxWidth = Orientation == Orientation.Horizontal ?
+                        firstChild.MaxWidth :
+                        firstChild.MaxHeight;
                     double stretchedChildWidth = Math.Min(rowWidth / itemsPerRow, maxWidth);
                     stretchedChildWidth =
                         Math.Max(stretchedChildWidth, childWidth); // ItemSize might be greater than MaxWidth/MaxHeight
@@ -1117,15 +1094,25 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
 
             double x = -GetX(_viewport.TopLeft) + outerSpacing;
 
+            double rowHeight = childSizes.Max(childSize => GetHeight(childSize));
+
             for (int i = 0; i < children.Count; i++)
             {
                 var child = children[i];
                 Size childSize = childSizes[i];
-                child.Arrange(CreateRect(x, y, GetWidth(childSize) + extraWidth, GetHeight(childSize)));
+                child.Arrange(CreateRect(x, y, GetWidth(childSize) + extraWidth, rowHeight));
                 x += GetWidth(childSize) + extraWidth + innerSpacing;
             }
         }
 
+        /// <summary>
+        /// Calculates the row spacing between the items and before and after the row
+        /// </summary>
+        /// <param name="rowWidth">the available row width</param>
+        /// <param name="children">the children to consider</param>
+        /// <param name="summedUpChildWidth">the sum of all children's width</param>
+        /// <param name="innerSpacing">returns the spacing between items</param>
+        /// <param name="outerSpacing">returns the spacing before and after each row</param>
         private void CalculateRowSpacing(double rowWidth, List<Control> children, double summedUpChildWidth,
             out double innerSpacing, out double outerSpacing)
         {
@@ -1137,9 +1124,9 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             }
             else
             {
-                childCount = IsGridLayoutEnabled
-                    ? (int)Math.Max(1, Math.Floor(rowWidth / GetWidth(sizeOfFirstItem!.Value)))
-                    : children.Count;
+                childCount = IsGridLayoutEnabled ?
+                    (int)Math.Max(1, Math.Floor(rowWidth / GetWidth(_sizeOfFirstItem!.Value))) :
+                    children.Count;
             }
 
             double unusedWidth = Math.Max(0, rowWidth - summedUpChildWidth);
@@ -1168,6 +1155,10 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             }
         }
 
+        /// <summary>
+        /// Calculates the avarage item size of all realized items
+        /// </summary>
+        /// <returns>the avarage item size or <see cref="FallbackItemSize"/> if no items are available</returns>
         private Size CalculateAverageItemSize()
         {
             if (_realizedElements!.Sizes.Count > 0)
@@ -1180,6 +1171,11 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             return FallbackItemSize;
         }
 
+        /// <summary>
+        /// This method gets called when the effective viewport got changed
+        /// </summary>
+        /// <param name="sender">the sender of the event</param>
+        /// <param name="e">the event args</param>
         private void OnEffectiveViewportChanged(object? sender, EffectiveViewportChangedEventArgs e)
         {
             // var vertical = Orientation == Orientation.Vertical;
@@ -1192,19 +1188,23 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             var newViewportStart = GetY(_viewport.TopLeft); // vertical ? _viewport.Top : _viewport.Left;
             var newViewportEnd = GetY(_viewport.BottomRight); // ? _viewport.Bottom : _viewport.Right);
 
-            if (!MathUtilities.AreClose(oldViewportStart, newViewportStart) ||
-                !MathUtilities.AreClose(oldViewportEnd, newViewportEnd))
+            if (!oldViewportStart.IsCloseTo(newViewportStart) ||
+                !oldViewportEnd.IsCloseTo(newViewportEnd))
             {
                 InvalidateMeasure();
             }
         }
 
-
+        /// <summary>
+        /// This method gets called when the associated ItemsControl is changed
+        /// </summary>
+        /// <param name="sender">the sender of the event</param>
+        /// <param name="e">the event args</param>
         private void OnItemsControlPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
         {
             if (_focusedElement is not null &&
                 e.Property == KeyboardNavigation.TabOnceActiveElementProperty &&
-                e.GetOldValue<IInputElement?>() == _focusedElement)
+                ReferenceEquals(e.GetOldValue<IInputElement?>(), _focusedElement))
             {
                 // TabOnceActiveElement has moved away from _focusedElement so we can recycle it.
                 RecycleElement(_focusedElement, _focusedIndex);
@@ -1215,97 +1215,139 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
 
         #region scroll info
 
-        // TODO determine exact scoll amount for item based scrolling when AllowDifferentSizedItems is true
+        // TODO determine exact scoll amount for item based scrolling when AllowDifferentSizedItems is true.
+        // for now, we will just disable jumping rows in this case.
 
-        // protected override double GetLineUpScrollAmount()
-        // {
-        //     return -Math.Min(GetAverageItemSize().Height * ScrollLineDeltaItem, ViewportSize.Height);
-        // }
-        //
-        // protected override double GetLineDownScrollAmount()
-        // {
-        //     return Math.Min(GetAverageItemSize().Height * ScrollLineDeltaItem, ViewportSize.Height);
-        // }
-        //
-        // protected override double GetLineLeftScrollAmount()
-        // {
-        //     return -Math.Min(GetAverageItemSize().Width * ScrollLineDeltaItem, ViewportSize.Width);
-        // }
-        //
-        // protected override double GetLineRightScrollAmount()
-        // {
-        //     return Math.Min(GetAverageItemSize().Width * ScrollLineDeltaItem, ViewportSize.Width);
-        // }
-        //
-        // protected override double GetMouseWheelUpScrollAmount()
-        // {
-        //     return -Math.Min(GetAverageItemSize().Height * MouseWheelDeltaItem, ViewportSize.Height);
-        // }
-        //
-        // protected override double GetMouseWheelDownScrollAmount()
-        // {
-        //     return Math.Min(GetAverageItemSize().Height * MouseWheelDeltaItem, ViewportSize.Height);
-        // }
-        //
-        // protected override double GetMouseWheelLeftScrollAmount()
-        // {
-        //     return -Math.Min(GetAverageItemSize().Width * MouseWheelDeltaItem, ViewportSize.Width);
-        // }
-        //
-        // protected override double GetMouseWheelRightScrollAmount()
-        // {
-        //     return Math.Min(GetAverageItemSize().Width * MouseWheelDeltaItem, ViewportSize.Width);
-        // }
-        //
-        // protected override double GetPageUpScrollAmount()
-        // {
-        //     return -ViewportSize.Height;
-        // }
-        //
-        // protected override double GetPageDownScrollAmount()
-        // {
-        //     return ViewportSize.Height;
-        // }
-        //
-        // protected override double GetPageLeftScrollAmount()
-        // {
-        //     return -ViewportSize.Width;
-        // }
-        //
-        // protected override double GetPageRightScrollAmount()
-        // {
-        //     return ViewportSize.Width;
-        // }
+        private void NavigateLeft(ref int currentIndex)
+        {
+            switch (Orientation)
+            {
+                case Orientation.Horizontal:
+                    --currentIndex;
+                    break;
+                
+                case Orientation.Vertical:
+                    if (AllowDifferentSizedItems) return;
+                    var itemsPerRow =
+                        (int)Math.Max(Math.Floor(GetWidth(_viewport.Size) / GetWidth(GetAverageItemSize())), 1);
+                    currentIndex -= itemsPerRow;
+                    break;
+            }
+        }
+
+        private void NavigateRight(ref int currentIndex)
+        {
+            switch (Orientation)
+            {
+                case Orientation.Horizontal:
+                    ++currentIndex;
+                    break;
+                
+                case Orientation.Vertical:
+                    if (AllowDifferentSizedItems) return;
+                    var itemsPerRow =
+                        (int)Math.Max(Math.Floor(GetWidth(_viewport.Size) / GetWidth(GetAverageItemSize())), 1);
+                    currentIndex += itemsPerRow;
+                    break;
+            }
+        }
+
+        private void NavigateUp(ref int currentIndex)
+        {
+            switch (Orientation)
+            {
+                case Orientation.Vertical:
+                    --currentIndex;
+                    break;
+                case Orientation.Horizontal:
+                    if (AllowDifferentSizedItems) return;
+                    var itemsPerRow =
+                        (int)Math.Max(Math.Floor(GetWidth(_viewport.Size) / GetWidth(GetAverageItemSize())), 1);
+                    currentIndex -= itemsPerRow;
+                    break;
+            }
+        }
+
+        private void NavigateDown(ref int currentIndex)
+        {
+            switch (Orientation)
+            {
+                case Orientation.Vertical:
+                    ++currentIndex;
+                    break;
+                case Orientation.Horizontal:
+                    if (AllowDifferentSizedItems) return;
+                    var itemsPerRow =
+                        (int)Math.Max(Math.Floor(GetWidth(_viewport.Size) / GetWidth(GetAverageItemSize())), 1);
+                    currentIndex += itemsPerRow;
+                    break;
+            }
+        }
+        
 
         #endregion
 
-        #region orientation aware helper methods
-
+        /// <summary>
+        /// Calculates a virtual X-coordinate based on the <see cref="Orientation"/> 
+        /// </summary>
         private double GetX(Point point) => Orientation == Orientation.Horizontal ? point.X : point.Y;
+
+        /// <summary>
+        /// Calculates a virtual Y-coordinate based on the <see cref="Orientation"/> 
+        /// </summary>
         private double GetY(Point point) => Orientation == Orientation.Horizontal ? point.Y : point.X;
-        private double GetRowWidth(Size size) => Orientation == Orientation.Vertical ? size.Width : size.Height;
+
+        /// <summary>
+        /// Calculates a virtual width-component based on the <see cref="Orientation"/> 
+        /// </summary>
         private double GetWidth(Size size) => Orientation == Orientation.Horizontal ? size.Width : size.Height;
+
+        /// <summary>
+        /// Calculates a virtual height-component based on the <see cref="Orientation"/> 
+        /// </summary>
         private double GetHeight(Size size) => Orientation == Orientation.Horizontal ? size.Height : size.Width;
 
+        /// <summary>
+        /// Creates a virtual Point based on the <see cref="Orientation"/> 
+        /// </summary>
         private Point CreatePoint(double x, double y) =>
             Orientation == Orientation.Horizontal ? new Point(x, y) : new Point(y, x);
 
-        private Size CreateSize(double width, double height) => Orientation == Orientation.Horizontal
-            ? new Size(width, height)
-            : new Size(height, width);
+        /// <summary>
+        /// Creates a virtual Size based on the <see cref="Orientation"/> 
+        /// </summary>
+        private Size CreateSize(double width, double height) => Orientation == Orientation.Horizontal ?
+            new Size(width, height) :
+            new Size(height, width);
 
+        /// <summary>
+        /// Creates a virtual Rect based on the <see cref="Orientation"/> 
+        /// </summary>
         private Rect CreateRect(double x, double y, double width, double height) =>
             Orientation == Orientation.Horizontal ? new Rect(x, y, width, height) : new Rect(y, x, height, width);
 
-        #endregion
 
+        /// <summary>
+        /// Gets an existing container or creates a new one of none was present
+        /// </summary>
+        /// <param name="items">the available items</param>
+        /// <param name="index">the index to create</param>
+        /// <returns>the requested container</returns>
         private Control GetOrCreateElement(IReadOnlyList<object?> items, int index)
         {
             Debug.Assert(ItemContainerGenerator is not null);
 
-            if ((GetRealizedElement(index) ??
-                 GetRealizedElement(index, ref _focusedIndex, ref _focusedElement) ??
-                 GetRealizedElement(index, ref _scrollToIndex, ref _scrollToElement)) is { } realized)
+            if (GetRealizedElement(index, ref _focusedIndex, ref _focusedElement) is { } focusedElement)
+            {
+                return focusedElement;
+            }
+
+            if (GetRealizedElement(index, ref _scrollToIndex, ref _scrollToElement) is { } scrollToElement)
+            {
+                return scrollToElement;
+            }
+
+            if (GetRealizedElement(index) is { } realized)
                 return realized;
 
             var item = items[index];
@@ -1322,11 +1364,23 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             }
         }
 
+        /// <summary>
+        /// Gets the realized element or null if not available
+        /// </summary>
+        /// <param name="index">The container index to lookup</param>
+        /// <returns>the realized container</returns>
         private Control? GetRealizedElement(int index)
         {
             return _realizedElements?.GetElement(index);
         }
 
+        /// <summary>
+        /// Gets the realized element or null if not available
+        /// </summary>
+        /// <param name="index">The container index to lookup</param>
+        /// <param name="specialIndex">the reference to a special index, e.g. <see cref="_focusedIndex"/></param>
+        /// <param name="specialElement">the reference to a special element, e.g. <see cref="_focusedElement"/></param>
+        /// <returns>the realized container</returns>
         private static Control? GetRealizedElement(
             int index,
             ref int specialIndex,
@@ -1345,6 +1399,12 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             return null;
         }
 
+        /// <summary>
+        /// Prepares a container if the item is it's own container 
+        /// </summary>
+        /// <param name="item">the item to use</param>
+        /// <param name="index">the item index</param>
+        /// <returns>the prepared container</returns>
         private Control GetItemAsOwnContainer(object? item, int index)
         {
             Debug.Assert(ItemContainerGenerator is not null);
@@ -1355,7 +1415,6 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             if (!controlItem.IsSet(RecycleKeyProperty))
             {
                 generator.PrepareItemContainer(controlItem, controlItem, index);
-                // TODO: Handle this here or in ItemsContainerManaager?
                 AddInternalChild(controlItem);
                 controlItem.SetValue(RecycleKeyProperty, s_itemIsItsOwnContainer);
                 generator.ItemContainerPrepared(controlItem, item, index);
@@ -1365,6 +1424,13 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             return controlItem;
         }
 
+        /// <summary>
+        /// Gets a recycled container or null if no container to recycle was available
+        /// </summary>
+        /// <param name="item">the item which uses the container</param>
+        /// <param name="index">the item index</param>
+        /// <param name="recycleKey">the recycle key</param>
+        /// <returns>the recycled container</returns>
         private Control? GetRecycledElement(object? item, int index, object? recycleKey)
         {
             Debug.Assert(ItemContainerGenerator is not null);
@@ -1386,6 +1452,13 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             return null;
         }
 
+        /// <summary>
+        /// Creates a container for a given item
+        /// </summary>
+        /// <param name="item">the item which needs a container</param>
+        /// <param name="index">the item index</param>
+        /// <param name="recycleKey">the recycle key to use</param>
+        /// <returns>the created element</returns>
         private Control CreateElement(object? item, int index, object? recycleKey)
         {
             Debug.Assert(ItemContainerGenerator is not null);
@@ -1395,13 +1468,17 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
 
             container.SetValue(RecycleKeyProperty, recycleKey);
             generator.PrepareItemContainer(container, item, index);
-            // TODO: Handle this here or in ItemsContainerManaager?
             AddInternalChild(container);
             generator.ItemContainerPrepared(container, item, index);
 
             return container;
         }
 
+        /// <summary>
+        /// Recycles a container
+        /// </summary>
+        /// <param name="element">the container to recycle</param>
+        /// <param name="index">the item index</param>
         private void RecycleElement(Control element, int index)
         {
             Debug.Assert(ItemsControl is not null);
@@ -1432,6 +1509,10 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             }
         }
 
+        /// <summary>
+        /// Recycles a container if the item was removed
+        /// </summary>
+        /// <param name="element">the container to recycle</param>
         private void RecycleElementOnItemRemoved(Control element)
         {
             Debug.Assert(ItemContainerGenerator is not null);
@@ -1451,6 +1532,11 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             }
         }
 
+        /// <summary>
+        /// Pushes a container to the recycle pool
+        /// </summary>
+        /// <param name="recycleKey">the containers recycle-key</param>
+        /// <param name="element">the container to recycle</param>
         private void PushToRecyclePool(object recycleKey, Control element)
         {
             _recyclePool ??= new();
@@ -1464,6 +1550,12 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             pool.Push(element);
         }
 
+        /// <summary>
+        /// Updates the index of an element
+        /// </summary>
+        /// <param name="element">the affected element</param>
+        /// <param name="oldIndex">the old index</param>
+        /// <param name="newIndex">the new index</param>
         private void UpdateElementIndex(Control element, int oldIndex, int newIndex)
         {
             Debug.Assert(ItemContainerGenerator is not null);
@@ -1471,19 +1563,214 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             ItemContainerGenerator.ItemContainerIndexChanged(element, oldIndex, newIndex);
         }
 
+        /// <summary>
+        /// Defines the <see cref="AreHorizontalSnapPointsRegular"/> property.
+        /// </summary>
+        public static readonly StyledProperty<bool> AreHorizontalSnapPointsRegularProperty =
+            StackPanel.AreHorizontalSnapPointsRegularProperty.AddOwner<VirtualizingWrapPanel>();
 
-        // private struct MeasureViewport
-        // {
-        //     public int anchorIndex;
-        //     public double anchorU;
-        //     public double viewportUStart;
-        //     public double viewportUEnd;
-        //     public double measuredV;
-        //     public double realizedEndU;
-        //     public int lastIndex;
-        //     public bool viewportIsDisjunct;
-        //     public double viewportHeight => viewportUEnd - viewportUStart;
-        //     public double viewportWidth;
-        // }
+        /// <summary>
+        /// Defines the <see cref="AreVerticalSnapPointsRegular"/> property.
+        /// </summary>
+        public static readonly StyledProperty<bool> AreVerticalSnapPointsRegularProperty =
+            StackPanel.AreVerticalSnapPointsRegularProperty.AddOwner<VirtualizingWrapPanel>();
+
+        /// <summary>
+        /// Defines the <see cref="HorizontalSnapPointsChanged"/> event.
+        /// </summary>
+        public static readonly RoutedEvent<RoutedEventArgs> HorizontalSnapPointsChangedEvent =
+            RoutedEvent.Register<VirtualizingWrapPanel, RoutedEventArgs>(
+                nameof(HorizontalSnapPointsChanged),
+                RoutingStrategies.Bubble);
+
+        /// <summary>
+        /// Defines the <see cref="VerticalSnapPointsChanged"/> event.
+        /// </summary>
+        public static readonly RoutedEvent<RoutedEventArgs> VerticalSnapPointsChangedEvent =
+            RoutedEvent.Register<VirtualizingWrapPanel, RoutedEventArgs>(
+                nameof(VerticalSnapPointsChanged),
+                RoutingStrategies.Bubble);
+
+        /// <inheritdoc/>
+        public IReadOnlyList<double> GetIrregularSnapPoints(Orientation orientation,
+            SnapPointsAlignment snapPointsAlignment)
+        {
+            var snapPoints = new List<double>();
+            double lineSize = 0;
+
+            switch (orientation)
+            {
+                case Orientation.Horizontal:
+                    if (AreHorizontalSnapPointsRegular)
+                        throw new InvalidOperationException();
+
+                    if (Orientation == Orientation.Horizontal)
+                    {
+                        foreach (var child in VisualChildren)
+                        {
+                            double snapPoint = 0;
+
+                            foreach (var item in Items)
+                            {
+                                if (lineSize + child.Bounds.Height > _viewport.Size.Height && lineSize != 0)
+                                {
+                                    lineSize = 0;
+                                    switch (snapPointsAlignment)
+                                    {
+                                        case SnapPointsAlignment.Near:
+                                            snapPoint = child.Bounds.Left;
+                                            break;
+                                        case SnapPointsAlignment.Center:
+                                            snapPoint = child.Bounds.Center.X;
+                                            break;
+                                        case SnapPointsAlignment.Far:
+                                            snapPoint = child.Bounds.Right;
+                                            break;
+                                    }
+
+                                    snapPoints.Add(snapPoint);
+                                }
+
+                                lineSize += child.Bounds.Height;
+                            }
+                        }
+                    }
+
+                    break;
+
+                case Orientation.Vertical:
+                    if (AreVerticalSnapPointsRegular)
+                        throw new InvalidOperationException();
+                    if (Orientation == Orientation.Vertical)
+                    {
+                        foreach (var child in VisualChildren)
+                        {
+                            double snapPoint = 0;
+
+                            foreach (var item in Items)
+                            {
+                                if (lineSize + child.Bounds.Width > _viewport.Size.Width && lineSize != 0)
+                                {
+                                    lineSize = 0;
+                                    switch (snapPointsAlignment)
+                                    {
+                                        case SnapPointsAlignment.Near:
+                                            snapPoint = child.Bounds.Top;
+                                            break;
+                                        case SnapPointsAlignment.Center:
+                                            snapPoint = child.Bounds.Center.Y;
+                                            break;
+                                        case SnapPointsAlignment.Far:
+                                            snapPoint = child.Bounds.Bottom;
+                                            break;
+                                    }
+
+                                    snapPoints.Add(snapPoint);
+                                }
+
+                                lineSize += child.Bounds.Width;
+                            }
+                        }
+                    }
+
+                    break;
+            }
+
+            return snapPoints;
+        }
+
+        /// <inheritdoc/>
+        public double GetRegularSnapPoints(Orientation orientation, SnapPointsAlignment snapPointsAlignment,
+            out double offset)
+        {
+            offset = 0f;
+            var firstChild = VisualChildren.FirstOrDefault();
+
+            if (firstChild == null)
+            {
+                return 0;
+            }
+
+            double snapPoint = 0;
+
+            switch (Orientation)
+            {
+                case Orientation.Horizontal:
+                    if (!AreHorizontalSnapPointsRegular)
+                        throw new InvalidOperationException();
+
+                    snapPoint = firstChild.Bounds.Width;
+                    switch (snapPointsAlignment)
+                    {
+                        case SnapPointsAlignment.Near:
+                            offset = firstChild.Bounds.Left;
+                            break;
+                        case SnapPointsAlignment.Center:
+                            offset = firstChild.Bounds.Center.X;
+                            break;
+                        case SnapPointsAlignment.Far:
+                            offset = firstChild.Bounds.Right;
+                            break;
+                    }
+
+                    break;
+                case Orientation.Vertical:
+                    if (!AreVerticalSnapPointsRegular)
+                        throw new InvalidOperationException();
+                    snapPoint = firstChild.Bounds.Height;
+                    switch (snapPointsAlignment)
+                    {
+                        case SnapPointsAlignment.Near:
+                            offset = firstChild.Bounds.Top;
+                            break;
+                        case SnapPointsAlignment.Center:
+                            offset = firstChild.Bounds.Center.Y;
+                            break;
+                        case SnapPointsAlignment.Far:
+                            offset = firstChild.Bounds.Bottom;
+                            break;
+                    }
+
+                    break;
+            }
+
+            return snapPoint;
+        }
+
+        /// <summary>
+        /// Occurs when the measurements for horizontal snap points change.
+        /// </summary>
+        public event EventHandler<RoutedEventArgs>? HorizontalSnapPointsChanged
+        {
+            add => AddHandler(HorizontalSnapPointsChangedEvent, value);
+            remove => RemoveHandler(HorizontalSnapPointsChangedEvent, value);
+        }
+
+        /// <summary>
+        /// Occurs when the measurements for vertical snap points change.
+        /// </summary>
+        public event EventHandler<RoutedEventArgs>? VerticalSnapPointsChanged
+        {
+            add => AddHandler(VerticalSnapPointsChangedEvent, value);
+            remove => RemoveHandler(VerticalSnapPointsChangedEvent, value);
+        }
+
+        /// <summary>
+        /// Gets or sets whether the horizontal snap points for the <see cref="StackPanel"/> are equidistant from each other.
+        /// </summary>
+        public bool AreHorizontalSnapPointsRegular
+        {
+            get => GetValue(AreHorizontalSnapPointsRegularProperty);
+            set => SetValue(AreHorizontalSnapPointsRegularProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets whether the vertical snap points for the <see cref="StackPanel"/> are equidistant from each other.
+        /// </summary>
+        public bool AreVerticalSnapPointsRegular
+        {
+            get => GetValue(AreVerticalSnapPointsRegularProperty);
+            set => SetValue(AreVerticalSnapPointsRegularProperty, value);
+        }
     }
 }

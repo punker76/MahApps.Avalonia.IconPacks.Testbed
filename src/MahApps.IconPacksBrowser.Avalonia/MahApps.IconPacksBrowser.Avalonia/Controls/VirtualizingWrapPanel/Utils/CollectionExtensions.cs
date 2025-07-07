@@ -1,16 +1,12 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.Diagnostics.CodeAnalysis;
 
 namespace MahApps.IconPacksBrowser.Avalonia.Controls.Utils;
 
-public static class CollectionUtils
+internal static class CollectionExtensions
 {
-    public static NotifyCollectionChangedEventArgs ResetEventArgs { get; } = new(NotifyCollectionChangedAction.Reset);
-
-    public static void InsertMany<T>(this List<T> list, int index, T item, int count)
+    internal static void InsertMany<T>(this List<T> list, int index, T item, int count)
     {
         var repeat = FastRepeat<T>.Instance;
         repeat.Count = count;
@@ -18,13 +14,13 @@ public static class CollectionUtils
         list.InsertRange(index, FastRepeat<T>.Instance);
         repeat.Item = default;
     }
-
+    
     private class FastRepeat<T> : ICollection<T>
     {
         public static readonly FastRepeat<T> Instance = new();
         public int Count { get; set; }
         public bool IsReadOnly => true;
-        [AllowNull] public T Item { get; set; }
+        public T? Item { get; set; }
         public void Add(T item) => throw new NotImplementedException();
         public void Clear() => throw new NotImplementedException();
         public bool Contains(T item) => throw new NotImplementedException();
@@ -34,6 +30,8 @@ public static class CollectionUtils
 
         public void CopyTo(T[] array, int arrayIndex)
         {
+            if (Item is null) throw new InvalidOperationException("Item was null.");
+            
             var end = arrayIndex + Count;
 
             for (var i = arrayIndex; i < end; ++i)

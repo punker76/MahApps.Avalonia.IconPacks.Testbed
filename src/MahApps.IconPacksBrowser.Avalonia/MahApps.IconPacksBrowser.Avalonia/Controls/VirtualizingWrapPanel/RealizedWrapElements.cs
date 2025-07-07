@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Layout;
 using MahApps.IconPacksBrowser.Avalonia.Controls.Utils;
 
 namespace MahApps.IconPacksBrowser.Avalonia.Controls
@@ -16,8 +15,6 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
         private int _firstIndex;
         private List<Control?>? _elements;
         private List<Size>? _sizes;
-        private double _startU;
-        private bool _startUUnstable;
 
         /// <summary>
         /// Gets the number of realized elements.
@@ -43,21 +40,14 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
         /// Gets the sizes of the elements on the primary axis.
         /// </summary>
         public IReadOnlyList<Size> Sizes => _sizes ??= new List<Size>();
-
-        /// <summary>
-        /// Gets the position of the first element on the primary axis, or NaN if the position is
-        /// unstable.
-        /// </summary>
-        public double StartU => _startUUnstable ? double.NaN : _startU;
-
+        
         /// <summary>
         /// Adds a newly realized element to the collection.
         /// </summary>
         /// <param name="index">The index of the element.</param>
         /// <param name="element">The element.</param>
-        /// <param name="u">The position of the element on the primary axis.</param>
-        /// <param name="sizeU">The size of the element on the primary axis.</param>
-        public void Add(int index, Control element, double u, Size size)
+        /// <param name="size">The size of the element on the primary axis.</param>
+        public void Add(int index, Control element, Size size)
         {
             if (index < 0)
                 throw new ArgumentOutOfRangeException(nameof(index));
@@ -69,7 +59,6 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             {
                 _elements.Add(element);
                 _sizes.Add(size);
-                _startU = u;
                 _firstIndex = index;
             }
             else if (index == LastIndex + 1)
@@ -82,7 +71,6 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                 --_firstIndex;
                 _elements.Insert(0, element);
                 _sizes.Insert(0, size);
-                _startU = u;
             }
             else
             {
@@ -118,7 +106,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             if (index < FirstIndex || _sizes is null)
                 return null;
 
-            if (index >= _sizes.Count)
+            if (index >= _sizes.Count - 1)
                 return null;
             
             return _sizes[index];
@@ -129,7 +117,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
             if (index < FirstIndex || _sizes is null)
                 return null;
 
-            if (index >= _sizes.Count)
+            if (index >= _sizes.Count - 1)
                 return null;
             
             return _sizes[index];
@@ -142,7 +130,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
         /// <returns>The index or -1 if the element is not present in the collection.</returns>
         public int GetIndex(Control element)
         {
-            return _elements?.IndexOf(element) is int index && index >= 0 ? index + FirstIndex : -1;
+            return _elements?.IndexOf(element) is { } index and >= 0 ? index + FirstIndex : -1;
         }
 
         /// <summary>
@@ -171,7 +159,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
 
                 for (var i = start; i < elementCount; ++i)
                 {
-                    if (_elements[i] is not Control element)
+                    if (_elements[i] is not { } element)
                         continue;
                     var oldIndex = i + first;
                     updateElementIndex(element, oldIndex, oldIndex + count);
@@ -181,7 +169,6 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                 {
                     // The insertion point was before the first element, update the first index.
                     _firstIndex += count;
-                    _startUUnstable = true;
                 }
                 else
                 {
@@ -222,12 +209,11 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                 // The removed range was before the realized elements. Update the first index and
                 // the indexes of the realized elements.
                 _firstIndex -= count;
-                _startUUnstable = true;
 
                 var newIndex = _firstIndex;
                 for (var i = 0; i < _elements.Count; ++i)
                 {
-                    if (_elements[i] is Control element)
+                    if (_elements[i] is { } element)
                         updateElementIndex(element, newIndex + count, newIndex);
                     ++newIndex;
                 }
@@ -240,7 +226,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
 
                 for (var i = start; i < end; ++i)
                 {
-                    if (_elements[i] is Control element)
+                    if (_elements[i] is { } element)
                     {
                         _elements[i] = null;
                         recycleElement(element);
@@ -256,7 +242,6 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                 if (startIndex <= 0 && end < last)
                 {
                     _firstIndex = first = index;
-                    _startUUnstable = true;
                 }
 
                 // Update the indexes of the elements after the removed range.
@@ -264,7 +249,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                 var newIndex = first + start;
                 for (var i = start; i < end; ++i)
                 {
-                    if (_elements[i] is Control element)
+                    if (_elements[i] is { } element)
                         updateElementIndex(element, newIndex + count, newIndex);
                     ++newIndex;
                 }
@@ -313,14 +298,13 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
 
             for (var i = 0; i < _elements.Count; i++)
             {
-                if (_elements[i] is Control e)
+                if (_elements[i] is { } e)
                 {
                     _elements[i] = null;
                     recycleElement(e);
                 }
             }
 
-            _startU = _firstIndex = 0;
             _elements?.Clear();
             _sizes?.Clear();
 
@@ -346,7 +330,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
 
                 for (var i = 0; i < endIndex; ++i)
                 {
-                    if (_elements[i] is Control e)
+                    if (_elements[i] is { } e)
                     {
                         _elements[i] = null;
                         recycleElement(e, i + FirstIndex);
@@ -380,7 +364,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
 
                 for (var i = startIndex; i < count; ++i)
                 {
-                    if (_elements[i] is Control e)
+                    if (_elements[i] is { } e)
                     {
                         _elements[i] = null;
                         recycleElement(e, i + FirstIndex);
@@ -403,14 +387,14 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
 
             for (var i = 0; i < _elements.Count; i++)
             {
-                if (_elements[i] is Control e)
+                if (_elements[i] is { } e)
                 {
                     _elements[i] = null;
                     recycleElement(e, i + FirstIndex);
                 }
             }
 
-            _startU = _firstIndex = 0;
+            _firstIndex = 0;
             _elements?.Clear();
             _sizes?.Clear();
         }
@@ -420,41 +404,9 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
         /// </summary>
         public void ResetForReuse()
         {
-            _startU = _firstIndex = 0;
-            _startUUnstable = false;
+            _firstIndex = 0;
             _elements?.Clear();
             _sizes?.Clear();
         }
-
-        /// <summary>
-        /// Validates that <see cref="StartU"/> is still valid.
-        /// </summary>
-        /// <param name="orientation">The panel orientation.</param>
-        /// <remarks>
-        /// If the U size of any element in the realized elements has changed, then the value of
-        /// <see cref="StartU"/> should be considered unstable.
-        /// </remarks>
-        public void ValidateStartU(Orientation orientation)
-        {
-            if (_elements is null || _sizes is null || _startUUnstable)
-                return;
-
-            for (var i = 0; i < _elements.Count; ++i)
-            {
-                if (_elements[i] is not { } element)
-                    continue;
-
-                var sizeU = orientation == Orientation.Horizontal ?
-                    element.DesiredSize.Width : element.DesiredSize.Height;
-
-                if (Math.Abs(sizeU - _sizes[i].Height) > TOLERANCE)
-                {
-                    _startUUnstable = true;
-                    break;
-                }
-            }
-        }
-
-        private const double TOLERANCE = 0.001;
     }
 }
