@@ -3,6 +3,7 @@ using System.IO;
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Platform;
+using IconPacks.Avalonia.Core;
 using MahApps.IconPacksBrowser.Avalonia.ViewModels;
 
 namespace MahApps.IconPacksBrowser.Avalonia.Helper;
@@ -116,7 +117,8 @@ namespace MahApps.IconPacksBrowser.Avalonia.Helper;
             this.IconPackHomepage = metaData?.ProjectUrl;
             this.IconPackLicense = metaData?.LicenseUrl;
 
-            this.PathData = (icon as IconViewModel)?.GetPackIconControlBase()?.Data?.ToString() ?? string.Empty;
+            this.PathData = (icon as IconViewModel)?.GetPathData() ?? string.Empty;
+            
         }
 
         internal string IconKind { get; set; }

@@ -104,21 +104,10 @@
                     <ListBox.ItemsPanel>
                         <ItemsPanelTemplate>
                             <!-- <VirtualizingStackPanel  /> -->
-                            <controls:VirtualizingWrapPanel />
+                            <controls:VirtualizingWrapPanel ItemSize="128,128"
+                                                            SpacingMode="Uniform" />
                         </ItemsPanelTemplate>
                     </ListBox.ItemsPanel>
-
-                    <!-- TODO: <ListBox.ItemsPanel> -->
-                    <!--     <ItemsPanelTemplate> -->
-                    <!--         <controls:VirtualizingWrapPanel IsItemsHost="True" -->
-                    <!--                                         ItemSize="128,128" -->
-                    <!--                                         MouseWheelDelta="1" -->
-                    <!--                                         Orientation="Vertical" -->
-                    <!--                                         ScrollLineDelta="1" -->
-                    <!--                                         SpacingMode="BetweenItemsOnly" -->
-                    <!--                                         StretchItems="False" /> -->
-                    <!--     </ItemsPanelTemplate> -->
-                    <!-- </ListBox.ItemsPanel> -->
                 </ListBox>
 
                 <!-- <TODO: ctrls:SidebarExpander Grid.Column="1" -->
