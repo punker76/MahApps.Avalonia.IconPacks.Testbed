@@ -18,10 +18,10 @@ public interface IIconViewModel
 
     string Name { get; set; }
     string IconPackName { get; }
-    string Description { get; set; }
+    string Description { get; }
     Type IconPackType { get; set; }
     Type IconType { get; set; }
-    object Value { get; set; }
+    Enum Value { get; set; }
     MetaDataAttribute MetaData { get; set; }
     string? CopyToClipboardText { get; }
     string? CopyToClipboardWpfGeometry { get; }
@@ -35,7 +35,6 @@ public class IconViewModel : ViewModelBase, IIconViewModel
     public IconViewModel(Type enumType, Type packType, Enum k, MetaDataAttribute metaData)
     {
         Name = k.ToString();
-        Description = GetDescription(k);
         IconPackType = packType;
         IconType = enumType;
         Value = k;
@@ -59,13 +58,13 @@ public class IconViewModel : ViewModelBase, IIconViewModel
 
     public string IconPackName => IconPackType.Name.Replace("PackIcon", "");
 
-    public string Description { get; set; }
+    public string Description => GetDescription(Value);
 
     public Type IconPackType { get; set; }
 
     public Type IconType { get; set; }
 
-    public object Value { get; set; }
+    public Enum Value { get; set; }
 
     public MetaDataAttribute MetaData { get; set; }
 
