@@ -1021,13 +1021,13 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
         private Size GetAssumedItemSize(object? item)
         {
             if (item is null) return EmptySize;
-            var index = Items.IndexOf(item);
-
+            
             if (GetUpfrontKnownItemSize(item) is { } upfrontKnownItemSize)
             {
                 return upfrontKnownItemSize;
             }
-
+            
+            var index = Items.IndexOf(item);
             if (_realizedElements!.GetElementSize(index) is { } cachedItemSize)
             {
                 return cachedItemSize;
