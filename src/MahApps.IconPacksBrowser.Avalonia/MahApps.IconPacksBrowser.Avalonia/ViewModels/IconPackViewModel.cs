@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using AsyncAwaitBestPractices;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -33,10 +35,10 @@ public partial class IconPackViewModel : ViewModelBase
         this.MetaData = Attribute.GetCustomAttribute(packType, typeof(MetaDataAttribute)) as MetaDataAttribute;
 
         this.Caption = this.MetaData?.Name;
-
+        this.IconPacksVersion = FileVersionInfo.GetVersionInfo(Assembly.GetAssembly(packType)!.Location).FileVersion;
         //this.LoadIconsAsync(enumType, packType).SafeFireAndForget();
     }
-
+    
     public async Task<IEnumerable<IIconViewModel>> LoadIconsAsync(Type enumType, Type packType)
     {
         var collection = await Task.Run(() => GetIcons(enumType, packType).OrderBy(i => i.Name, StringComparer.InvariantCultureIgnoreCase).ToList());
@@ -101,6 +103,11 @@ public partial class IconPackViewModel : ViewModelBase
     public MetaDataAttribute? MetaData { get; }
 
 
+    /// <summary>
+    /// Gets the Version info for this pack
+    /// </summary>
+    public string? IconPacksVersion { get; }
+    
     // [RelayCommand]
     // private async Task SaveAsSvgAsync()
     // {

@@ -1,4 +1,6 @@
 using Avalonia.Controls;
+using Avalonia.Media;
+using FluentAvalonia.UI.Windowing;
 
 namespace MahApps.IconPacksBrowser.Avalonia.Views;
 

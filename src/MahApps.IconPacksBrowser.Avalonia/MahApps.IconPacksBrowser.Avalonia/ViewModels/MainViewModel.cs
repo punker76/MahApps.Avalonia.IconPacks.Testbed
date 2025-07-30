@@ -1,16 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AsyncAwaitBestPractices;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using FluentAvalonia.UI.Controls;
-using IconPacks.Avalonia;
-using R3.Avalonia;
 using IconPacks.Avalonia.BootstrapIcons;
 using IconPacks.Avalonia.BoxIcons;
 using IconPacks.Avalonia.CircumIcons;
@@ -62,7 +58,7 @@ public partial class MainViewModel : ViewModelBase
 
     public MainViewModel()
     {
-        _SelectedIconPack = AvailableIconPacks[0];
+        _SelectedIconPackNavigationItem = AvailableIconPacks[0];
 
         // for ui synchronization safety of viewmodel
 
@@ -142,7 +138,7 @@ public partial class MainViewModel : ViewModelBase
             .Select(tuple =>
             {
                 var iconPack = new IconPackViewModel(this, tuple.EnumType, tuple.IconPackType);
-                AvailableIconPacks.Add(new NavigationViewItem() { Content = iconPack.Caption, Tag = iconPack });
+                AvailableIconPacks.Add(new IconPackNavigationItemViewModel(iconPack));
                 return iconPack;
             });
 
@@ -156,18 +152,21 @@ public partial class MainViewModel : ViewModelBase
     /// <summary>
     /// Gets the navigation view items for all icon packs
     /// </summary>
-    public ObservableCollection<NavigationViewItemBase> AvailableIconPacks { get; } =
+    public ObservableCollection<NavigationItemViewModelBase> AvailableIconPacks { get; } =
     [
-        new NavigationViewItem() { Content = "All Icons" },
-        new NavigationViewItemSeparator()
+        new AllIconPacksNavigationItemViewModel(),
+        new SeparatorNavigationItemViewModel()
     ];
 
     private readonly ObservableList<IIconViewModel> _iconsCache = new();
 
     public NotifyCollectionChangedSynchronizedViewList<IIconViewModel> VisibleIcons { get; set; }
 
-    [ObservableProperty] private NavigationViewItemBase _SelectedIconPack;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SelectedIconPack))]
+    private NavigationItemViewModelBase _SelectedIconPackNavigationItem;
 
+    public IconPackViewModel? SelectedIconPack => SelectedIconPackNavigationItem.Tag as IconPackViewModel;
 
     [ObservableProperty] private IIconViewModel? _SelectedIcon;
 
@@ -181,7 +180,8 @@ public partial class MainViewModel : ViewModelBase
         {
             return 
                 // Filter for IconPackType
-                (viewModel.SelectedIconPack == viewModel.AvailableIconPacks[0] || icon.MetaData.Name == viewModel.SelectedIconPack.Content?.ToString())
+                (viewModel.SelectedIconPackNavigationItem is AllIconPacksNavigationItemViewModel 
+                 || icon.IconPackType == (viewModel.SelectedIconPackNavigationItem as IconPackNavigationItemViewModel)?.IconPackType)
                 // Filter for IconName
                 && (string.IsNullOrWhiteSpace(viewModel.FilterText) || icon.Name.Contains(viewModel.FilterText.Trim(), StringComparison.OrdinalIgnoreCase));
         }
@@ -225,4 +225,6 @@ public partial class MainViewModel : ViewModelBase
     {
         await DoCopyTextToClipboard(icon.CopyToClipboardAsPathIconText);
     }
+    
+    public string AppVersion { get; } = "v 1.0.0.0";
 }

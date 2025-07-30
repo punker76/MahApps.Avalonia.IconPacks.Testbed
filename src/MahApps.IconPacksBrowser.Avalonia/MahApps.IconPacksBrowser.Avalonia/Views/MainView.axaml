@@ -59,7 +59,7 @@
                                              Foreground="{DynamicResource MahApps.Brushes.Highlight}"
                                              FontSize="30"
                                              FontWeight="DemiBold"
-                                             Content="{Binding SelectedIconPack.Content}" />
+                                             Content="{Binding SelectedIconPackNavigationItem.Title}" />
             </DockPanel>
         </Border>
 
@@ -69,7 +69,23 @@
                                  IsPaneOpen="True"
                                  OpenPaneLength="205"
                                  MenuItemsSource="{Binding AvailableIconPacks}"
-                                 SelectedItem="{Binding SelectedIconPack}">
+                                 SelectedItem="{Binding SelectedIconPackNavigationItem}">
+            <fa:NavigationView.MenuItemTemplateSelector>
+                <helper:MenuItemTemplateSelector>
+                    <helper:MenuItemTemplateSelector.ItemTemplate>
+                        <DataTemplate DataType="vm:NavigationItemViewModelBase">
+                            <fa:NavigationViewItem Content="{Binding Title}"
+                                                   IconSource="{Binding Icon}"/>
+                        </DataTemplate>
+                    </helper:MenuItemTemplateSelector.ItemTemplate>
+                    <helper:MenuItemTemplateSelector.SeparatorTemplate>
+                        <DataTemplate DataType="vm:SeparatorNavigationItemViewModel">
+                            <fa:NavigationViewItemSeparator />
+                        </DataTemplate>
+                    </helper:MenuItemTemplateSelector.SeparatorTemplate>
+                </helper:MenuItemTemplateSelector>
+            </fa:NavigationView.MenuItemTemplateSelector>
+            
 
             <Grid ColumnDefinitions="*,Auto" RowDefinitions="*,Auto">
 
@@ -143,95 +159,90 @@
             </Grid>
         </fa:NavigationView>
 
-        <!-- <TODO: StatusBar Grid.Row="2" -->
-        <!--            Height="24"> -->
-        <!--     ~1~ <StatusBarItem Content="{Binding AppVersion, Mode=OneWay}" ContentStringFormat="{}Browser v{0}" /> @1@ -->
-        <!--     ~1~ <Separator Style="{DynamicResource MahApps.Styles.Separator.StatusBar}" /> @1@ -->
-        <!--     <StatusBarItem Content="{Binding IconPacksVersion, Mode=OneWay}" -->
-        <!--                    ContentStringFormat="{}IconPacks v{0}" /> -->
-        <!-- -->
-        <!--     <Separator Style="{DynamicResource MahApps.Styles.Separator.StatusBar}" /> -->
-        <!-- -->
-        <!--     <StatusBarItem Content="{Binding ElementName=NavigationListBox, Path=SelectedItem, Mode=OneWay}"> -->
-        <!--         <StatusBarItem.ContentTemplate> -->
-        <!--             <DataTemplate DataType="{x:Type viewModels:IconPackViewModel}"> -->
-        <!--                 <TextBlock> -->
-        <!--                     <TextBlock.Text> -->
-        <!--                         <MultiBinding StringFormat="{}{0} with {1} icons"> -->
-        <!--                             <Binding Mode="OneWay" -->
-        <!--                                      Path="Caption" /> -->
-        <!--                             <Binding Mode="OneWay" -->
-        <!--                                      Path="IconCount" /> -->
-        <!--                         </MultiBinding> -->
-        <!--                     </TextBlock.Text> -->
-        <!--                 </TextBlock> -->
-        <!--             </DataTemplate> -->
-        <!--         </StatusBarItem.ContentTemplate> -->
-        <!--     </StatusBarItem> -->
-        <!-- -->
-        <!--     <Separator Style="{DynamicResource MahApps.Styles.Separator.StatusBar}" /> -->
-        <!-- -->
-        <!--     <StatusBarItem Content="{Binding ElementName=NavigationListBox, Path=SelectedItem, Mode=OneWay}"> -->
-        <!--         <StatusBarItem.ContentTemplate> -->
-        <!--             <DataTemplate DataType="{x:Type viewModels:IconPackViewModel}"> -->
-        <!--                 <Button Style="{StaticResource LinkButtonStyle}" -->
-        <!--                         Margin="0 0 4 0" -->
-        <!--                         VerticalAlignment="Center" -->
-        <!--                         Command="{x:Static viewModels:MainViewModel.OpenUrlCommand}" -->
-        <!--                         CommandParameter="{Binding SelectedIcon.MetaData.ProjectUrl, Mode=OneWay}"> -->
-        <!--                     <Button.ContentTemplate> -->
-        <!--                         <DataTemplate> -->
-        <!--                             <StackPanel Orientation="Horizontal"> -->
-        <!--                                 <iconPacks:PackIconOcticons Width="14" -->
-        <!--                                                             Height="14" -->
-        <!--                                                             Margin="0 0 4 0" -->
-        <!--                                                             VerticalAlignment="Center" -->
-        <!--                                                             Kind="LinkExternal" /> -->
-        <!--                                 <TextBlock Style="{StaticResource UnderlinedTextBlockStyle}" -->
-        <!--                                            VerticalAlignment="Center" -->
-        <!--                                            Text="Project site" /> -->
-        <!--                             </StackPanel> -->
-        <!--                         </DataTemplate> -->
-        <!--                     </Button.ContentTemplate> -->
-        <!--                     <Button.ToolTip> -->
-        <!--                         <TextBlock Text="{Binding SelectedIcon.MetaData.ProjectUrl, Mode=OneWay, StringFormat='{}Visit: {0}'}" /> -->
-        <!--                     </Button.ToolTip> -->
-        <!--                 </Button> -->
-        <!--             </DataTemplate> -->
-        <!--         </StatusBarItem.ContentTemplate> -->
-        <!--     </StatusBarItem> -->
-        <!-- -->
-        <!--     <Separator Style="{DynamicResource MahApps.Styles.Separator.StatusBar}" /> -->
-        <!-- -->
-        <!--     <StatusBarItem Content="{Binding ElementName=NavigationListBox, Path=SelectedItem, Mode=OneWay}"> -->
-        <!--         <StatusBarItem.ContentTemplate> -->
-        <!--             <DataTemplate DataType="{x:Type viewModels:IconPackViewModel}"> -->
-        <!--                 <Button Style="{StaticResource LinkButtonStyle}" -->
-        <!--                         Margin="0 0 4 0" -->
-        <!--                         VerticalAlignment="Center" -->
-        <!--                         Command="{x:Static viewModels:MainViewModel.OpenUrlCommand}" -->
-        <!--                         CommandParameter="{Binding SelectedIcon.MetaData.LicenseUrl, Mode=OneWay}"> -->
-        <!--                     <Button.ContentTemplate> -->
-        <!--                         <DataTemplate> -->
-        <!--                             <StackPanel Orientation="Horizontal"> -->
-        <!--                                 <iconPacks:PackIconOcticons Width="14" -->
-        <!--                                                             Height="14" -->
-        <!--                                                             Margin="0 0 4 0" -->
-        <!--                                                             VerticalAlignment="Center" -->
-        <!--                                                             Kind="Law" /> -->
-        <!--                                 <TextBlock Style="{StaticResource UnderlinedTextBlockStyle}" -->
-        <!--                                            VerticalAlignment="Center" -->
-        <!--                                            Text="License" /> -->
-        <!--                             </StackPanel> -->
-        <!--                         </DataTemplate> -->
-        <!--                     </Button.ContentTemplate> -->
-        <!--                     <Button.ToolTip> -->
-        <!--                         <TextBlock Text="{Binding SelectedIcon.MetaData.LicenseUrl, Mode=OneWay, StringFormat='{}License: {0}'}" /> -->
-        <!--                     </Button.ToolTip> -->
-        <!--                 </Button> -->
-        <!--             </DataTemplate> -->
-        <!--         </StatusBarItem.ContentTemplate> -->
-        <!--     </StatusBarItem> -->
-        <!-- </StatusBar> -->
+        <DockPanel Grid.Row="2"
+                DataContext="{x:Static vm:MainViewModel.Instance}"
+                x:DataType="vm:MainViewModel"
+                Height="24">
+            <ContentControl Content="{Binding AppVersion, Mode=OneWay, StringFormat='{}Browser v{0}'}" />
+            <Separator />
+            <ContentControl Content="{Binding SelectedIconPack.IconPacksVersion, Mode=OneWay, StringFormat='{}IconPacks v{0}'}"/>
+        
+            <Separator />
+        
+            <ContentControl Content="{Binding SelectedIconPack, Mode=OneWay}">
+                <ContentControl.DataTemplates>
+                    <DataTemplate DataType="{x:Type vm:IconPackViewModel}">
+                        <TextBlock>
+                            <TextBlock.Text>
+                                <MultiBinding StringFormat="{}{0} with {1} icons">
+                                    <Binding Mode="OneWay"
+                                             Path="Caption" />
+                                    <Binding Mode="OneWay"
+                                             Path="IconCount" />
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+                    </DataTemplate>
+                </ContentControl.DataTemplates>
+            </ContentControl>
+        
+            <Separator />
+        
+            <ContentControl Content="{Binding SelectedIcon, Mode=OneWay}">
+                <ContentControl.ContentTemplate>
+                    <DataTemplate DataType="vm:IIconViewModel">
+                        <HyperlinkButton Margin="0 0 4 0"
+                                VerticalAlignment="Center"
+                                NavigateUri="{Binding  MetaData.ProjectUrl, Mode=OneWay}">
+                            <Button.ContentTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <iconPacks:PackIconOcticons Width="14"
+                                                                    Height="14"
+                                                                    Margin="0 0 4 0"
+                                                                    VerticalAlignment="Center"
+                                                                    Kind="LinkExternal" />
+                                        <TextBlock VerticalAlignment="Center"
+                                                   Text="Project site" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </Button.ContentTemplate>
+                            <ToolTip.Tip>
+                                <TextBlock Text="{Binding MetaData.ProjectUrl, Mode=OneWay, StringFormat='{}Visit: {0}'}" />
+                            </ToolTip.Tip>
+                        </HyperlinkButton>
+                    </DataTemplate>
+                </ContentControl.ContentTemplate>
+            </ContentControl>
+        
+            <Separator />
+        
+            <ContentControl Content="{Binding SelectedIcon, Mode=OneWay}">
+                <ContentControl.ContentTemplate>
+                    <DataTemplate DataType="{x:Type vm:IIconViewModel}">
+                        <HyperlinkButton Margin="0 0 4 0"
+                                VerticalAlignment="Center"
+                                NavigateUri="{Binding MetaData.LicenseUrl, Mode=OneWay}">
+                            <Button.ContentTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <iconPacks:PackIconOcticons Width="14"
+                                                                    Height="14"
+                                                                    Margin="0 0 4 0"
+                                                                    VerticalAlignment="Center"
+                                                                    Kind="Law" />
+                                        <TextBlock VerticalAlignment="Center"
+                                                   Text="License" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </Button.ContentTemplate>
+                            <ToolTip.Tip>
+                                <TextBlock Text="{Binding MetaData.LicenseUrl, Mode=OneWay, StringFormat='{}License: {0}'}" />
+                            </ToolTip.Tip>
+                        </HyperlinkButton>
+                    </DataTemplate>
+                </ContentControl.ContentTemplate>
+            </ContentControl>
+        </DockPanel>
     </Grid>
 </UserControl>
