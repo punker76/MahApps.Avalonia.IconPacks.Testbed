@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using AsyncAwaitBestPractices;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using IconPacks.Avalonia.BootstrapIcons;
@@ -58,6 +61,8 @@ public partial class MainViewModel : ViewModelBase
 
     public MainViewModel()
     {
+        this.AppVersion = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).FileVersion!;
+        
         _SelectedIconPackNavigationItem = AvailableIconPacks[0];
 
         // for ui synchronization safety of viewmodel
@@ -88,7 +93,6 @@ public partial class MainViewModel : ViewModelBase
         //     .Bind(out _visibleIcons)
         //     .Subscribe();
         
-
         LoadIconPacks().SafeFireAndForget();
     }
 
@@ -146,7 +150,7 @@ public partial class MainViewModel : ViewModelBase
         var loadIconsTasks = availableIconPacks.Select(ip => ip.LoadIconsAsync(ip.EnumType, ip.PackType));
         _iconsCache.AddRange((await Task.WhenAll(loadIconsTasks)).SelectMany(x => x));
         
-        TotalItems = AvailableIconPacks.Count;
+        Dispatcher.UIThread.Post(() => TotalItems = _iconsCache.Count);
     }
 
     /// <summary>
@@ -173,6 +177,10 @@ public partial class MainViewModel : ViewModelBase
 
     [ObservableProperty] string? _FilterText;
     
+    /// <summary>
+    /// Gets the App version of this Application
+    /// </summary>
+    public string AppVersion { get; }
 
     private class IconFilter(MainViewModel viewModel) : ISynchronizedViewFilter<IIconViewModel, IIconViewModel>
     {
@@ -181,7 +189,7 @@ public partial class MainViewModel : ViewModelBase
             return 
                 // Filter for IconPackType
                 (viewModel.SelectedIconPackNavigationItem is AllIconPacksNavigationItemViewModel 
-                 || icon.IconPackType == (viewModel.SelectedIconPackNavigationItem as IconPackNavigationItemViewModel)?.IconPackType)
+                 || icon.IconPackType == (viewModel.SelectedIconPackNavigationItem as IconPackNavigationItemViewModel)?.IconPack.PackType)
                 // Filter for IconName
                 && (string.IsNullOrWhiteSpace(viewModel.FilterText) || icon.Name.Contains(viewModel.FilterText.Trim(), StringComparison.OrdinalIgnoreCase));
         }
@@ -225,6 +233,4 @@ public partial class MainViewModel : ViewModelBase
     {
         await DoCopyTextToClipboard(icon.CopyToClipboardAsPathIconText);
     }
-    
-    public string AppVersion { get; } = "v 1.0.0.0";
 }

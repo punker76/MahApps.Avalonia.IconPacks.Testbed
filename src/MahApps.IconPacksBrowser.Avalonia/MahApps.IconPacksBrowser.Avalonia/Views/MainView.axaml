@@ -1,4 +1,5 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+<UserControl x:Class="MahApps.IconPacksBrowser.Avalonia.Views.MainView"
+             xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -7,15 +8,17 @@
              xmlns:helper="clr-namespace:MahApps.IconPacksBrowser.Avalonia.Helper"
              xmlns:iconPacks="https://github.com/MahApps/IconPacks.Avalonia"
              xmlns:controls="clr-namespace:MahApps.IconPacksBrowser.Avalonia.Controls"
-             mc:Ignorable="d"
+             xmlns:converters="clr-namespace:MahApps.IconPacksBrowser.Avalonia.Converters"
              d:DesignWidth="800"
              d:DesignHeight="450"
              helper:DialogManager.Register="{Binding}"
-             x:Class="MahApps.IconPacksBrowser.Avalonia.Views.MainView"
-             x:DataType="vm:MainViewModel">
+             x:DataType="vm:MainViewModel"
+             mc:Ignorable="d">
     <Design.DataContext>
-        <!-- This only sets the DataContext for the previewer in an IDE,
-         to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
+        <!--
+            This only sets the DataContext for the previewer in an IDE,
+            to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs)
+        -->
         <vm:MainViewModel />
     </Design.DataContext>
 
@@ -24,7 +27,7 @@
                 Height="48"
                 Background="{DynamicResource MahApps.Brushes.ThemeBackground}"
                 BorderBrush="{DynamicResource MahApps.Brushes.Accent}"
-                BorderThickness="0 0 0 3"
+                BorderThickness="0,0,0,3"
                 DockPanel.Dock="Top">
             <DockPanel LastChildFill="True">
                 <TextBox x:Name="FilterTextBox"
@@ -42,19 +45,17 @@
                                        Text="Advanced filtering:" />
                             <TextBlock>
                                 <Run Text="Use these chars to match all substrings: &#x09;" />
-                                <Run FontFamily="Courier New"
-                                     Text="'&amp;' '+' ',' ';'" />
+                                <Run FontFamily="Courier New" Text="'&amp;' '+' ',' ';'" />
                             </TextBlock>
                             <TextBlock>
                                 <Run Text="Use this chars to match any substring: &#x09;" />
-                                <Run FontFamily="Courier New"
-                                     Text="'|'" />
+                                <Run FontFamily="Courier New" Text="'|'" />
                             </TextBlock>
                         </StackPanel>
                     </ToolTip.Tip>
                 </TextBox>
 
-                <TransitioningContentControl Margin="10 0"
+                <TransitioningContentControl Margin="10,0"
                                              VerticalAlignment="Center"
                                              Foreground="{DynamicResource MahApps.Brushes.Highlight}"
                                              FontSize="30"
@@ -65,17 +66,16 @@
 
 
         <fa:NavigationView Grid.Row="1"
-                                 PaneDisplayMode="Left"
-                                 IsPaneOpen="True"
-                                 OpenPaneLength="205"
-                                 MenuItemsSource="{Binding AvailableIconPacks}"
-                                 SelectedItem="{Binding SelectedIconPackNavigationItem}">
+                           PaneDisplayMode="Left"
+                           IsPaneOpen="True"
+                           OpenPaneLength="205"
+                           MenuItemsSource="{Binding AvailableIconPacks}"
+                           SelectedItem="{Binding SelectedIconPackNavigationItem}">
             <fa:NavigationView.MenuItemTemplateSelector>
                 <helper:MenuItemTemplateSelector>
                     <helper:MenuItemTemplateSelector.ItemTemplate>
                         <DataTemplate DataType="vm:NavigationItemViewModelBase">
-                            <fa:NavigationViewItem Content="{Binding Title}"
-                                                   IconSource="{Binding Icon}"/>
+                            <fa:NavigationViewItem Content="{Binding Title}" IconSource="{Binding Icon}" />
                         </DataTemplate>
                     </helper:MenuItemTemplateSelector.ItemTemplate>
                     <helper:MenuItemTemplateSelector.SeparatorTemplate>
@@ -85,24 +85,24 @@
                     </helper:MenuItemTemplateSelector.SeparatorTemplate>
                 </helper:MenuItemTemplateSelector>
             </fa:NavigationView.MenuItemTemplateSelector>
-            
+
 
             <Grid ColumnDefinitions="*,Auto" RowDefinitions="*,Auto">
 
-                <!-- <ScrollViewer Grid.Column="0" -->
-                <!--               Margin="2" -->
-                <!--               HorizontalScrollBarVisibility="Disabled" -->
-                <!--               VerticalScrollBarVisibility="Auto"> -->
-                <!--     <controls:ItemsRepeater ItemTemplate="{StaticResource IconPacksBrowser.DataTemplates.ListBox.IconViewModel.Test}" -->
-                <!--                             ItemsSource="{Binding VisibleIcons}"> -->
+                <!--  <ScrollViewer Grid.Column="0"  -->
+                <!--  Margin="2"  -->
+                <!--  HorizontalScrollBarVisibility="Disabled"  -->
+                <!--  VerticalScrollBarVisibility="Auto">  -->
+                <!--  <controls:ItemsRepeater ItemTemplate="{StaticResource IconPacksBrowser.DataTemplates.ListBox.IconViewModel.Test}"  -->
+                <!--  ItemsSource="{Binding VisibleIcons}">  -->
                 <!--         <controls:ItemsRepeater.Layout> -->
                 <!--             <controls:UniformGridLayout MinColumnSpacing="1" MinRowSpacing="1" Orientation="Horizontal" /> -->
                 <!--         </controls:ItemsRepeater.Layout> -->
                 <!--     </controls:ItemsRepeater> -->
                 <!-- </ScrollViewer> -->
 
-                <ListBox Grid.Column="0"
-                         Grid.Row="0"
+                <ListBox Grid.Row="0"
+                         Grid.Column="0"
                          Margin="2"
                          ItemTemplate="{StaticResource IconPacksBrowser.DataTemplates.ListBox.IconViewModel}"
                          ItemsSource="{Binding VisibleIcons}"
@@ -120,25 +120,24 @@
                     <ListBox.ItemsPanel>
                         <ItemsPanelTemplate>
                             <!-- <VirtualizingStackPanel  /> -->
-                            <controls:VirtualizingWrapPanel ItemSize="128,128"
-                                                            SpacingMode="Uniform" />
+                            <controls:VirtualizingWrapPanel ItemSize="128,128" SpacingMode="Uniform" />
                         </ItemsPanelTemplate>
                     </ListBox.ItemsPanel>
                 </ListBox>
 
-                <!-- <TODO: ctrls:SidebarExpander Grid.Column="1" -->
-                <!--                        Background="{DynamicResource IconPackBrowser.Brushes.PanelBackground}" -->
-                <!--                        mah:HeaderedControlHelper.HeaderBackground="{DynamicResource IconPackBrowser.Brushes.PanelBackground}" -->
-                <!--                        BorderBrush="{DynamicResource MahApps.Brushes.Gray10}" -->
-                <!--                        BorderThickness="0" -->
-                <!--                        DataContext="{Binding ElementName=NavigationListBox, Path=SelectedItem}" -->
-                <!--                        ExpandDirection="Right" -->
-                <!--                        IsExpanded="True"> -->
+                <!--  <TODO: ctrls:SidebarExpander Grid.Column="1"  -->
+                <!--  Background="{DynamicResource IconPackBrowser.Brushes.PanelBackground}"  -->
+                <!--  mah:HeaderedControlHelper.HeaderBackground="{DynamicResource IconPackBrowser.Brushes.PanelBackground}"  -->
+                <!--  BorderBrush="{DynamicResource MahApps.Brushes.Gray10}"  -->
+                <!--  BorderThickness="0"  -->
+                <!--  DataContext="{Binding ElementName=NavigationListBox, Path=SelectedItem}"  -->
+                <!--  ExpandDirection="Right"  -->
+                <!--  IsExpanded="True">  -->
                 <!--     <ctrls:SidebarExpander.Header> -->
-                <!--         <TextBlock FontWeight="Bold" -->
-                <!--                    Text="P R E V I E W    A N D    E X P O R T" -->
-                <!--                    TextAlignment="Center" -->
-                <!--                    TextOptions.TextFormattingMode="Display"> -->
+                <!--  <TextBlock FontWeight="Bold"  -->
+                <!--  Text="P R E V I E W    A N D    E X P O R T"  -->
+                <!--  TextAlignment="Center"  -->
+                <!--  TextOptions.TextFormattingMode="Display">  -->
                 <!--             <TextBlock.LayoutTransform> -->
                 <!--                 <RotateTransform Angle="270" /> -->
                 <!--             </TextBlock.LayoutTransform> -->
@@ -146,103 +145,121 @@
                 <!--     </ctrls:SidebarExpander.Header> -->
                 <!--     <ctrls:SideBar /> -->
                 <!-- </ctrls:SidebarExpander> -->
-
-
-                <TextBlock Grid.Column="0"
-                           Grid.ColumnSpan="2"
-                           Grid.Row="1"
-                           Margin="0,0,15,0"
-                           HorizontalAlignment="Right"
-                           VerticalAlignment="Center"
-                           Text="{Binding VisibleIcons.Count, StringFormat={}{0} icons}" />
-
             </Grid>
         </fa:NavigationView>
 
-        <DockPanel Grid.Row="2"
-                DataContext="{x:Static vm:MainViewModel.Instance}"
-                x:DataType="vm:MainViewModel"
-                Height="24">
-            <ContentControl Content="{Binding AppVersion, Mode=OneWay, StringFormat='{}Browser v{0}'}" />
+        <StackPanel Grid.Row="2"
+                    Height="24"
+                    x:DataType="vm:MainViewModel"
+                    DataContext="{x:Static vm:MainViewModel.Instance}"
+                    Background="{DynamicResource AccentFillColorDefaultBrush}"
+                    TextElement.Foreground="White"
+                    Orientation="Horizontal">
+
+            <!--  Some Styles for the StatusBar appearance  -->
+            <StackPanel.Styles>
+                <Style Selector="ContentControl">
+                    <Setter Property="VerticalAlignment" Value="Center" />
+                    <Setter Property="Margin" Value="8,0" />
+                </Style>
+                
+                <Style Selector="Separator">
+                    <Setter Property="Width" Value="1" />
+                    <Setter Property="Height" Value="10" />
+                    <Setter Property="VerticalAlignment" Value="Center" />
+                    <Setter Property="Background" Value="White" />
+                </Style>
+                
+                <Style Selector="HyperlinkButton">
+                    <Setter Property="VerticalAlignment" Value="Center" />
+                    <Setter Property="Margin" Value="8,0" />
+                    <Setter Property="Foreground" Value="White" />
+                    <Setter Property="IsEnabled" Value="{Binding $self.NavigateUri, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                    <Style Selector="^:pointerover /template/ ContentPresenter#ContentPresenter">
+                        <Setter Property="Foreground" Value="White" />
+                        <Setter Property="TextBlock.TextDecorations" Value="{x:Static TextDecorations.Underline}" />
+                    </Style>
+                    <Style Selector="^:disabled /template/ ContentPresenter#ContentPresenter">
+                        <Setter Property="Foreground" Value="White" />
+                        <Setter Property="Opacity" Value="0.5" />
+                    </Style>
+                </Style>
+            </StackPanel.Styles>
+
+            <ContentControl Content="{Binding AppVersion, Mode=OneWay, StringFormat='{}Browser version v{0}'}" />
             <Separator />
-            <ContentControl Content="{Binding SelectedIconPack.IconPacksVersion, Mode=OneWay, StringFormat='{}IconPacks v{0}'}"/>
-        
-            <Separator />
-        
-            <ContentControl Content="{Binding SelectedIconPack, Mode=OneWay}">
+
+            <ContentControl Content="{Binding SelectedIconPackNavigationItem.Tag, Converter={x:Static converters:GetAssemblyVersionConverter.Instance}, Mode=OneWay, StringFormat='{}IconPack version v{0}'}" IsVisible="{Binding SelectedIconPackNavigationItem.Tag, Converter={x:Static ObjectConverters.IsNotNull}}" />
+            <Separator IsVisible="{Binding SelectedIconPackNavigationItem, Converter={x:Static ObjectConverters.IsNotNull}}" />
+
+            <ContentControl Content="{Binding SelectedIconPackNavigationItem, Mode=OneWay}">
                 <ContentControl.DataTemplates>
-                    <DataTemplate DataType="{x:Type vm:IconPackViewModel}">
+                    <DataTemplate DataType="{x:Type vm:IconPackNavigationItemViewModel}">
                         <TextBlock>
                             <TextBlock.Text>
-                                <MultiBinding StringFormat="{}{0} with {1} icons">
-                                    <Binding Mode="OneWay"
-                                             Path="Caption" />
-                                    <Binding Mode="OneWay"
-                                             Path="IconCount" />
+                                <MultiBinding StringFormat="{}{0} with {1:N0} icons">
+                                    <Binding Mode="OneWay" Path="Title" />
+                                    <Binding Mode="OneWay" Path="IconPack.IconCount" />
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+                    </DataTemplate>
+                    <DataTemplate DataType="{x:Type vm:AllIconPacksNavigationItemViewModel}">
+                        <TextBlock>
+                            <TextBlock.Text>
+                                <MultiBinding StringFormat="{}{0} with {1:N0} icons">
+                                    <Binding Mode="OneWay" Path="Title" />
+                                    <Binding Mode="OneWay" Path="IconCount" />
                                 </MultiBinding>
                             </TextBlock.Text>
                         </TextBlock>
                     </DataTemplate>
                 </ContentControl.DataTemplates>
             </ContentControl>
-        
+
             <Separator />
-        
-            <ContentControl Content="{Binding SelectedIcon, Mode=OneWay}">
-                <ContentControl.ContentTemplate>
-                    <DataTemplate DataType="vm:IIconViewModel">
-                        <HyperlinkButton Margin="0 0 4 0"
-                                VerticalAlignment="Center"
-                                NavigateUri="{Binding  MetaData.ProjectUrl, Mode=OneWay}">
-                            <Button.ContentTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal">
-                                        <iconPacks:PackIconOcticons Width="14"
-                                                                    Height="14"
-                                                                    Margin="0 0 4 0"
-                                                                    VerticalAlignment="Center"
-                                                                    Kind="LinkExternal" />
-                                        <TextBlock VerticalAlignment="Center"
-                                                   Text="Project site" />
-                                    </StackPanel>
-                                </DataTemplate>
-                            </Button.ContentTemplate>
-                            <ToolTip.Tip>
-                                <TextBlock Text="{Binding MetaData.ProjectUrl, Mode=OneWay, StringFormat='{}Visit: {0}'}" />
-                            </ToolTip.Tip>
-                        </HyperlinkButton>
+
+            <HyperlinkButton Margin="0,0,4,0"
+                             VerticalAlignment="Center"
+                             NavigateUri="{Binding SelectedIcon.MetaData.ProjectUrl, Mode=OneWay}">
+                <Button.ContentTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconOcticons Width="14"
+                                                        Height="14"
+                                                        Margin="0,0,4,0"
+                                                        VerticalAlignment="Center"
+                                                        Kind="LinkExternal" />
+                            <TextBlock VerticalAlignment="Center" Text="Project site" />
+                        </StackPanel>
                     </DataTemplate>
-                </ContentControl.ContentTemplate>
-            </ContentControl>
-        
+                </Button.ContentTemplate>
+                <ToolTip.Tip>
+                    <TextBlock Text="{Binding SelectedIcon.MetaData.ProjectUrl, Mode=OneWay, StringFormat='{}Visit: {0}'}" />
+                </ToolTip.Tip>
+            </HyperlinkButton>
+
             <Separator />
-        
-            <ContentControl Content="{Binding SelectedIcon, Mode=OneWay}">
-                <ContentControl.ContentTemplate>
-                    <DataTemplate DataType="{x:Type vm:IIconViewModel}">
-                        <HyperlinkButton Margin="0 0 4 0"
-                                VerticalAlignment="Center"
-                                NavigateUri="{Binding MetaData.LicenseUrl, Mode=OneWay}">
-                            <Button.ContentTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal">
-                                        <iconPacks:PackIconOcticons Width="14"
-                                                                    Height="14"
-                                                                    Margin="0 0 4 0"
-                                                                    VerticalAlignment="Center"
-                                                                    Kind="Law" />
-                                        <TextBlock VerticalAlignment="Center"
-                                                   Text="License" />
-                                    </StackPanel>
-                                </DataTemplate>
-                            </Button.ContentTemplate>
-                            <ToolTip.Tip>
-                                <TextBlock Text="{Binding MetaData.LicenseUrl, Mode=OneWay, StringFormat='{}License: {0}'}" />
-                            </ToolTip.Tip>
-                        </HyperlinkButton>
+
+            <HyperlinkButton Margin="0,0,4,0"
+                             VerticalAlignment="Center"
+                             NavigateUri="{Binding SelectedIcon.MetaData.LicenseUrl, Mode=OneWay}">
+                <Button.ContentTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <iconPacks:PackIconOcticons Width="14"
+                                                        Height="14"
+                                                        Margin="0,0,4,0"
+                                                        VerticalAlignment="Center"
+                                                        Kind="Law" />
+                            <TextBlock VerticalAlignment="Center" Text="License" />
+                        </StackPanel>
                     </DataTemplate>
-                </ContentControl.ContentTemplate>
-            </ContentControl>
-        </DockPanel>
+                </Button.ContentTemplate>
+                <ToolTip.Tip>
+                    <TextBlock Text="{Binding SelectedIcon.MetaData.LicenseUrl, Mode=OneWay, StringFormat='{}License: {0}'}" />
+                </ToolTip.Tip>
+            </HyperlinkButton>
+        </StackPanel>
     </Grid>
 </UserControl>

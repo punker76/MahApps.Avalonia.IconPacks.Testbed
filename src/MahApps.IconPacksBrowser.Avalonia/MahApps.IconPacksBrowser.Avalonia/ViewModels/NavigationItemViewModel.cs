@@ -20,10 +20,10 @@ public class IconPackNavigationItemViewModel : NavigationItemViewModelBase
     {
         Title =  iconPack.Caption;
         Tag =  iconPack;
-        IconPackType = iconPack.PackType;
+        IconPack = iconPack;
     }
 
-    public Type IconPackType { get; }
+    public IconPackViewModel IconPack { get; }
 }
 
 public class AllIconPacksNavigationItemViewModel : NavigationItemViewModelBase
@@ -32,4 +32,6 @@ public class AllIconPacksNavigationItemViewModel : NavigationItemViewModelBase
     {
         Title = "All Icons";
     }
+    
+    public int IconCount => MainViewModel.Instance.TotalItems;
 }

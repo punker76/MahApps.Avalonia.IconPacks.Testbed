@@ -1,7 +1,6 @@
 using System;
 using System.ComponentModel;
 using System.Linq;
-using IconPacks.Avalonia;
 using IconPacks.Avalonia.Core;
 using IconPacks.Avalonia.Core.Attributes;
 using MahApps.IconPacksBrowser.Avalonia.Helper;
@@ -20,7 +19,6 @@ public interface IIconViewModel
     string IconPackName { get; }
     string Description { get; }
     Type IconPackType { get; set; }
-    Type IconType { get; set; }
     Enum Value { get; set; }
     MetaDataAttribute MetaData { get; set; }
     string? CopyToClipboardText { get; }
