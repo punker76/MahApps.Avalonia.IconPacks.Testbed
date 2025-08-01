@@ -9,6 +9,8 @@
              xmlns:iconPacks="https://github.com/MahApps/IconPacks.Avalonia"
              xmlns:controls="clr-namespace:MahApps.IconPacksBrowser.Avalonia.Controls"
              xmlns:converters="clr-namespace:MahApps.IconPacksBrowser.Avalonia.Converters"
+             xmlns:windowing="clr-namespace:FluentAvalonia.UI.Windowing;assembly=FluentAvalonia"
+             xmlns:views="clr-namespace:MahApps.IconPacksBrowser.Avalonia.Views"
              d:DesignWidth="800"
              d:DesignHeight="450"
              helper:DialogManager.Register="{Binding}"
@@ -25,25 +27,36 @@
     <Grid RowDefinitions="Auto,*,Auto">
         <Border Grid.Row="0"
                 Height="48"
-                Background="{DynamicResource MahApps.Brushes.ThemeBackground}"
-                BorderBrush="{DynamicResource MahApps.Brushes.Accent}"
+                BorderBrush="{DynamicResource AccentFillColorDefaultBrush}"
                 BorderThickness="0,0,0,3"
+                Margin="0,0,0,1"
                 DockPanel.Dock="Top">
             <DockPanel LastChildFill="True">
+                <!-- Placeholder for WindowButtons -->
+                <Border Width="{Binding $parent[windowing:AppWindow].TitleBar.LeftInset, FallbackValue=10}"></Border>
                 <TextBox x:Name="FilterTextBox"
                          MinWidth="400"
                          Margin="5"
-                         Background="{DynamicResource MahApps.Brushes.Gray9}"
+                         VerticalContentAlignment="Center"
                          Watermark="Filter by... (Ctrl + F)"
-                         BorderThickness="0"
+                         BorderBrush="{DynamicResource SurfaceStrokeColorDefaultBrush}"
+                         CornerRadius="{Binding $self.Bounds, Converter={x:Static converters:BoundsToCornerRadiusConverter.Instance}}"
+                         BorderThickness="1"
                          DockPanel.Dock="Right"
                          Text="{Binding FilterText}">
+                    <TextBox.InnerLeftContent>
+                        <iconPacks:PackIconBootstrapIcons Kind="Search" 
+                                                          VerticalAlignment="Center"
+                                                          Height="14"
+                                                          Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                          Margin="10,0,0,0"/>
+                    </TextBox.InnerLeftContent>
                     <ToolTip.Tip>
-                        <StackPanel>
-                            <TextBlock Foreground="{DynamicResource MahApps.Brushes.Accent}"
+                        <StackPanel Spacing="5">
+                            <TextBlock Foreground="{DynamicResource TextFillColorTertiaryBrush}"
                                        FontWeight="Bold"
                                        Text="Advanced filtering:" />
-                            <TextBlock>
+                            <TextBlock TextWrapping="NoWrap">
                                 <Run Text="Use these chars to match all substrings: &#x09;" />
                                 <Run FontFamily="Courier New" Text="'&amp;' '+' ',' ';'" />
                             </TextBlock>
@@ -55,9 +68,9 @@
                     </ToolTip.Tip>
                 </TextBox>
 
-                <TransitioningContentControl Margin="10,0"
+                <TransitioningContentControl Margin="15,0"
                                              VerticalAlignment="Center"
-                                             Foreground="{DynamicResource MahApps.Brushes.Highlight}"
+                                             Foreground="{DynamicResource AccentFillColorDefaultBrush}"
                                              FontSize="30"
                                              FontWeight="DemiBold"
                                              Content="{Binding SelectedIconPackNavigationItem.Title}" />
@@ -86,65 +99,24 @@
                 </helper:MenuItemTemplateSelector>
             </fa:NavigationView.MenuItemTemplateSelector>
 
-
-            <Grid ColumnDefinitions="*,Auto" RowDefinitions="*,Auto">
-
-                <!--  <ScrollViewer Grid.Column="0"  -->
-                <!--  Margin="2"  -->
-                <!--  HorizontalScrollBarVisibility="Disabled"  -->
-                <!--  VerticalScrollBarVisibility="Auto">  -->
-                <!--  <controls:ItemsRepeater ItemTemplate="{StaticResource IconPacksBrowser.DataTemplates.ListBox.IconViewModel.Test}"  -->
-                <!--  ItemsSource="{Binding VisibleIcons}">  -->
-                <!--         <controls:ItemsRepeater.Layout> -->
-                <!--             <controls:UniformGridLayout MinColumnSpacing="1" MinRowSpacing="1" Orientation="Horizontal" /> -->
-                <!--         </controls:ItemsRepeater.Layout> -->
-                <!--     </controls:ItemsRepeater> -->
-                <!-- </ScrollViewer> -->
-
-                <ListBox Grid.Row="0"
-                         Grid.Column="0"
+            <Grid ColumnDefinitions="*,Auto" >
+                
+                <ListBox Grid.Column="0"
                          Margin="2"
                          ItemTemplate="{StaticResource IconPacksBrowser.DataTemplates.ListBox.IconViewModel}"
                          ItemsSource="{Binding VisibleIcons}"
+                         ItemContainerTheme="{StaticResource IconPackBrowserListBoxItemStyle}"
                          SelectedValue="{Binding SelectedIcon}">
-
-                    <ListBox.Styles>
-                        <Style Selector="ListBoxItem:selected iconPacks|PackIconControl#PackIcon">
-                            <Setter Property="Foreground" Value="{DynamicResource SystemAccentColor}" />
-                        </Style>
-                        <Style Selector="ListBoxItem:pointerover iconPacks|PackIconControl#PackIcon">
-                            <Setter Property="Foreground" Value="{DynamicResource ListBoxItemPointerOverForegroundThemeBrush}" />
-                        </Style>
-                    </ListBox.Styles>
 
                     <ListBox.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <!-- <VirtualizingStackPanel  /> -->
-                            <controls:VirtualizingWrapPanel ItemSize="128,128" SpacingMode="Uniform" />
+                            <controls:VirtualizingWrapPanel SpacingMode="Uniform" />
                         </ItemsPanelTemplate>
                     </ListBox.ItemsPanel>
                 </ListBox>
 
-                <!--  <TODO: ctrls:SidebarExpander Grid.Column="1"  -->
-                <!--  Background="{DynamicResource IconPackBrowser.Brushes.PanelBackground}"  -->
-                <!--  mah:HeaderedControlHelper.HeaderBackground="{DynamicResource IconPackBrowser.Brushes.PanelBackground}"  -->
-                <!--  BorderBrush="{DynamicResource MahApps.Brushes.Gray10}"  -->
-                <!--  BorderThickness="0"  -->
-                <!--  DataContext="{Binding ElementName=NavigationListBox, Path=SelectedItem}"  -->
-                <!--  ExpandDirection="Right"  -->
-                <!--  IsExpanded="True">  -->
-                <!--     <ctrls:SidebarExpander.Header> -->
-                <!--  <TextBlock FontWeight="Bold"  -->
-                <!--  Text="P R E V I E W    A N D    E X P O R T"  -->
-                <!--  TextAlignment="Center"  -->
-                <!--  TextOptions.TextFormattingMode="Display">  -->
-                <!--             <TextBlock.LayoutTransform> -->
-                <!--                 <RotateTransform Angle="270" /> -->
-                <!--             </TextBlock.LayoutTransform> -->
-                <!--         </TextBlock> -->
-                <!--     </ctrls:SidebarExpander.Header> -->
-                <!--     <ctrls:SideBar /> -->
-                <!-- </ctrls:SidebarExpander> -->
+                <views:IconPreviewer Grid.Column="1"  />
+
             </Grid>
         </fa:NavigationView>
 

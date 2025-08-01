@@ -1,0 +1,250 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:viewModels="clr-namespace:MahApps.IconPacksBrowser.Avalonia.ViewModels"
+             xmlns:iconPacks="https://github.com/MahApps/IconPacks.Avalonia"
+             xmlns:prop="clr-namespace:MahApps.IconPacksBrowser.Avalonia.Properties"
+             xmlns:controls="clr-namespace:MahApps.IconPacksBrowser.Avalonia.Controls"
+             xmlns:controls1="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+             xmlns:system="clr-namespace:System;assembly=System.Runtime"
+             mc:Ignorable="d"
+             d:DesignWidth="800"
+             d:DesignHeight="450"
+             x:DataType="viewModels:MainViewModel"
+             x:Class="MahApps.IconPacksBrowser.Avalonia.Views.IconPreviewer">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <DockPanel>
+                <ToggleButton DockPanel.Dock="Left" Content="◄" 
+                              IsChecked="{Binding Source={x:Static prop:Settings.Default}, Path=IsPreviewerVisible}"/>
+                <Grid Width="200" IsVisible="{Binding Source={x:Static prop:Settings.Default}, Path=IsPreviewerVisible}" >
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="250"
+                                       MinHeight="50" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <Expander Header="Preview"
+                              Grid.Row="0"
+                              Padding="0"
+                              DataContext="{Binding SelectedIcon}">
+                        <Expander.Background>
+                            <DrawingBrush TileMode="Tile">
+                                <DrawingBrush.Drawing>
+                                    <DrawingGroup>
+                                        <GeometryDrawing Brush="{DynamicResource MahApps.Brushes.ThemeBackground}">
+                                            <GeometryDrawing.Geometry>
+                                                <RectangleGeometry Rect="0,0,20,20" />
+                                            </GeometryDrawing.Geometry>
+                                        </GeometryDrawing>
+                                        <GeometryDrawing Brush="{DynamicResource MahApps.Brushes.Gray9}">
+                                            <GeometryDrawing.Geometry>
+                                                <GeometryGroup>
+                                                    <RectangleGeometry Rect="0,0,10,10" />
+                                                    <RectangleGeometry Rect="10,10,10,10" />
+                                                </GeometryGroup>
+                                            </GeometryDrawing.Geometry>
+                                        </GeometryDrawing>
+                                    </DrawingGroup>
+                                </DrawingBrush.Drawing>
+                            </DrawingBrush>
+                        </Expander.Background>
+                        <ScrollViewer x:Name="PreviewScrollViewer"
+                                      Padding="2"
+                                      HorizontalScrollBarVisibility="Auto"
+                                      VerticalScrollBarVisibility="Auto">
+                            <ScrollViewer.Background>
+                                <SolidColorBrush Color="{Binding Source={x:Static prop:Settings.Default}, Path=IconBackground}" />
+                            </ScrollViewer.Background>
+                            <iconPacks:PackIconControl x:Name="PreviewHolder"
+                                                       Width="{Binding Source={x:Static prop:Settings.Default}, Path=IconPreviewSize}"
+                                                       Height="{Binding Source={x:Static prop:Settings.Default}, Path=IconPreviewSize}"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       Kind="{Binding Value, Mode=OneWay}">
+                                <iconPacks:PackIconControl.Foreground>
+                                    <SolidColorBrush Color="{Binding Source={x:Static prop:Settings.Default}, Path=IconForeground}" />
+                                </iconPacks:PackIconControl.Foreground>
+                            </iconPacks:PackIconControl>
+                        </ScrollViewer>
+                    </Expander>
+
+                    <GridSplitter Grid.Row="1"
+                                  Height="3"
+                                  HorizontalAlignment="Stretch" />
+
+                    <StackPanel Grid.Row="2">
+
+                        <Expander Header="Icon Information"
+                                  Margin="0 2 0 0">
+                            <StackPanel Spacing="5">
+                                <controls:HeaderedControl Header="IconPackName and IconKind"
+                                                          DataContext="{Binding SelectedIcon}">
+                                    <controls:CopyToClipboardTextBox>
+                                        <controls:CopyToClipboardTextBox.TextToCopy>
+                                            <MultiBinding StringFormat="{}{0}.{1}">
+                                                <Binding Mode="OneWay"
+                                                         Path="IconPackName" />
+                                                <Binding Mode="OneWay"
+                                                         Path="Name" />
+                                            </MultiBinding>
+                                        </controls:CopyToClipboardTextBox.TextToCopy>
+                                    </controls:CopyToClipboardTextBox>
+                                </controls:HeaderedControl>
+                                <controls:HeaderedControl Header="Additional Tags">
+                                    <controls:CopyToClipboardTextBox TextToCopy="{Binding SelectedIcon.Description}" />
+                                </controls:HeaderedControl>
+                                <controls:HeaderedControl Header="Homepage">
+                                    <TextBox Classes="hyperlink"
+                                             Text="{Binding SelectedIcon.MetaData.ProjectUrl, Mode=OneWay}" />
+                                </controls:HeaderedControl>
+                                <controls:HeaderedControl Header="License URL">
+                                    <TextBox Classes="hyperlink"
+                                             Text="{Binding SelectedIcon.MetaData.LicenseUrl, Mode=OneWay}" />
+                                </controls:HeaderedControl>
+                            </StackPanel>
+                        </Expander>
+
+                        <Expander Header="Preview options"
+                                  Margin="0 5 0 0">
+                            <StackPanel>
+                                <controls:HeaderedControl Header="Iconsize ">
+                                    <controls1:FAComboBox x:Name="ComboBoxIconPreviewSize"
+                                                          IsEditable="True"
+                                                          Text="{Binding Source={x:Static prop:Settings.Default}, Path=IconPreviewSize}">
+                                        <system:Double>16</system:Double>
+                                        <system:Double>24</system:Double>
+                                        <system:Double>32</system:Double>
+                                        <system:Double>48</system:Double>
+                                        <system:Double>64</system:Double>
+                                        <system:Double>128</system:Double>
+                                        <system:Double>256</system:Double>
+                                        <system:Double>512</system:Double>
+                                        <system:Double>1024</system:Double>
+                                    </controls1:FAComboBox>
+                                </controls:HeaderedControl>
+                                <controls:HeaderedControl Header="Foreground">
+                                    <ColorPicker Color="{Binding Source={x:Static prop:Settings.Default}, Path=IconForeground}" />
+                                </controls:HeaderedControl>
+
+                                <controls:HeaderedControl Header="Background">
+                                    <ColorPicker Color="{Binding Source={x:Static prop:Settings.Default}, Path=IconBackground}" />
+                                </controls:HeaderedControl>
+                            </StackPanel>
+                        </Expander>
+
+                        <Expander Header="Copy to clipboard"
+                                  Margin="0 5 0 0"
+                                  DataContext="{Binding SelectedIcon}"
+                                  IsExpanded="True">
+                            <StackPanel>
+                                <!--  WPF Control  -->
+                                <controls:HeaderedControl>
+                                    <controls:HeaderedControl.Header>
+                                        <StackPanel Orientation="Horizontal">
+                                            <iconPacks:PackIconPhosphorIcons Width="12"
+                                                                             Height="12"
+                                                                             VerticalAlignment="Center"
+                                                                             Kind="BracketsAngle" />
+                                            <Label Margin="4 0"
+                                                   Padding="0"
+                                                   VerticalAlignment="Center"
+                                                   Content="Copy as WPF-Control" />
+                                        </StackPanel>
+                                    </controls:HeaderedControl.Header>
+                                    <controls:CopyToClipboardTextBox FontFamily="Consolas"
+                                                                     TextToCopy="{Binding CopyToClipboardText}" />
+                                </controls:HeaderedControl>
+
+                                <controls:HeaderedControl>
+                                    <controls:HeaderedControl.Header>
+                                        <StackPanel Orientation="Horizontal">
+                                            <iconPacks:PackIconPhosphorIcons Width="12"
+                                                                             Height="12"
+                                                                             VerticalAlignment="Center"
+                                                                             Kind="Polygon" />
+                                            <Label Margin="4 0"
+                                                   Padding="0"
+                                                   VerticalAlignment="Center"
+                                                   Content="Copy as WPF-PathGeometry" />
+                                        </StackPanel>
+                                    </controls:HeaderedControl.Header>
+                                    <controls:CopyToClipboardTextBox FontFamily="Consolas"
+                                                                     TextToCopy="{Binding CopyToClipboardWpfGeometry}" />
+                                </controls:HeaderedControl>
+
+                                <!--  Content Markup  -->
+                                <controls:HeaderedControl>
+                                    <controls:HeaderedControl.Header>
+                                        <StackPanel Orientation="Horizontal">
+                                            <iconPacks:PackIconPhosphorIcons Width="12"
+                                                                             Height="12"
+                                                                             VerticalAlignment="Center"
+                                                                             Kind="BracketsCurly" />
+                                            <Label Margin="4 0"
+                                                   Padding="0"
+                                                   VerticalAlignment="Center"
+                                                   Content="Copy as content extension" />
+                                        </StackPanel>
+                                    </controls:HeaderedControl.Header>
+                                    <controls:CopyToClipboardTextBox FontFamily="Consolas"
+                                                                     TextToCopy="{Binding CopyToClipboardAsContentText}" />
+                                </controls:HeaderedControl>
+
+                                <!--  Copy as UWP Control  -->
+                                <controls:HeaderedControl>
+                                    <controls:HeaderedControl.Header>
+                                        <StackPanel Orientation="Horizontal">
+                                            <iconPacks:PackIconPhosphorIcons Width="12"
+                                                                             Height="12"
+                                                                             VerticalAlignment="Center"
+                                                                             Kind="BracketsAngle" />
+                                            <Label Margin="4 0"
+                                                   Padding="0"
+                                                   VerticalAlignment="Center"
+                                                   Content="Copy as UWP-Control" />
+                                        </StackPanel>
+                                    </controls:HeaderedControl.Header>
+                                    <controls:CopyToClipboardTextBox FontFamily="Consolas"
+                                                                     TextToCopy="{Binding CopyToClipboardAsPathIconText}" />
+                                </controls:HeaderedControl>
+
+                                <controls:HeaderedControl>
+                                    <controls:HeaderedControl.Header>
+                                        <StackPanel Orientation="Horizontal">
+                                            <iconPacks:PackIconPhosphorIcons Width="12"
+                                                                             Height="12"
+                                                                             VerticalAlignment="Center"
+                                                                             Kind="Polygon" />
+                                            <Label Margin="4 0"
+                                                   Padding="0"
+                                                   VerticalAlignment="Center"
+                                                   Content="Copy path data" />
+                                        </StackPanel>
+                                    </controls:HeaderedControl.Header>
+                                    <controls:CopyToClipboardTextBox FontFamily="Consolas"
+                                                                     TextToCopy="{Binding CopyToClipboardAsGeometryText}" />
+                                </controls:HeaderedControl>
+                            </StackPanel>
+                        </Expander>
+
+                        <Expander Header="Export"
+                                  Margin="0 5 0 0"
+                                  Padding="4 0 4 4"
+                                  DataContext="{Binding SelectedIcon}"
+                                  IsExpanded="True">
+                            <StackPanel>
+                                <!-- <Button Command="{Binding SaveAsSvgCommand}" Content="Save as svg" /> -->
+                                <!-- <Button Command="{Binding SaveAsWpfCommand}" Content="Save as XAML (WPF)" /> -->
+                                <!-- <Button Command="{Binding SaveAsUwpCommand}" Content="Save as XAML (UWP)" /> -->
+                                <!-- <Button Command="{Binding SaveAsPngCommand}" Content="Save as Png" /> -->
+                                <!-- <Button Command="{Binding SaveAsJpegCommand}" Content="Save as Jpeg" /> -->
+                                <!-- <Button Command="{Binding SaveAsBmpCommand}" Content="Save as Bmp" /> -->
+                            </StackPanel>
+                        </Expander>
+                    </StackPanel>
+                </Grid>
+            </DockPanel>
+    </ScrollViewer>
+</UserControl>
