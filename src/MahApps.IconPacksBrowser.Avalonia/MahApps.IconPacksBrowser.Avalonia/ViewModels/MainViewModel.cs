@@ -21,18 +21,23 @@ using IconPacks.Avalonia.FeatherIcons;
 using IconPacks.Avalonia.FileIcons;
 using IconPacks.Avalonia.Fontaudio;
 using IconPacks.Avalonia.FontAwesome;
+using IconPacks.Avalonia.FontAwesome5;
+using IconPacks.Avalonia.FontAwesome6;
 using IconPacks.Avalonia.Fontisto;
 using IconPacks.Avalonia.ForkAwesome;
 using IconPacks.Avalonia.GameIcons;
 using IconPacks.Avalonia.Ionicons;
 using IconPacks.Avalonia.JamIcons;
+using IconPacks.Avalonia.KeyruneIcons;
 using IconPacks.Avalonia.Lucide;
 using IconPacks.Avalonia.Material;
 using IconPacks.Avalonia.MaterialDesign;
 using IconPacks.Avalonia.MaterialLight;
 using IconPacks.Avalonia.MemoryIcons;
 using IconPacks.Avalonia.Microns;
+using IconPacks.Avalonia.MingCuteIcons;
 using IconPacks.Avalonia.Modern;
+using IconPacks.Avalonia.MynaUIIcons;
 using IconPacks.Avalonia.Octicons;
 using IconPacks.Avalonia.PhosphorIcons;
 using IconPacks.Avalonia.PicolIcons;
@@ -62,7 +67,7 @@ public partial class MainViewModel : ViewModelBase
     public MainViewModel()
     {
         this.AppVersion = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).FileVersion!;
-        
+
         _SelectedIconPackNavigationItem = AvailableIconPacks[0];
 
         // for ui synchronization safety of viewmodel
@@ -70,17 +75,17 @@ public partial class MainViewModel : ViewModelBase
         var view = _iconsCache.CreateView(x => x);
 
         var filter = new IconFilter(this);
-       // view.AttachFilter(filter);
-        
-        this.ObservePropertyChanged(x=> x.FilterText)
+        // view.AttachFilter(filter);
+
+        this.ObservePropertyChanged(x => x.FilterText)
             .Delay(TimeSpan.FromSeconds(0.3))
             .ObserveOn(SynchronizationContext.Current)
             .Subscribe(_ => view.AttachFilter(filter));
-        
-        this.ObservePropertyChanged(x=> x.SelectedIconPack)
+
+        this.ObservePropertyChanged(x => x.SelectedIconPack)
             .ObserveOn(SynchronizationContext.Current)
             .Subscribe(_ => view.AttachFilter(filter));
-        
+
         VisibleIcons = view.ToNotifyCollectionChanged(SynchronizationContextCollectionEventDispatcher.Current);
         // var filterByText = this.WhenAnyValue(x => x.FilterText, x => x.SelectedIconPack)
         //     .Throttle(TimeSpan.FromMilliseconds(350), RxApp.MainThreadScheduler)
@@ -92,7 +97,7 @@ public partial class MainViewModel : ViewModelBase
         //     .ObserveOn(RxApp.MainThreadScheduler)
         //     .Bind(out _visibleIcons)
         //     .Subscribe();
-        
+
         LoadIconPacks().SafeFireAndForget();
     }
 
@@ -112,19 +117,24 @@ public partial class MainViewModel : ViewModelBase
                 (typeof(PackIconFeatherIconsKind), typeof(PackIconFeatherIcons)),
                 (typeof(PackIconFileIconsKind), typeof(PackIconFileIcons)),
                 (typeof(PackIconFontaudioKind), typeof(PackIconFontaudio)),
+                (typeof(PackIconFontAwesome5Kind), typeof(PackIconFontAwesome5)),
+                (typeof(PackIconFontAwesome6Kind), typeof(PackIconFontAwesome6)),
                 (typeof(PackIconFontAwesomeKind), typeof(PackIconFontAwesome)),
                 (typeof(PackIconFontistoKind), typeof(PackIconFontisto)),
                 (typeof(PackIconForkAwesomeKind), typeof(PackIconForkAwesome)),
                 (typeof(PackIconGameIconsKind), typeof(PackIconGameIcons)),
                 (typeof(PackIconIoniconsKind), typeof(PackIconIonicons)),
                 (typeof(PackIconJamIconsKind), typeof(PackIconJamIcons)),
+                (typeof(PackIconKeyruneIconsKind), typeof(PackIconKeyruneIcons)),
                 (typeof(PackIconLucideKind), typeof(PackIconLucide)),
                 (typeof(PackIconMaterialKind), typeof(PackIconMaterial)),
                 (typeof(PackIconMaterialLightKind), typeof(PackIconMaterialLight)),
                 (typeof(PackIconMaterialDesignKind), typeof(PackIconMaterialDesign)),
                 (typeof(PackIconMemoryIconsKind), typeof(PackIconMemoryIcons)),
                 (typeof(PackIconMicronsKind), typeof(PackIconMicrons)),
+                (typeof(PackIconMingCuteIconsKind), typeof(PackIconMingCuteIcons)),
                 (typeof(PackIconModernKind), typeof(PackIconModern)),
+                (typeof(PackIconMynaUIIconsKind), typeof(PackIconMynaUIIcons)),
                 (typeof(PackIconOcticonsKind), typeof(PackIconOcticons)),
                 (typeof(PackIconPhosphorIconsKind), typeof(PackIconPhosphorIcons)),
                 (typeof(PackIconPicolIconsKind), typeof(PackIconPicolIcons)),
@@ -149,7 +159,7 @@ public partial class MainViewModel : ViewModelBase
 
         var loadIconsTasks = availableIconPacks.Select(ip => ip.LoadIconsAsync(ip.EnumType, ip.PackType));
         _iconsCache.AddRange((await Task.WhenAll(loadIconsTasks)).SelectMany(x => x));
-        
+
         Dispatcher.UIThread.Post(() => TotalItems = _iconsCache.Count);
     }
 
@@ -166,8 +176,7 @@ public partial class MainViewModel : ViewModelBase
 
     public NotifyCollectionChangedSynchronizedViewList<IIconViewModel> VisibleIcons { get; set; }
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(SelectedIconPack))]
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(SelectedIconPack))]
     private NavigationItemViewModelBase _SelectedIconPackNavigationItem;
 
     public IconPackViewModel? SelectedIconPack => SelectedIconPackNavigationItem.Tag as IconPackViewModel;
@@ -176,19 +185,20 @@ public partial class MainViewModel : ViewModelBase
 
 
     [ObservableProperty] string? _FilterText;
-    
+
     /// <summary>
     /// Gets the App version of this Application
     /// </summary>
     public string AppVersion { get; }
 
+
     private class IconFilter(MainViewModel viewModel) : ISynchronizedViewFilter<IIconViewModel, IIconViewModel>
     {
         public bool IsMatch(IIconViewModel icon, IIconViewModel transformedIcon)
         {
-            return 
+            return
                 // Filter for IconPackType
-                (viewModel.SelectedIconPackNavigationItem is AllIconPacksNavigationItemViewModel 
+                (viewModel.SelectedIconPackNavigationItem is AllIconPacksNavigationItemViewModel
                  || icon.IconPackType == (viewModel.SelectedIconPackNavigationItem as IconPackNavigationItemViewModel)?.IconPack.PackType)
                 // Filter for IconName
                 && (string.IsNullOrWhiteSpace(viewModel.FilterText) || icon.Name.Contains(viewModel.FilterText.Trim(), StringComparison.OrdinalIgnoreCase));

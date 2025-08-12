@@ -23,6 +23,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\MahApps.IconPacksBrowser.Avalonia\MahApps.IconPacksBrowser.Avalonia.csproj"/>
+        <ProjectReference Include="..\MahApps.IconPacksBrowser.Avalonia\MahApps.IconPacksBrowser.Avalonia.csproj" />
     </ItemGroup>
 </Project>
