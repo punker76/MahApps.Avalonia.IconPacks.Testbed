@@ -1,5 +1,6 @@
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace MahApps.IconPacksBrowser.Avalonia.Properties;
 
@@ -26,6 +27,12 @@ public partial class Settings : ObservableObject
     /// Gets or sets if the previewer is visible 
     /// </summary>
     [ObservableProperty] private bool isPreviewerVisible = false;
+
+    [RelayCommand]
+    private void ToggleIsPreviewerVisible()
+    {
+        IsPreviewerVisible = !IsPreviewerVisible;
+    }
     
 
     partial void OnIconPreviewSizeChanging(double value)
@@ -33,4 +40,6 @@ public partial class Settings : ObservableObject
         // Make sure icon is not too small at all
         if (value < 8) value = 8;
     }
+    
+    
 }

@@ -161,6 +161,7 @@ public partial class MainViewModel : ViewModelBase
         _iconsCache.AddRange((await Task.WhenAll(loadIconsTasks)).SelectMany(x => x));
 
         Dispatcher.UIThread.Post(() => TotalItems = _iconsCache.Count);
+        SelectedIcon = SelectedIconPack?.Icons.FirstOrDefault();
     }
 
     /// <summary>

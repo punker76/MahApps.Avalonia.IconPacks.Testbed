@@ -33,7 +33,9 @@
                 DockPanel.Dock="Top">
             <DockPanel LastChildFill="True">
                 <!-- Placeholder for WindowButtons -->
-                <Border Width="{Binding $parent[windowing:AppWindow].TitleBar.LeftInset, FallbackValue=10}"></Border>
+                <Border x:Name="WindowButtonsPlaceHolder" 
+                        DockPanel.Dock="Right" 
+                        Width="0" />
                 <TextBox x:Name="FilterTextBox"
                          MinWidth="400"
                          Margin="5"
