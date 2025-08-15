@@ -182,7 +182,9 @@ public partial class MainViewModel : ViewModelBase
 
     public IconPackViewModel? SelectedIconPack => SelectedIconPackNavigationItem.Tag as IconPackViewModel;
 
-    [ObservableProperty] private IIconViewModel? _SelectedIcon;
+    [ObservableProperty] 
+    [NotifyCanExecuteChangedFor(nameof(SaveAsSvgCommand))]
+    private IIconViewModel? _SelectedIcon;
 
 
     [ObservableProperty] string? _FilterText;
@@ -210,8 +212,16 @@ public partial class MainViewModel : ViewModelBase
     {
         if (text != null)
         {
-            await this.SetClipboardContent(text);
+            await this.SetClipboardContentAsync(text);
         }
+    }
+
+    bool CanExport => SelectedIcon != null;
+    
+    [RelayCommand]
+    private async Task FollowUriAsync(string? text)
+    {
+        await this.OpenUriAsync(text);
     }
 
     [RelayCommand]
@@ -225,7 +235,6 @@ public partial class MainViewModel : ViewModelBase
     {
         await DoCopyTextToClipboard(icon.CopyToClipboardText);
     }
-
 
     [RelayCommand]
     public async Task CopyToClipboardAsContentTextAsync(IIconViewModel icon)
@@ -243,5 +252,11 @@ public partial class MainViewModel : ViewModelBase
     public async Task CopyToClipboardAsPathIconTextAsync(IIconViewModel icon)
     {
         await DoCopyTextToClipboard(icon.CopyToClipboardAsPathIconText);
+    }
+
+    [RelayCommand (CanExecute = nameof(CanExport))]
+    private async Task SaveAsSvgAsync(IIconViewModel icon)
+    {
+        await ExportHelper.SaveAsSvgAsync(icon);
     }
 }

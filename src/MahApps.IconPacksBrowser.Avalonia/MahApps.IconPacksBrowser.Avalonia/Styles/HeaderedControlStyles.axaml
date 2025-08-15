@@ -1,12 +1,20 @@
-<ResourceDictionary xmlns="https://github.com/avaloniaui" 
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:controls="clr-namespace:MahApps.IconPacksBrowser.Avalonia.Controls">
+<ResourceDictionary xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:controls="clr-namespace:MahApps.IconPacksBrowser.Avalonia.Controls"
+                    xmlns:converters="clr-namespace:MahApps.IconPacksBrowser.Avalonia.Converters">
+
+    <Design.PreviewWith>
+        <StackPanel Width="500">
+            <controls:HeaderedControl Header="Test">
+                <TextBox> Hello World</TextBox>
+            </controls:HeaderedControl>
+        </StackPanel>
+    </Design.PreviewWith>
     
-    <Thickness x:Key="HeaderedControl.HeaderMargin">0,6,4,0</Thickness>
+    <Thickness x:Key="HeaderedControl.HeaderMargin">0,6,0,4</Thickness>
 
     <ControlTheme x:Key="{x:Type controls:HeaderedControl}" TargetType="controls:HeaderedControl">
 
         <Setter Property="Padding" Value="3" />
+        <Setter Property="HeaderPosition" Value="{Binding $self.Bounds, Converter={x:Static converters:BoundsToHeaderPositionConverter.Instance}}" />
         <Setter Property="Template">
             <ControlTemplate>
                 <Border Name="PART_Border"
@@ -63,7 +71,6 @@
             <Setter Property="Grid.ColumnSpan" Value="1" />
             <Setter Property="Grid.Column" Value="0" />
             <Setter Property="Grid.Row" Value="0" />
-
         </Style>
 
         <!--  HeaderPosition: Top  -->

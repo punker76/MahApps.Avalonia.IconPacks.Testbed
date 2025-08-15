@@ -4,8 +4,11 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="/Styles/ButtonStyles.axaml" />
                 <ResourceInclude Source="/Styles/ListBoxStyles.axaml" />
                 <ResourceInclude Source="/Styles/HeaderedControlStyles.axaml" />
+                <ResourceInclude Source="/Styles/PropertyResizerStyles.axaml" />
+                <ResourceInclude Source="/Styles/TextBoxStyles.axaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <DataTemplate x:Key="IconPacksBrowser.DataTemplates.ListBox.IconViewModel" DataType="viewModels:IIconViewModel">

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
@@ -121,7 +122,15 @@ public static class DialogHelper
         return null;
     }
 
-    public static async Task SetClipboardContent(this object? context, string content)
+    /// <summary>
+    /// Shows a save file dialog for a registered context, most likely a ViewModel
+    /// </summary>
+    /// <param name="context">The context</param>
+    /// <param name="title">The dialog title or a default is null</param>
+    /// <param name="filters">The filter to use</param>
+    /// <returns>The chosen file name</returns>
+    /// <exception cref="ArgumentNullException">if context was null</exception>
+    public static async Task<Stream?> SaveFileDialogAsync(this object? context, string? title = null, IReadOnlyList<FilePickerFileType>? filters = null)
     {
         if (context == null)
         {
@@ -131,9 +140,51 @@ public static class DialogHelper
         // lookup the TopLevel for the context
         var topLevel = DialogManager.GetTopLevelForContext(context);
 
+        if (topLevel != null)
+        {
+            // Open the file dialog
+            var storageFile = await topLevel.StorageProvider.SaveFilePickerAsync(
+                new FilePickerSaveOptions()
+                {
+                    ShowOverwritePrompt = true,
+                    FileTypeChoices = filters,
+                    Title = title ?? "Save File As"
+                });
+
+            // return the result
+            if (storageFile != null) return await storageFile.OpenWriteAsync();
+        }
+
+        return null;
+    }
+
+    public static async Task SetClipboardContentAsync(this object? context, string content)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        // lookup the TopLevel for the context
+        var topLevel = DialogManager.GetTopLevelForContext(context);
+
         if (topLevel?.Clipboard != null)
         {
             await topLevel.Clipboard.SetTextAsync(content);
+        }
+    }
+
+    public static async Task OpenUriAsync(this object? context, object? uri)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        var topLevel = DialogManager.GetTopLevelForContext(context);
+        Uri? navigateUri = uri switch {
+            Uri u => u,
+            string s => new Uri(s),
+            _ => null
+        };
+        
+        if (navigateUri is not null)
+        {
+            await topLevel!.Launcher.LaunchUriAsync(navigateUri);
         }
     }
 }

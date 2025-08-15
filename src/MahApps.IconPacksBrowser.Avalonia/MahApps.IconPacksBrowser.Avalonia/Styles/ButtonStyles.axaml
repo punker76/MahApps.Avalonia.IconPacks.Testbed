@@ -1,0 +1,59 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Design.PreviewWith>
+        <Button Theme="{StaticResource TextBoxButtonStyle}" Content="Hello" />
+    </Design.PreviewWith>
+    <ControlTheme x:Key="TextBoxButtonStyle" TargetType="Button">
+        <Setter Property="Foreground" Value="{DynamicResource TextControlButtonForeground}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TextControlButtonBorderBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <!--
+                    Note: TextControlButtonBackground isn't defined anywhere so
+                    replaced Background with Transparent
+                -->
+                <Border Name="ButtonLayoutGrid"
+                        Margin="{DynamicResource TextBoxInnerButtonMargin}"
+                        Background="Transparent"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{TemplateBinding CornerRadius}">
+                    <ContentPresenter x:Name="PART_ContentPresenter"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      Content="{TemplateBinding Content}"
+                                      ContentTemplate="{TemplateBinding ContentTemplate}"
+                                      FontSize="{DynamicResource TextBoxIconFontSize}"
+                                      Foreground="{TemplateBinding Foreground}" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+
+        <Style Selector="^:pointerover">
+            <Style Selector="^ /template/ Border#ButtonLayoutGrid">
+                <Setter Property="Background" Value="{DynamicResource TextControlButtonBackgroundPointerOver}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource TextControlButtonBorderBrushPointerOver}" />
+            </Style>
+
+            <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+                <Setter Property="Foreground" Value="{DynamicResource TextControlButtonForegroundPointerOver}" />
+            </Style>
+        </Style>
+
+        <Style Selector="^:pressed">
+            <Style Selector="^ /template/ Border#ButtonLayoutGrid">
+                <Setter Property="Background" Value="{DynamicResource TextControlButtonBackgroundPressed}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource TextControlButtonBorderBrushPressed}" />
+            </Style>
+
+            <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+                <Setter Property="Foreground" Value="{DynamicResource TextControlButtonForegroundPressed}" />
+            </Style>
+        </Style>
+
+        <Style Selector="^:disabled /template/ Border#ButtonLayoutGrid">
+            <Setter Property="Opacity" Value="0" />
+        </Style>
+    </ControlTheme>
+</ResourceDictionary>
