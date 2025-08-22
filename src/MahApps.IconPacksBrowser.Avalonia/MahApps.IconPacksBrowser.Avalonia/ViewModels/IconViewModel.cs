@@ -66,28 +66,6 @@ public class IconViewModel : ViewModelBase, IIconViewModel
 
     public MetaDataAttribute MetaData { get; set; }
 
-    internal string? GetPathData()
-    {
-        try
-        {
-            var packIconDataFactory = typeof(PackIconDataFactory<>).MakeGenericType(IconType);
-            var dataIndex = packIconDataFactory.GetProperty("DataIndex")!.GetValue(null);
-            var dictionary = dataIndex!.GetType().GetProperty("Value")!.GetValue(dataIndex)!;
-            
-            object[] args = [Value, string.Empty];
-            dictionary.GetType().GetMethod("TryGetValue")!.Invoke(dictionary, args);
-            
-            var skPath = SKPath.ParseSvgPathData(args[1] as string);
-            skPath.Transform(SKMatrix.CreateScale(1,-1));
-
-            return skPath.ToSvgPathData();
-        }
-        catch (Exception e)
-        {
-            return "Something went wrong " + e.Message;
-        }
-    }
-
     internal static string GetDescription(Enum value)
     {
         var fieldInfo = value.GetType().GetField(value.ToString());

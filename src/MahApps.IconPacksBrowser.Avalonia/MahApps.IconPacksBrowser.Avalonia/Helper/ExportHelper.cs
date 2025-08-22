@@ -4,17 +4,63 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Platform.Storage;
+using Avalonia.Skia;
 using CommunityToolkit.Mvvm.Input;
+using IconPacks.Avalonia;
+using IconPacks.Avalonia.BootstrapIcons;
+using IconPacks.Avalonia.BoxIcons;
+using IconPacks.Avalonia.CircumIcons;
+using IconPacks.Avalonia.Codicons;
+using IconPacks.Avalonia.Coolicons;
 using IconPacks.Avalonia.Core;
+using IconPacks.Avalonia.Entypo;
+using IconPacks.Avalonia.EvaIcons;
+using IconPacks.Avalonia.FeatherIcons;
+using IconPacks.Avalonia.FileIcons;
+using IconPacks.Avalonia.Fontaudio;
+using IconPacks.Avalonia.FontAwesome;
+using IconPacks.Avalonia.FontAwesome5;
+using IconPacks.Avalonia.FontAwesome6;
+using IconPacks.Avalonia.Fontisto;
+using IconPacks.Avalonia.ForkAwesome;
+using IconPacks.Avalonia.GameIcons;
+using IconPacks.Avalonia.Ionicons;
+using IconPacks.Avalonia.JamIcons;
+using IconPacks.Avalonia.KeyruneIcons;
+using IconPacks.Avalonia.Lucide;
+using IconPacks.Avalonia.Material;
+using IconPacks.Avalonia.MaterialDesign;
+using IconPacks.Avalonia.MaterialLight;
+using IconPacks.Avalonia.MemoryIcons;
+using IconPacks.Avalonia.Microns;
+using IconPacks.Avalonia.MingCuteIcons;
+using IconPacks.Avalonia.Modern;
+using IconPacks.Avalonia.MynaUIIcons;
+using IconPacks.Avalonia.Octicons;
+using IconPacks.Avalonia.PhosphorIcons;
+using IconPacks.Avalonia.PicolIcons;
+using IconPacks.Avalonia.PixelartIcons;
+using IconPacks.Avalonia.RadixIcons;
+using IconPacks.Avalonia.RemixIcon;
+using IconPacks.Avalonia.RPGAwesome;
+using IconPacks.Avalonia.SimpleIcons;
+using IconPacks.Avalonia.Typicons;
+using IconPacks.Avalonia.Unicons;
+using IconPacks.Avalonia.VaadinIcons;
+using IconPacks.Avalonia.WeatherIcons;
+using IconPacks.Avalonia.Zondicons;
 using MahApps.IconPacksBrowser.Avalonia.Properties;
 using MahApps.IconPacksBrowser.Avalonia.ViewModels;
+using SkiaSharp;
 
 namespace MahApps.IconPacksBrowser.Avalonia.Helper;
 
-internal class ExportHelper
+internal static class ExportHelper
 {
     // SVG-File
     private static string? _SvgFileTemplate;
@@ -90,6 +136,65 @@ internal class ExportHelper
         }
     }
 
+
+    internal static SKPath? GetPath(Enum kind)
+    {
+        try
+        {
+            var packIconDataFactory = typeof(PackIconDataFactory<>).MakeGenericType(kind.GetType());
+            var dataIndex = packIconDataFactory.GetProperty("DataIndex")!.GetValue(null);
+            var dictionary = dataIndex!.GetType().GetProperty("Value")!.GetValue(dataIndex)!;
+
+            object[] args = [kind, string.Empty];
+            dictionary.GetType().GetMethod("TryGetValue")!.Invoke(dictionary, args);
+
+            var skPath = SKPath.ParseSvgPathData(args[1] as string);
+
+            // Transform if needed
+            // TODO: Would be great to have an upstream API to get this information to not duplicate the code elsewhere
+            switch (kind)
+            {
+                case PackIconBootstrapIconsKind:
+                case PackIconBoxIconsKind:
+                case PackIconCodiconsKind:
+                case PackIconCooliconsKind:
+                case PackIconEvaIconsKind:
+                case PackIconFileIconsKind:
+                case PackIconFontaudioKind:
+                case PackIconFontistoKind:
+                case PackIconForkAwesomeKind:
+                case PackIconJamIconsKind:
+                case PackIconLucideKind:
+                case PackIconMingCuteIconsKind:
+                case PackIconMynaUIIconsKind:
+                case PackIconRPGAwesomeKind:
+                case PackIconTypiconsKind:
+                case PackIconVaadinIconsKind:
+                    skPath.Transform(SKMatrix.CreateScale(1, -1));
+                    break;
+            }
+
+            skPath.FillType = SKPathFillType.EvenOdd;
+            
+            return skPath;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    internal static SKPath MoveIntoBounds(this SKPath path, float width, float height)
+    {
+        var scale = Math.Max(width, height) / Math.Max(path.Bounds.Width, path.Bounds.Height);
+        path.Transform(SKMatrix.CreateScale(scale, scale));
+        path.Transform(SKMatrix.CreateTranslation(
+            - path.Bounds.Left - (path.Bounds.Width - width) / 2, 
+            - path.Bounds.Top - (path.Bounds.Width - width) / 2));
+        
+        return path;
+    }
+
     internal static async Task SaveAsSvgAsync(IIconViewModel iconViewModel)
     {
         await using var saveFileStream = await MainViewModel.Instance.SaveFileDialogAsync(filters: new[]
@@ -106,6 +211,42 @@ internal class ExportHelper
         {
             await using var streamWriter = new StreamWriter(saveFileStream);
             await streamWriter.WriteAsync(fileContent);
+        }
+    }
+
+    internal static async Task SaveAsPngAsync(IIconViewModel icon)
+    {
+        await using var saveFileStream = await MainViewModel.Instance.SaveFileDialogAsync(filters: new[]
+        {
+            FilePickerFileTypes.ImagePng
+        });
+        
+        int renderWidth = Settings.Default.IconPreviewSize;
+        int renderHeight = Settings.Default.IconPreviewSize;
+        
+        using var path = GetPath(icon.Value)?.MoveIntoBounds(renderWidth, renderHeight);
+
+        using var bitmap = new SKBitmap(new SKImageInfo(renderWidth, renderHeight));
+        using var canvas = new SKCanvas(bitmap);
+        using var paint = new SKPaint();
+
+        paint.IsAntialias = true;
+        
+        if (Settings.Default.IconBackground != null)
+        {
+            canvas.DrawColor(Settings.Default.IconBackground.Value.ToSKColor());
+        }
+
+        paint.Color = Settings.Default.IconForeground.ToSKColor();
+        paint.IsStroke = icon.Value is PackIconFeatherIconsKind;
+
+        canvas.DrawPath(path, paint);
+
+        if (saveFileStream is { CanWrite: true })
+        {
+            using var image = SKImage.FromBitmap(bitmap);
+            using var encodedImage = image.Encode(SKEncodedImageFormat.Png, 100);
+            encodedImage.SaveTo(saveFileStream);
         }
     }
 }
@@ -125,9 +266,9 @@ internal struct ExportParameters
         this.PageWidth = Settings.Default.IconPreviewSize.ToString(CultureInfo.InvariantCulture);
         this.PageHeight = Settings.Default.IconPreviewSize.ToString(CultureInfo.InvariantCulture);
         this.FillColor = Settings.Default.IconForeground.ToString();
-        this.Background = Settings.Default.IconBackground.ToString();
+        this.Background = Settings.Default.IconBackground.ToString() ?? Colors.Black.ToString();
         this.StrokeColor = Settings.Default.IconForeground.ToString();
-        this.StrokeWidth = "0"; // TODO: We need an API to read these values
+        this.StrokeWidth = icon.Value is PackIconFeatherIconsKind ? "2" : "0"; // TODO: We need an API to read these values
         this.StrokeLineCap = nameof(PenLineCap.Round);
         this.StrokeLineJoin = nameof(PenLineJoin.Round);
         this.TransformMatrix = Matrix.Identity.ToString();
@@ -135,7 +276,7 @@ internal struct ExportParameters
         this.IconPackHomepage = metaData?.ProjectUrl;
         this.IconPackLicense = metaData?.LicenseUrl;
 
-        this.PathData = (icon as IconViewModel)?.GetPathData() ?? string.Empty;
+        this.PathData = ExportHelper.GetPath(icon.Value)?.ToSvgPathData() ?? string.Empty;
     }
 
     internal string IconKind { get; set; }

@@ -30,7 +30,12 @@ public partial class Settings : ObservableObject
     /// <summary>
     /// Gets or sets the preview size
     /// </summary>
-    [ObservableProperty] private double iconPreviewSize = 48;
+    [ObservableProperty] private int iconPreviewSize = 48;
+
+    partial void OnIconPreviewSizeChanged(int value)
+    {
+        if (value < 0) IconPreviewSize = 0;
+    }
     
     /// <summary>
     /// Gets or sets if the previewer is visible 
@@ -42,13 +47,4 @@ public partial class Settings : ObservableObject
     {
         IsPreviewerVisible = !IsPreviewerVisible;
     }
-    
-
-    partial void OnIconPreviewSizeChanging(double value)
-    {
-        // Make sure icon is not too small at all
-        if (value < 8) value = 8;
-    }
-    
-    
 }

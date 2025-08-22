@@ -132,7 +132,7 @@
                             <controls1:FAComboBox x:Name="ComboBoxIconPreviewSize"
                                                   HorizontalAlignment="Stretch"
                                                   IsEditable="True"
-                                                  Text="{Binding Source={x:Static prop:Settings.Default}, Path=IconPreviewSize}">
+                                                  Text="{Binding Source={x:Static prop:Settings.Default}, Path=IconPreviewSize, Mode=TwoWay}">
                                 <system:Double>16</system:Double>
                                 <system:Double>24</system:Double>
                                 <system:Double>32</system:Double>
@@ -264,8 +264,9 @@
                                 Content="Save as svg" />
                     <!--     <Button Command="{Binding SaveAsWpfCommand}" Content="Save as XAML (WPF)" /> -->
                     <!--     <Button Command="{Binding SaveAsUwpCommand}" Content="Save as XAML (UWP)" /> -->
-                    <!--     <Button Command="{Binding SaveAsPngCommand}" Content="Save as Png" /> -->
-                    <!--     <Button Command="{Binding SaveAsJpegCommand}" Content="Save as Jpeg" /> -->
+                    <Button Command="{Binding SaveAsPngCommand}" 
+                            CommandParameter="{Binding SelectedIcon}"
+                            Content="Save as Png" />
                     <!--     <Button Command="{Binding SaveAsBmpCommand}" Content="Save as Bmp" /> -->
                     </StackPanel>
                 </Expander>

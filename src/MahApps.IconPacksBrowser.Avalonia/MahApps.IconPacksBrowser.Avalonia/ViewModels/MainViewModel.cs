@@ -184,6 +184,7 @@ public partial class MainViewModel : ViewModelBase
 
     [ObservableProperty] 
     [NotifyCanExecuteChangedFor(nameof(SaveAsSvgCommand))]
+    [NotifyCanExecuteChangedFor(nameof(SaveAsPngCommand))]
     private IIconViewModel? _SelectedIcon;
 
 
@@ -258,5 +259,11 @@ public partial class MainViewModel : ViewModelBase
     private async Task SaveAsSvgAsync(IIconViewModel icon)
     {
         await ExportHelper.SaveAsSvgAsync(icon);
+    }
+    
+    [RelayCommand (CanExecute = nameof(CanExport))]
+    private async Task SaveAsPngAsync(IIconViewModel icon)
+    {
+        await ExportHelper.SaveAsPngAsync(icon);
     }
 }
