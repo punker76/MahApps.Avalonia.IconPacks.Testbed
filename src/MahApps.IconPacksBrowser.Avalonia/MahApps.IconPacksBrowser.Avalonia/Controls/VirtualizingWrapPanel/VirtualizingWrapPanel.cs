@@ -102,7 +102,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
         }
 
         /// <summary>
-        /// Gets or sets a value that specifies the size of the items. The default value is <see cref="EmptySize"/>. 
+        /// Gets or sets a value that specifies the size of the items. The default value is <see cref="EmptySize"/>.
         /// If the value is <see cref="EmptySize"/> the item size is determined by measuring the first realized item.
         /// </summary>
         public Size ItemSize
@@ -112,8 +112,8 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
         }
 
         /// <summary>
-        /// Specifies whether items can have different sizes. The default value is false. If this property is enabled, 
-        /// it is strongly recommended to also set the <see cref="ItemSizeProvider"/> property. Otherwise, the position 
+        /// Specifies whether items can have different sizes. The default value is false. If this property is enabled,
+        /// it is strongly recommended to also set the <see cref="ItemSizeProvider"/> property. Otherwise, the position
         /// of the items is not always guaranteed to be correct.
         /// </summary>
         public bool AllowDifferentSizedItems
@@ -145,8 +145,8 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
         /// Gets or sets a value that specifies if the items get stretched to fill up remaining space. The default value is false.
         /// </summary>
         /// <remarks>
-        /// The MaxWidth and MaxHeight properties of the ItemContainerStyle can be used to limit the stretching. 
-        /// In this case the use of the remaining space will be determined by the SpacingMode property. 
+        /// The MaxWidth and MaxHeight properties of the ItemContainerStyle can be used to limit the stretching.
+        /// In this case the use of the remaining space will be determined by the SpacingMode property.
         /// </remarks>
         public bool StretchItems
         {
@@ -156,11 +156,11 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
 
         /// <summary>
         /// Specifies whether the items are arranged in a grid-like layout. The default value is <c>true</c>.
-        /// When set to <c>true</c>, the items are arranged based on the number of items that can fit in a row. 
-        /// When set to <c>false</c>, the items are arranged based on the number of items that are actually placed in the row. 
+        /// When set to <c>true</c>, the items are arranged based on the number of items that can fit in a row.
+        /// When set to <c>false</c>, the items are arranged based on the number of items that are actually placed in the row.
         /// </summary>
         /// <remarks>
-        /// If <see cref="AllowDifferentSizedItems"/> is enabled, this property has no effect and the items are always 
+        /// If <see cref="AllowDifferentSizedItems"/> is enabled, this property has no effect and the items are always
         /// arranged based on the number of items that are actually placed in the row.
         /// </remarks>
         public bool IsGridLayoutEnabled
@@ -308,7 +308,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                     ArrangeRow(GetWidth(finalSize), rowChilds, childSizes, y);
                 }
 
-                // Ensure that the focused element is in the correct position.                
+                // Ensure that the focused element is in the correct position.
                 if (_focusedElement is not null && _focusedIndex >= 0)
                 {
                     var startPoint = FindItemOffset(_focusedIndex);
@@ -322,7 +322,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                     _focusedElement.Arrange(rect);
                 }
 
-                // Ensure that the scrollTo element is in the correct position.                
+                // Ensure that the scrollTo element is in the correct position.
                 if (_scrollToElement is not null && _scrollToIndex >= 0)
                 {
                     var startPoint = FindItemOffset(_scrollToIndex);
@@ -688,8 +688,8 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                 InvalidateMeasure();
                 InvalidateArrange();
             }
-            
-            
+
+
             base.OnPropertyChanged(change);
         }
 
@@ -725,7 +725,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
         }
 
         /// <summary>
-        /// Calculates the start offset for a given item index 
+        /// Calculates the start offset for a given item index
         /// </summary>
         /// <param name="itemIndex">the index of the requested item</param>
         /// <returns>the starting point</returns>
@@ -1021,12 +1021,12 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
         private Size GetAssumedItemSize(object? item)
         {
             if (item is null) return EmptySize;
-            
+
             if (GetUpfrontKnownItemSize(item) is { } upfrontKnownItemSize)
             {
                 return upfrontKnownItemSize;
             }
-            
+
             var index = Items.IndexOf(item);
             if (_realizedElements!.GetElementSize(index) is { } cachedItemSize)
             {
@@ -1179,17 +1179,23 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
         private void OnEffectiveViewportChanged(object? sender, EffectiveViewportChangedEventArgs e)
         {
             // var vertical = Orientation == Orientation.Vertical;
-            var oldViewportStart = GetY(_viewport.TopLeft); // vertical ? ScrollOffset.Top : _viewport.Left;
-            var oldViewportEnd = GetY(_viewport.BottomRight); // vertical ? _viewport.Bottom : _viewport.Right;
+            var oldViewportStartX = GetX(_viewport.TopLeft);
+            var oldViewportStartY = GetY(_viewport.TopLeft); // vertical ? ScrollOffset.Top : _viewport.Left;
+            var oldViewportEndX = GetX(_viewport.BottomRight);
+            var oldViewportEndY = GetY(_viewport.BottomRight); // vertical ? _viewport.Bottom : _viewport.Right;
 
             _viewport = e.EffectiveViewport.Intersect(new(Bounds.Size));
             _isWaitingForViewportUpdate = false;
 
-            var newViewportStart = GetY(_viewport.TopLeft); // vertical ? _viewport.Top : _viewport.Left;
-            var newViewportEnd = GetY(_viewport.BottomRight); // ? _viewport.Bottom : _viewport.Right);
+            var newViewportStartX = GetX(_viewport.TopLeft);
+            var newViewportStartY = GetY(_viewport.TopLeft); // vertical ? _viewport.Top : _viewport.Left;
+            var newViewportEndX = GetX(_viewport.BottomRight);
+            var newViewportEndY = GetY(_viewport.BottomRight); // ? _viewport.Bottom : _viewport.Right);
 
-            if (!oldViewportStart.IsCloseTo(newViewportStart) ||
-                !oldViewportEnd.IsCloseTo(newViewportEnd))
+            if (!oldViewportStartX.IsCloseTo(newViewportStartX) ||
+                !oldViewportEndX.IsCloseTo(newViewportEndX) ||
+                !oldViewportStartY.IsCloseTo(newViewportStartY) ||
+                !oldViewportEndY.IsCloseTo(newViewportEndY))
             {
                 InvalidateMeasure();
             }
@@ -1225,7 +1231,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                 case Orientation.Horizontal:
                     --currentIndex;
                     break;
-                
+
                 case Orientation.Vertical:
                     if (AllowDifferentSizedItems) return;
                     var itemsPerRow =
@@ -1242,7 +1248,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                 case Orientation.Horizontal:
                     ++currentIndex;
                     break;
-                
+
                 case Orientation.Vertical:
                     if (AllowDifferentSizedItems) return;
                     var itemsPerRow =
@@ -1283,45 +1289,45 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
                     break;
             }
         }
-        
+
 
         #endregion
 
         /// <summary>
-        /// Calculates a virtual X-coordinate based on the <see cref="Orientation"/> 
+        /// Calculates a virtual X-coordinate based on the <see cref="Orientation"/>
         /// </summary>
         private double GetX(Point point) => Orientation == Orientation.Horizontal ? point.X : point.Y;
 
         /// <summary>
-        /// Calculates a virtual Y-coordinate based on the <see cref="Orientation"/> 
+        /// Calculates a virtual Y-coordinate based on the <see cref="Orientation"/>
         /// </summary>
         private double GetY(Point point) => Orientation == Orientation.Horizontal ? point.Y : point.X;
 
         /// <summary>
-        /// Calculates a virtual width-component based on the <see cref="Orientation"/> 
+        /// Calculates a virtual width-component based on the <see cref="Orientation"/>
         /// </summary>
         private double GetWidth(Size size) => Orientation == Orientation.Horizontal ? size.Width : size.Height;
 
         /// <summary>
-        /// Calculates a virtual height-component based on the <see cref="Orientation"/> 
+        /// Calculates a virtual height-component based on the <see cref="Orientation"/>
         /// </summary>
         private double GetHeight(Size size) => Orientation == Orientation.Horizontal ? size.Height : size.Width;
 
         /// <summary>
-        /// Creates a virtual Point based on the <see cref="Orientation"/> 
+        /// Creates a virtual Point based on the <see cref="Orientation"/>
         /// </summary>
         private Point CreatePoint(double x, double y) =>
             Orientation == Orientation.Horizontal ? new Point(x, y) : new Point(y, x);
 
         /// <summary>
-        /// Creates a virtual Size based on the <see cref="Orientation"/> 
+        /// Creates a virtual Size based on the <see cref="Orientation"/>
         /// </summary>
         private Size CreateSize(double width, double height) => Orientation == Orientation.Horizontal ?
             new Size(width, height) :
             new Size(height, width);
 
         /// <summary>
-        /// Creates a virtual Rect based on the <see cref="Orientation"/> 
+        /// Creates a virtual Rect based on the <see cref="Orientation"/>
         /// </summary>
         private Rect CreateRect(double x, double y, double width, double height) =>
             Orientation == Orientation.Horizontal ? new Rect(x, y, width, height) : new Rect(y, x, height, width);
@@ -1400,7 +1406,7 @@ namespace MahApps.IconPacksBrowser.Avalonia.Controls
         }
 
         /// <summary>
-        /// Prepares a container if the item is it's own container 
+        /// Prepares a container if the item is it's own container
         /// </summary>
         /// <param name="item">the item to use</param>
         /// <param name="index">the item index</param>
