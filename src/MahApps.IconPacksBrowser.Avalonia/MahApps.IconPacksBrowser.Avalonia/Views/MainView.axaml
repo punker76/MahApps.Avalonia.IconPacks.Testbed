@@ -183,7 +183,7 @@
                             <TextBlock.Text>
                                 <MultiBinding StringFormat="{}{0} with {1:N0} icons">
                                     <Binding Mode="OneWay" Path="Title" />
-                                    <Binding Mode="OneWay" Path="IconCount" />
+                                    <Binding Mode="OneWay" Path="MainViewModel.TotalItems" />
                                 </MultiBinding>
                             </TextBlock.Text>
                         </TextBlock>

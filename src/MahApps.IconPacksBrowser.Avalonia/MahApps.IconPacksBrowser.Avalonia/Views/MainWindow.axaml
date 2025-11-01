@@ -8,6 +8,11 @@
         BorderThickness="1"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="MahApps.IconPacksBrowser.Avalonia.Views.MainWindow"
+        WindowStartupLocation="CenterScreen"
+        Width="1280"
+        Height="720"
+        MinWidth="400"
+        MinHeight="300"
         Icon="/Assets/avalonia-logo.ico"
         Title="MahApps.IconPacksBrowser">
         <views:MainView />

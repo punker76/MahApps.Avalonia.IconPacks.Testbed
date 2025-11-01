@@ -6,6 +6,7 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8AA3A5E7-A687-4781-9416-E96489E4C781}"
 	ProjectSection(SolutionItems) = preProject
 		..\.editorconfig = ..\.editorconfig
+		MahApps.IconPacksBrowser.Avalonia\Directory.Build.props = MahApps.IconPacksBrowser.Avalonia\Directory.Build.props
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MahApps.IconPacksBrowser.Avalonia", "MahApps.IconPacksBrowser.Avalonia\MahApps.IconPacksBrowser.Avalonia\MahApps.IconPacksBrowser.Avalonia.csproj", "{B04B040D-16F4-4B13-87FF-F3D5458192D9}"
@@ -94,7 +95,5 @@ Global
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E6ECA210-1B2F-4011-A34A-7E9D2CC4721F}
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
 	EndGlobalSection
 EndGlobal

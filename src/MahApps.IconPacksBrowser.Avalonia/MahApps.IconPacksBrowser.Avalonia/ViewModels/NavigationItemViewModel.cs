@@ -1,4 +1,3 @@
-using System;
 using FluentAvalonia.UI.Controls;
 
 namespace MahApps.IconPacksBrowser.Avalonia.ViewModels;
@@ -6,9 +5,9 @@ namespace MahApps.IconPacksBrowser.Avalonia.ViewModels;
 public class NavigationItemViewModelBase
 {
     public object? Tag { get; init; }
-    
+
     public string? Title { get; init; }
-    
+
     public IconSource? Icon { get; init; }
 }
 
@@ -18,8 +17,8 @@ public class IconPackNavigationItemViewModel : NavigationItemViewModelBase
 {
     public IconPackNavigationItemViewModel(IconPackViewModel iconPack)
     {
-        Title =  iconPack.Caption;
-        Tag =  iconPack;
+        Title = iconPack.Caption;
+        Tag = iconPack;
         IconPack = iconPack;
     }
 
@@ -32,6 +31,6 @@ public class AllIconPacksNavigationItemViewModel : NavigationItemViewModelBase
     {
         Title = "All Icons";
     }
-    
-    public int IconCount => MainViewModel.Instance.TotalItems;
+
+    public MainViewModel MainViewModel => MainViewModel.Instance;
 }

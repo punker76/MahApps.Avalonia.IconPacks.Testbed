@@ -6,12 +6,11 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using AsyncAwaitBestPractices;
-using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using IconPacks.Avalonia.BootstrapIcons;
 using IconPacks.Avalonia.BoxIcons;
+using IconPacks.Avalonia.BoxIcons2;
 using IconPacks.Avalonia.CircumIcons;
 using IconPacks.Avalonia.Codicons;
 using IconPacks.Avalonia.Coolicons;
@@ -68,9 +67,8 @@ public partial class MainViewModel : ViewModelBase
     {
         this.AppVersion = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).FileVersion!;
 
-        _SelectedIconPackNavigationItem = AvailableIconPacks[0];
-
         // for ui synchronization safety of viewmodel
+        _SelectedIconPackNavigationItem = AvailableIconPacks[0];
 
         var view = _iconsCache.CreateView(x => x);
 
@@ -78,7 +76,7 @@ public partial class MainViewModel : ViewModelBase
         // view.AttachFilter(filter);
 
         this.ObservePropertyChanged(x => x.FilterText)
-            .Delay(TimeSpan.FromSeconds(0.3))
+            .Debounce(TimeSpan.FromMilliseconds(500))
             .ObserveOn(SynchronizationContext.Current)
             .Subscribe(_ => view.AttachFilter(filter));
 
@@ -98,16 +96,17 @@ public partial class MainViewModel : ViewModelBase
         //     .Bind(out _visibleIcons)
         //     .Subscribe();
 
-        LoadIconPacks().SafeFireAndForget();
+        //LoadIconPacksAsync().SafeFireAndForget();
     }
 
     [ObservableProperty] int _TotalItems;
 
-    private async Task LoadIconPacks()
+    public async Task LoadIconPacksAsync()
     {
         var availableIconPacks = new List<(Type EnumType, Type IconPackType)>(
             [
                 (typeof(PackIconBootstrapIconsKind), typeof(PackIconBootstrapIcons)),
+                (typeof(PackIconBoxIcons2Kind), typeof(PackIconBoxIcons2)),
                 (typeof(PackIconBoxIconsKind), typeof(PackIconBoxIcons)),
                 (typeof(PackIconCircumIconsKind), typeof(PackIconCircumIcons)),
                 (typeof(PackIconCodiconsKind), typeof(PackIconCodicons)),
@@ -160,8 +159,9 @@ public partial class MainViewModel : ViewModelBase
         var loadIconsTasks = availableIconPacks.Select(ip => ip.LoadIconsAsync(ip.EnumType, ip.PackType));
         _iconsCache.AddRange((await Task.WhenAll(loadIconsTasks)).SelectMany(x => x));
 
-        Dispatcher.UIThread.Post(() => TotalItems = _iconsCache.Count);
-        SelectedIcon = SelectedIconPack?.Icons.FirstOrDefault();
+        //Dispatcher.UIThread.Post(() => TotalItems = _iconsCache.Count);
+        TotalItems = _iconsCache.Count;
+        SelectedIcon = SelectedIconPack?.Icons.FirstOrDefault() ?? _iconsCache.FirstOrDefault();
     }
 
     /// <summary>
@@ -182,9 +182,7 @@ public partial class MainViewModel : ViewModelBase
 
     public IconPackViewModel? SelectedIconPack => SelectedIconPackNavigationItem.Tag as IconPackViewModel;
 
-    [ObservableProperty] 
-    [NotifyCanExecuteChangedFor(nameof(SaveAsSvgCommand))]
-    [NotifyCanExecuteChangedFor(nameof(SaveAsPngCommand))]
+    [ObservableProperty] [NotifyCanExecuteChangedFor(nameof(SaveAsSvgCommand))] [NotifyCanExecuteChangedFor(nameof(SaveAsPngCommand))]
     private IIconViewModel? _SelectedIcon;
 
 
@@ -218,7 +216,7 @@ public partial class MainViewModel : ViewModelBase
     }
 
     bool CanExport => SelectedIcon != null;
-    
+
     [RelayCommand]
     private async Task FollowUriAsync(string? text)
     {
@@ -255,13 +253,13 @@ public partial class MainViewModel : ViewModelBase
         await DoCopyTextToClipboard(icon.CopyToClipboardAsPathIconText);
     }
 
-    [RelayCommand (CanExecute = nameof(CanExport))]
+    [RelayCommand(CanExecute = nameof(CanExport))]
     private async Task SaveAsSvgAsync(IIconViewModel icon)
     {
         await ExportHelper.SaveAsSvgAsync(icon);
     }
-    
-    [RelayCommand (CanExecute = nameof(CanExport))]
+
+    [RelayCommand(CanExecute = nameof(CanExport))]
     private async Task SaveAsPngAsync(IIconViewModel icon)
     {
         await ExportHelper.SaveAsPngAsync(icon);

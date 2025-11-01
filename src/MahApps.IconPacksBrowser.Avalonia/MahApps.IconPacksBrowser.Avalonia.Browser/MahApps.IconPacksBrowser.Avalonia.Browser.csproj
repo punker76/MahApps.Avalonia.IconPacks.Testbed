@@ -1,8 +1,9 @@
-<Project Sdk="Microsoft.NET.Sdk.WebAssembly">
+﻿<Project Sdk="Microsoft.NET.Sdk.WebAssembly">
     <PropertyGroup>
         <TargetFramework>net9.0-browser</TargetFramework>
         <OutputType>Exe</OutputType>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <WasmAllowUndefinedSymbols>true</WasmAllowUndefinedSymbols>
     </PropertyGroup>
 
     <ItemGroup>
