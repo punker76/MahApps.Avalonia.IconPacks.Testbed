@@ -15,6 +15,6 @@ public partial class MainWindow : AppWindow
         TitleBar.ButtonPressedForegroundColor = Colors.White;
         TitleBar.ExtendsContentIntoTitleBar = true;
 
-        PlatformFeatures.SetWindowBorderColor(Colors.Green);
+        PlatformFeatures?.SetWindowBorderColor(Colors.Green);
     }
 }
