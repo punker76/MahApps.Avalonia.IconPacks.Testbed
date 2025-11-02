@@ -14,15 +14,15 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: | 
-            6.x
             8.x
+            9.x
     - name: Publish with dotnet
-      run: dotnet publish ./src/AvaloniaApp/AvaloniaApp.csproj -r linux-x64 -c Release -f net6.0
+      run: dotnet publish ./src/MahApps.IconPacksBrowser.Avalonia.Desktop/MahApps.IconPacksBrowser.Avalonia.Desktop.csproj -r linux-x64 -c Release -f net9.0
     - name: Archive publish artifacts
       uses: actions/upload-artifact@v4
       with:
         name: AvaloniaApp_net60_linux-x64
-        path: src/AvaloniaApp/bin/Release/net6.0/linux-x64/publish
+        path: src/MahApps.IconPacksBrowser.Avalonia.Desktop/bin/Release/net9.0/linux-x64/publish
 
   publishwin:
     runs-on: windows-latest
@@ -35,15 +35,15 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: | 
-            6.x
             8.x
+            9.x
     - name: Publish with dotnet
-      run: dotnet publish ./src/AvaloniaApp/AvaloniaApp.csproj -r win-x64 -c Release -f net6.0
+      run: dotnet publish ./src/MahApps.IconPacksBrowser.Avalonia.Desktop/MahApps.IconPacksBrowser.Avalonia.Desktop.csproj -r win-x64 -c Release -f net9.0
     - name: Archive publish artifacts
       uses: actions/upload-artifact@v4
       with:
         name: AvaloniaApp_net60_winx64
-        path: src/AvaloniaApp/bin/Release/net6.0/win-x64/publish
+        path: src/MahApps.IconPacksBrowser.Avalonia.Desktop/bin/Release/net9.0/win-x64/publish
 
   publishmac:
     runs-on: macos-latest
@@ -56,12 +56,12 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: | 
-            6.x
             8.x
+            9.x
     - name: Publish with dotnet
-      run: dotnet publish ./src/AvaloniaApp/AvaloniaApp.csproj -r osx-x64 -c Release -f net6.0
+      run: dotnet publish ./src/MahApps.IconPacksBrowser.Avalonia.Desktop/MahApps.IconPacksBrowser.Avalonia.Desktop.csproj -r osx-x64 -c Release -f net9.0
     - name: Archive publish artifacts
       uses: actions/upload-artifact@v4
       with:
         name: AvaloniaApp_net60_osx
-        path: src/AvaloniaApp/bin/Release/net6.0/osx-x64/publish
+        path: src/MahApps.IconPacksBrowser.Avalonia.Desktop/bin/Release/net9.0/osx-x64/publish

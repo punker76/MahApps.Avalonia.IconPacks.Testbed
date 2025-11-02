@@ -1,0 +1,56 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:iconPacks="https://github.com/MahApps/IconPacks.Avalonia" xmlns:vm="clr-namespace:MahApps.IconPacksBrowser.Avalonia.ViewModels">
+    <Design.PreviewWith>
+        <StackPanel Width="200"
+                    Margin="5"
+                    Spacing="5">
+            <TextBox Text="Hello " Theme="{StaticResource CopyToClipboardTextBox}" />
+
+            <TextBox Text="www.mahapps.com" Theme="{StaticResource CopyToClipboardAndHyperlinkTextBox}" />
+        </StackPanel>
+    </Design.PreviewWith>
+
+    <ControlTheme x:Key="CopyToClipboardTextBox"
+                  BasedOn="{StaticResource {x:Type TextBox}}"
+                  TargetType="TextBox">
+        <Setter Property="MaxHeight" Value="100" />
+        <Setter Property="IsReadOnly" Value="True" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
+        <Setter Property="InnerRightContent">
+            <Template>
+                <Button Padding="0"
+                        Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=CopyTextToClipboardCommand}"
+                        CommandParameter="{Binding $parent[TextBox].Text}"
+                        Content="{iconPacks:Octicons Kind=Copy,
+                                                     Height={StaticResource TextBoxIconFontSize}}"
+                        Theme="{DynamicResource TextBoxButtonStyle}"
+                        ToolTip.Tip="Copy" />
+            </Template>
+        </Setter>
+    </ControlTheme>
+
+    <ControlTheme x:Key="CopyToClipboardAndHyperlinkTextBox"
+                  BasedOn="{StaticResource CopyToClipboardTextBox}"
+                  TargetType="TextBox">
+        <Setter Property="InnerRightContent">
+            <Template>
+                <StackPanel Orientation="Horizontal">
+                    <Button Padding="0"
+                            Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=FollowUriCommand}"
+                            CommandParameter="{Binding $parent[TextBox].Text}"
+                            Content="{iconPacks:RadixIcons Kind=ExternalLink,
+                                                           Height={StaticResource TextBoxIconFontSize}}"
+                            Theme="{DynamicResource TextBoxButtonStyle}"
+                            ToolTip.Tip="Visit Url" />
+                    <Button Padding="0"
+                            Command="{Binding Source={x:Static vm:MainViewModel.Instance}, Path=CopyTextToClipboardCommand}"
+                            CommandParameter="{Binding $parent[TextBox].Text}"
+                            Content="{iconPacks:Octicons Kind=Copy,
+                                                         Height={StaticResource TextBoxIconFontSize}}"
+                            Theme="{DynamicResource TextBoxButtonStyle}"
+                            ToolTip.Tip="Copy" />
+                </StackPanel>
+            </Template>
+        </Setter>
+    </ControlTheme>
+</ResourceDictionary>
